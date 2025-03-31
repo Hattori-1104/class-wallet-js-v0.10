@@ -7,12 +7,8 @@
 	},
 	"files": {
 		"ignoreUnknown": false,
-		"ignore": [
-			"node_modules"
-		],
-		"include": [
-			"app"
-		]
+		"ignore": ["node_modules"],
+		"include": ["app"]
 	},
 	"formatter": {
 		"enabled": true,
@@ -26,7 +22,14 @@
 	"linter": {
 		"enabled": true,
 		"rules": {
-			"all": true
+			"all": true,
+			"style": {
+				"noDefaultExport": "off"
+			},
+			"correctness": {
+				"noEmptyPattern": "off",
+				"useImportExtensions": "off"
+			}
 		}
 	},
 	"javascript": {
