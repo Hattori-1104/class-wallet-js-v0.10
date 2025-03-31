@@ -1,0 +1,135 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+model Student {
+  id    String @id
+  email String @unique
+  name  String
+
+  parts       Part[]   @relation("PartStudents")
+  leaderParts Part[]   @relation("PartLeaders")
+  wallets     Wallet[]
+
+  certifications StudentCertification[]
+}
+
+model Teacher {
+  id    String @id
+  email String @unique
+  name  String
+
+  wallets        Wallet[]
+  certifications TeacherCertification[]
+}
+
+model Part {
+  id     String @id @default(uuid())
+  name   String
+  budget Int    @default(0)
+
+  students Student[] @relation("PartStudents")
+  leaders  Student[] @relation("PartLeaders")
+  walletId String
+  wallet   Wallet    @relation(fields: [walletId], references: [id], onDelete: Cascade)
+
+  purchases Purchase[]
+}
+
+model Wallet {
+  id     String @id @default(uuid())
+  name   String
+  budget Int
+
+  eventId String
+  event   Event  @relation(fields: [eventId], references: [id], onDelete: Cascade)
+
+  parts              Part[]
+  teachers           Teacher[]
+  accountantStudents Student[]
+}
+
+model Event {
+  id     String   @id @default(uuid())
+  name   String
+  Wallet Wallet[]
+}
+
+model StudentCertification {
+  id         String   @id @default(uuid())
+  createdAt  DateTime @default(now())
+  approved   Boolean  @default(true)
+  signedById String
+  signedBy   Student  @relation(fields: [signedById], references: [id], onDelete: Cascade)
+
+  purchaseRequest  Purchase? @relation(name: "RequestCert")
+  purchaseApproval Purchase? @relation(name: "AccountantCert")
+}
+
+model TeacherCertification {
+  id         String   @id @default(uuid())
+  createdAt  DateTime @default(now())
+  approved   Boolean  @default(true)
+  signedById String
+  signedBy   Teacher  @relation(fields: [signedById], references: [id], onDelete: Cascade)
+
+  purchaseApproval Purchase? @relation(name: "TeacherCert")
+}
+
+model Purchase {
+  id            String    @id @default(uuid())
+  receiptNumber Int?
+  label         String
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime? @updatedAt
+  returnedAt    DateTime?
+  completedAt   DateTime?
+  checkedAt     DateTime?
+  actualUsage   Int?
+
+  partId String
+  part   Part   @relation(fields: [partId], references: [id], onDelete: Cascade)
+
+  items PurchaseItem[]
+
+  requestCertId    String                @unique
+  requestCert      StudentCertification  @relation(name: "RequestCert", fields: [requestCertId], references: [id], onDelete: Cascade)
+  accountantCertId String?               @unique
+  accountantCert   StudentCertification? @relation(name: "AccountantCert", fields: [accountantCertId], references: [id])
+  teacherCertId    String?               @unique
+  teacherCert      TeacherCertification? @relation(name: "TeacherCert", fields: [teacherCertId], references: [id])
+
+  @@index([partId])
+}
+
+model PurchaseItem {
+  id       String @id @default(uuid())
+  quantity Int    @default(1)
+
+  purchaseId String
+  purchase   Purchase @relation(fields: [purchaseId], references: [id], onDelete: Cascade)
+
+  productId String
+  product   Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+}
+
+model Product {
+  id          String  @id @default(uuid())
+  name        String
+  price       Int
+  description String?
+  IsShared    Boolean @default(false)
+
+  purchaseItems PurchaseItem[]
+}

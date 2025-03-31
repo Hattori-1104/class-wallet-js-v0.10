@@ -15,6 +15,9 @@
 			"source.addMissingImports.biome": "explicit"
 		}
 	},
+	"[prisma]": {
+		"editor.defaultFormatter": "Prisma.prisma"
+	},
 	"editor.tabSize": 2,
 	"editor.insertSpaces": true,
 	"typescript.updateImportsOnFileMove.enabled": "always"
