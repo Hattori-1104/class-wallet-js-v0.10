@@ -1,16 +1,13 @@
-import { Welcome } from "~/welcome/welcome"
+import { Link } from "react-router"
+import { Button } from "~/components/ui/button"
 import type { Route } from "./+types/home"
 
-export function meta({}: Route.MetaArgs) {
-	return [
-		{ title: "New React Router App" },
-		{
-			name: "description",
-			content: "Welcome to React Router!",
-		},
-	]
-}
-
-export default function Home() {
-	return <Welcome />
+export default ({}: Route.ComponentProps) => {
+	return (
+		<div className="container">
+			<Button variant={"outline"} asChild>
+				<Link to="/auth">認証</Link>
+			</Button>
+		</div>
+	)
 }

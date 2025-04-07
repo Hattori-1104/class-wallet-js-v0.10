@@ -8,13 +8,13 @@
 	"files": {
 		"ignoreUnknown": false,
 		"ignore": ["node_modules"],
-		"include": ["app"]
+		"include": ["app", "prisma/seed.ts"]
 	},
 	"formatter": {
 		"enabled": true,
 		"indentStyle": "tab",
 		"indentWidth": 2,
-		"lineWidth": 80
+		"lineWidth": 120
 	},
 	"organizeImports": {
 		"enabled": true
@@ -24,11 +24,18 @@
 		"rules": {
 			"all": true,
 			"style": {
-				"noDefaultExport": "off"
+				"noDefaultExport": "off",
+				"useSelfClosingElements": "warn",
+				"useBlockStatements": "off",
+				"noImplicitBoolean": "off",
+				"useNamingConvention": "off"
 			},
 			"correctness": {
 				"noEmptyPattern": "off",
 				"useImportExtensions": "off"
+			},
+			"suspicious": {
+				"noReactSpecificProps": "off"
 			}
 		}
 	},
