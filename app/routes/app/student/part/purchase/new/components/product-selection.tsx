@@ -12,6 +12,7 @@ import {
 	DialogHeader,
 	DialogTitle,
 } from "~/components/ui/dialog"
+import { ScrollArea } from "~/components/ui/scroll-area"
 import { cn } from "~/lib/utils"
 import { useProductSelectStore } from "~/stores/product-select"
 
@@ -39,32 +40,36 @@ export const ProductSelection = ({ products }: { products: Pick<Product, "id" | 
 					<DialogTitle>新規商品を追加</DialogTitle>
 					<DialogDescription>未登録の商品情報を入力してください。</DialogDescription>
 				</DialogHeader>
-				<Command className="w-full my-4">
+				<Command className="w-full border">
 					<CommandInput placeholder="商品を選択" className="h-9" autoFocus={false} />
-					<CommandList>
-						<CommandEmpty>商品が見つかりません</CommandEmpty>
-						<CommandGroup>
-							{products.map((product) => (
-								<CommandItem
-									key={product.id}
-									value={product.id}
-									onSelect={() => {
-										if (productSelectStore.find(product.id)) {
-											productSelectStore.remove(product.id)
-										} else {
-											productSelectStore.add(product, product.id)
-										}
-									}}
-								>
-									<div>
-										<div className="text-base">{product.name}</div>
-										<div className="text-sm text-muted-foreground leading-none">¥{product.price}</div>
-									</div>
-									<Check className={cn("ml-auto", productSelectStore.find(product.id) ? "opacity-100" : "opacity-0")} />
-								</CommandItem>
-							))}
-						</CommandGroup>
-					</CommandList>
+					<ScrollArea>
+						<CommandList>
+							<CommandEmpty>商品が見つかりません</CommandEmpty>
+							<CommandGroup>
+								{products.map((product) => (
+									<CommandItem
+										key={product.id}
+										value={product.id}
+										onSelect={() => {
+											if (productSelectStore.find(product.id)) {
+												productSelectStore.remove(product.id)
+											} else {
+												productSelectStore.add(product, product.id)
+											}
+										}}
+									>
+										<div>
+											<div className="text-base">{product.name}</div>
+											<div className="text-sm text-muted-foreground leading-none">¥{product.price}</div>
+										</div>
+										<Check
+											className={cn("ml-auto", productSelectStore.find(product.id) ? "opacity-100" : "opacity-0")}
+										/>
+									</CommandItem>
+								))}
+							</CommandGroup>
+						</CommandList>
+					</ScrollArea>
 				</Command>
 				<DialogClose asChild>
 					<Button>閉じる</Button>

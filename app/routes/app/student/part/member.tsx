@@ -1,7 +1,7 @@
 import { Section, SectionTitle } from "~/components/common/container"
 import { Badge } from "~/components/ui/badge"
 import { errorRedirect, prisma } from "~/services/repository.server"
-import { verifyStudent } from "~/services/session.server"
+import { getSession, verifyStudent } from "~/services/session.server"
 import type { Route } from "./+types/member"
 
 export const loader = async ({ request, params }: Route.LoaderArgs) => {
@@ -52,7 +52,7 @@ export const loader = async ({ request, params }: Route.LoaderArgs) => {
 				},
 			},
 		})
-		.catch(errorRedirect(request, "/app/student", "パートが存在しません。"))
+		.catch(errorRedirect(await getSession(request.headers.get("Cookie")), "/app/student", "パートが存在しません。"))
 	return { part }
 }
 export default ({ loaderData: { part } }: Route.ComponentProps) => {
@@ -68,7 +68,7 @@ export default ({ loaderData: { part } }: Route.ComponentProps) => {
 	return (
 		<>
 			<Section>
-				<SectionTitle className="font-semibold text-lg">教師</SectionTitle>
+				<SectionTitle className="font-bold text-lg">教師</SectionTitle>
 				<div className="space-y-4">
 					{part.wallet.teachers.map((teacher) => (
 						<div key={teacher.id}>{teacher.name}</div>
@@ -77,7 +77,7 @@ export default ({ loaderData: { part } }: Route.ComponentProps) => {
 			</Section>
 			<Section>
 				<SectionTitle className="flex flex-row items-baseline justify-between">
-					<h1 className="font-semibold text-lg">生徒</h1>
+					<h1 className="font-bold text-lg">生徒</h1>
 					<span className="text-muted-foreground">{part._count.students}人</span>
 				</SectionTitle>
 				<div className="space-y-4">

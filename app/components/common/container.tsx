@@ -2,7 +2,7 @@ import type { ReactNode } from "react"
 import { cn } from "~/lib/utils"
 
 export const MainContainer = ({ children }: { children: ReactNode }) => {
-	return <div className="grow container mx-auto px-8">{children}</div>
+	return <div className="grow container mx-auto px-8 overflow-y-auto scrollbar-hidden">{children}</div>
 }
 
 export const CenterCardContainer = ({ children }: { children: ReactNode }) => {
@@ -16,8 +16,12 @@ export const CenterCardContainer = ({ children }: { children: ReactNode }) => {
 }
 
 export const Section = ({ children }: { children: ReactNode }) => {
-	return <section className="my-8">{children}</section>
+	return <section className="my-8 w-full">{children}</section>
 }
 export const SectionTitle = ({ children, className }: { children: ReactNode; className?: string }) => {
 	return <div className={cn("my-8", className)}>{children}</div>
+}
+
+export function Section2Column({ className, children }: { className?: string; children: ReactNode }) {
+	return <div className={cn("contents w-full sm:flex sm:flex-row sm:gap-8 sm:my-[-2rem]", className)}>{children}</div>
 }

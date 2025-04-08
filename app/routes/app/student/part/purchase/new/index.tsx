@@ -1,7 +1,7 @@
 import { Plus } from "lucide-react"
 import { Loader2 } from "lucide-react"
 import { useMemo, useState } from "react"
-import { Form, redirect } from "react-router"
+import { Form } from "react-router"
 import { useFetcher } from "react-router"
 import { Link } from "react-router"
 import { z } from "zod"
@@ -11,14 +11,14 @@ import { Input } from "~/components/ui/input"
 import { Label } from "~/components/ui/label"
 import { Separator } from "~/components/ui/separator"
 import { errorRedirect, prisma, successRedirect } from "~/services/repository.server"
-import { verifyStudent } from "~/services/session.server"
+import { getSession, verifyStudent } from "~/services/session.server"
 import { useProductAddStore } from "~/stores/product-add"
 import { useProductSelectStore } from "~/stores/product-select"
 import { formatMoney } from "~/utilities/display"
 import type { Route } from "./+types/index"
-import { ProductAddForm } from "./product-add-form"
-import { ProductItem } from "./product-item"
-import { ProductSelection } from "./product-selection"
+import { ProductAddForm } from "./components/product-add-form"
+import { ProductItem } from "./components/product-item"
+import { ProductSelection } from "./components/product-selection"
 
 const purchaseBodySchema = z.object({
 	partId: z.string(),
@@ -57,7 +57,7 @@ export const loader = async ({ request }: Route.LoaderArgs) => {
 				},
 			},
 		})
-		.catch(errorRedirect(request, "/app/student"))
+		.catch(errorRedirect(await getSession(request.headers.get("Cookie")), "/app/student"))
 	const products = await prisma.product.findMany({
 		where: {
 			isShared: true,
@@ -103,7 +103,7 @@ export default ({ loaderData: { part, products } }: Route.ComponentProps) => {
 	}
 	return (
 		<Section>
-			<SectionTitle className="font-semibold text-lg">新規購入リクエスト</SectionTitle>
+			<SectionTitle className="font-bold text-lg">新規購入リクエスト</SectionTitle>
 			<div className="space-y-4">
 				<div className="space-y-2">
 					<Label>購入リクエストの説明</Label>
@@ -165,7 +165,13 @@ export const action = async ({ request, params: { partId } }: Route.ActionArgs) 
 	const body = await request.json()
 	const { addedProducts, selectedProducts, label } = await purchaseBodySchema
 		.parseAsync(body)
-		.catch(errorRedirect(request, `/app/student/part/${partId}`, "購入のリクエストに失敗しました。"))
+		.catch(
+			errorRedirect(
+				await getSession(request.headers.get("Cookie")),
+				`/app/student/part/${partId}`,
+				"購入のリクエストに失敗しました。",
+			),
+		)
 	await prisma.purchase
 		.create({
 			data: {
@@ -207,6 +213,16 @@ export const action = async ({ request, params: { partId } }: Route.ActionArgs) 
 				},
 			},
 		})
-		.catch(errorRedirect(request, `/app/student/part/${partId}`, "購入のリクエストに失敗しました。"))
-	await successRedirect(request, `/app/student/part/${partId}`, "購入リクエストを送信しました。")
+		.catch(
+			errorRedirect(
+				await getSession(request.headers.get("Cookie")),
+				`/app/student/part/${partId}`,
+				"購入のリクエストに失敗しました。",
+			),
+		)
+	await successRedirect(
+		await getSession(request.headers.get("Cookie")),
+		`/app/student/part/${partId}`,
+		"購入リクエストを送信しました。",
+	)
 }

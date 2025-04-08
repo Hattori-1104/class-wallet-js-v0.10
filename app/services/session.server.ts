@@ -44,8 +44,18 @@ export const verifyStudent = async (request: Request) => {
 	const session = await getSession(request.headers.get("Cookie"))
 	const user = session.get("user")
 	if (!user) throw redirect("/auth")
-	if (user.type !== "student") throw redirect("/teacher")
+	if (user.type !== "student") throw redirect("/app/teacher")
 	const student = await prisma.student.findUniqueOrThrow({ where: { id: user.id } }).catch((e) => e)
+	if (student instanceof Error) throw redirect("/auth")
+	return user.id
+}
+
+export const verifyTeacher = async (request: Request) => {
+	const session = await getSession(request.headers.get("Cookie"))
+	const user = session.get("user")
+	if (!user) throw redirect("/auth")
+	if (user.type !== "teacher") throw redirect("/app/student")
+	const student = await prisma.teacher.findUniqueOrThrow({ where: { id: user.id } }).catch((e) => e)
 	if (student instanceof Error) throw redirect("/auth")
 	return user.id
 }

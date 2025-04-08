@@ -23,8 +23,10 @@
 	"editor.insertSpaces": true,
 	"typescript.updateImportsOnFileMove.enabled": "always",
 	"cSpell.words": [
+		"cmdk",
 		"isbot",
 		"shadcn",
-		"sonner"
+		"sonner",
+		"vaul"
 	]
 }
