@@ -93,6 +93,7 @@ model Purchase {
   label         String
   createdAt     DateTime  @default(now())
   updatedAt     DateTime? @updatedAt
+  reportedAt    DateTime?
   returnedAt    DateTime?
   completedAt   DateTime?
   checkedAt     DateTime?

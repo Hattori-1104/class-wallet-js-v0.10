@@ -1,15 +1,18 @@
 import { useMemo } from "react"
-import { Section, SectionTitle } from "~/components/common/container"
+import { Section, Section2Column, SectionTitle } from "~/components/common/container"
 import { Title } from "~/components/common/typography"
-import { errorRedirect, prisma } from "~/services/repository.server"
+import { createErrorRedirect, prisma } from "~/services/repository.server"
 import { getSession, verifyTeacher } from "~/services/session.server"
 import { getWalletActualUsage, getWalletPlannedUsage } from "~/utilities/calc"
 import type { Route } from "./+types/index"
 import { BudgetSection } from "./components/budget-section"
+import { ManagerSection } from "./components/manager-section"
 import { PurchaseSection } from "./components/purchase-section"
 
 export const loader = async ({ request, params: { walletId } }: Route.LoaderArgs) => {
-	const teacherId = await verifyTeacher(request)
+	const session = await getSession(request.headers.get("Cookie"))
+	const teacherId = await verifyTeacher(session)
+	const errorRedirect = createErrorRedirect(session, "/app/teacher")
 	const wallet = await prisma.wallet
 		.findUniqueOrThrow({
 			where: {
@@ -165,7 +168,7 @@ export const loader = async ({ request, params: { walletId } }: Route.LoaderArgs
 				},
 			},
 		})
-		.catch(errorRedirect(await getSession(request.headers.get("Cookie")), "/app/teacher", "ウォレットが存在しません。"))
+		.catch(errorRedirect("ウォレットが存在しません。").catch())
 	return { wallet }
 }
 
@@ -173,6 +176,7 @@ export default ({ loaderData: { wallet } }: Route.ComponentProps) => {
 	const actualUsage = useMemo(() => getWalletActualUsage(wallet), [wallet])
 	const plannedUsage = useMemo(() => getWalletPlannedUsage(wallet), [wallet])
 	const purchaseInProgress = wallet.parts.reduce((acc, part) => acc + part._count.purchases, 0)
+	const leaders = wallet.parts.flatMap((part) => part.leaders.map((leader) => ({ ...leader, part })))
 	return (
 		<>
 			<Section>
@@ -180,12 +184,10 @@ export default ({ loaderData: { wallet } }: Route.ComponentProps) => {
 					<Title>{wallet.name}</Title>
 				</SectionTitle>
 			</Section>
-			<BudgetSection
-				budget={wallet.budget}
-				usage={actualUsage}
-				plannedUsage={plannedUsage}
-				purchaseInProgress={purchaseInProgress}
-			/>
+			<Section2Column>
+				<ManagerSection leaders={leaders} accountantStudents={wallet.accountantStudents} teachers={wallet.teachers} />
+				<BudgetSection budget={wallet.budget} usage={actualUsage} plannedUsage={plannedUsage} purchaseInProgress={purchaseInProgress} />
+			</Section2Column>
 			<PurchaseSection wallet={wallet} />
 		</>
 	)

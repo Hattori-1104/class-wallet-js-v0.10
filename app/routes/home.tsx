@@ -8,6 +8,9 @@ export default ({}: Route.ComponentProps) => {
 			<Button variant={"outline"} asChild>
 				<Link to="/auth">認証</Link>
 			</Button>
+			<Button variant={"outline"} asChild>
+				<Link to="/app/admin">管理画面</Link>
+			</Button>
 		</div>
 	)
 }

@@ -2,6 +2,7 @@ export const formatMoney = (money: number) =>
 	money.toLocaleString("ja-JP", { style: "currency", currency: "JPY" }).replace("￥", "¥ ")
 
 export const formatDiffDate = (date: Date, now: ReturnType<typeof Date.now>) => {
+	// 秒数
 	const diff = ((now - date.getTime()) / 1000) | 0
 	if (diff < 60) return "たった今"
 	if (diff < 60 * 60) return `${(diff / 60) | 0}分前`

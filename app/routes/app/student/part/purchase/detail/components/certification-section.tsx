@@ -10,15 +10,18 @@ export const CertificationSection = ({ children }: { children: ReactNode }) => {
 	const [searchParams, setSearchParams] = useSearchParams()
 	const isOpen = Boolean(searchParams.has("certification-dialog"))
 	const onOpenChange = () => {
-		setSearchParams((prev) => {
-			if (prev.has("certification-dialog")) prev.delete("certification-dialog")
-			else prev.set("certification-dialog", "true")
-			return prev
-		})
+		setSearchParams(
+			(prev) => {
+				if (prev.has("certification-dialog")) prev.delete("certification-dialog")
+				else prev.set("certification-dialog", "true")
+				return prev
+			},
+			{ replace: true },
+		)
 	}
 	return (
 		<Section>
-			<Form className="w-full">
+			<Form className="w-full" method="post" replace>
 				<Button name={"certification-dialog"} value="true" variant={"secondary"} className="w-full text-center">
 					証明書を確認する
 				</Button>

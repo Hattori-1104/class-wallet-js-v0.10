@@ -14,7 +14,7 @@
 		"enabled": true,
 		"indentStyle": "tab",
 		"indentWidth": 2,
-		"lineWidth": 120
+		"lineWidth": 160
 	},
 	"organizeImports": {
 		"enabled": true
@@ -35,7 +35,8 @@
 				"useImportExtensions": "off"
 			},
 			"suspicious": {
-				"noReactSpecificProps": "off"
+				"noReactSpecificProps": "off",
+				"noArrayIndexKey": "off"
 			}
 		}
 	},

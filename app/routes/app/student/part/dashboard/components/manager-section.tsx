@@ -1,4 +1,5 @@
 import { Section, SectionTitle } from "~/components/common/container"
+import { AccountantBadge, LeaderBadge, TeacherBadge } from "~/components/utility/manager-badge"
 
 type ManagerSectionProps = {
 	leaders: { id: string; name: string }[]
@@ -10,34 +11,26 @@ export function ManagerSection({ leaders, accountantStudents, teachers }: Manage
 	return (
 		<Section>
 			<SectionTitle className="font-bold text-lg">責任者</SectionTitle>
-			<ul className="list-disc space-y-1">
-				{leaders.length > 0 ? (
-					leaders.map((leader) => (
-						<li key={leader.id} className="flex justify-between items-center">
-							<div className="text-sm text-muted-foreground">パート責任者</div>
-							<div>{leader.name}</div>
-						</li>
-					))
-				) : (
-					<div className="text-sm text-muted-foreground">パート責任者がいません</div>
-				)}
-				{accountantStudents.map((student) => (
-					<li key={student.id} className="flex justify-between items-center">
-						<div className="text-sm text-muted-foreground">HR会計</div>
-						<div>{student.name}</div>
-					</li>
+			<div className="space-y-2">
+				{teachers.map((teacher) => (
+					<div key={teacher.id} className="flex justify-between items-center">
+						<div>{teacher.name}</div>
+						<TeacherBadge />
+					</div>
 				))}
-				{teachers.length > 0 ? (
-					teachers.map((teacher) => (
-						<li key={teacher.id} className="flex justify-between items-center">
-							<div className="text-sm text-muted-foreground">担任教師</div>
-							<div>{teacher.name}</div>
-						</li>
-					))
-				) : (
-					<div className="text-sm text-muted-foreground">担任教師がいません</div>
-				)}
-			</ul>
+				{leaders.map((leader) => (
+					<div key={leader.id} className="flex justify-between items-center">
+						<div>{leader.name}</div>
+						<div className="flex flex-row gap-2">
+							<LeaderBadge />
+							{accountantStudents.some((accountant) => leader.id === accountant.id) && <AccountantBadge />}
+						</div>
+					</div>
+				))}
+			</div>
+			{leaders.length + accountantStudents.length + teachers.length === 0 && (
+				<div className="text-sm text-center text-muted-foreground">責任者がいません</div>
+			)}
 		</Section>
 	)
 }

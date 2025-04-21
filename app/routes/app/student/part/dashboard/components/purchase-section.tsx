@@ -4,119 +4,89 @@ import { useMemo } from "react"
 import { Link } from "react-router"
 import { Section, SectionTitle } from "~/components/common/container"
 import { Title } from "~/components/common/typography"
-import { Badge } from "~/components/ui/badge"
+import { NotificationDot } from "~/components/utility/notification-dot"
 import { getPurchaseState } from "~/utilities/calc"
 import { formatMoney } from "~/utilities/display"
 
 type PurchaseSectionProps = {
-	part: Prisma.PartGetPayload<{
+	purchases: Prisma.PurchaseGetPayload<{
 		select: {
 			id: true
-			purchases: {
+			label: true
+			requestCert: {
 				select: {
-					id: true
-					label: true
-					requestCert: {
-						select: {
-							signedBy: {
-								select: {
-									id: true
-									name: true
-								}
-							}
-							approved: true
-						}
-					}
-					accountantCert: {
-						select: {
-							signedBy: {
-								select: {
-									id: true
-									name: true
-								}
-							}
-							approved: true
-						}
-					}
-					teacherCert: {
-						select: {
-							signedBy: {
-								select: {
-									id: true
-									name: true
-								}
-							}
-							approved: true
-						}
-					}
-					returnedAt: true
-					completedAt: true
-					actualUsage: true
-					items: {
+					signedBy: {
 						select: {
 							id: true
-							quantity: true
-							product: {
-								select: {
-									id: true
-									name: true
-									price: true
-								}
-							}
+							name: true
 						}
 					}
+					approved: true
 				}
 			}
-			_count: {
+			accountantCert: {
 				select: {
-					purchases: {
-						where: {
-							NOT: {
-								OR: [
-									{
-										requestCert: {
-											approved: false
-										}
-									},
-									{
-										teacherCert: {
-											approved: false
-										}
-									},
-									{
-										accountantCert: {
-											approved: false
-										}
-									},
-								]
-							}
+					signedBy: {
+						select: {
+							id: true
+							name: true
+						}
+					}
+					approved: true
+				}
+			}
+			teacherCert: {
+				select: {
+					signedBy: {
+						select: {
+							id: true
+							name: true
+						}
+					}
+					approved: true
+				}
+			}
+			returnedAt: true
+			completedAt: true
+			actualUsage: true
+			items: {
+				select: {
+					id: true
+					quantity: true
+					product: {
+						select: {
+							id: true
+							name: true
+							price: true
 						}
 					}
 				}
 			}
 		}
-	}>
+	}>[]
+	purchaseCountInProgress: number
 }
 
-export const PurchaseSection = ({ part }: PurchaseSectionProps) => {
-	const purchaseInProgress = part._count.purchases
+export const PurchaseSection = ({ purchases, purchaseCountInProgress }: PurchaseSectionProps) => {
 	return (
 		<Section>
 			<SectionTitle className="flex flex-row items-center justify-between">
 				<Title>進行中の購入リクエスト</Title>
-				<Badge variant={"destructive"}>{purchaseInProgress}件</Badge>
+				<NotificationDot count={purchaseCountInProgress} />
 			</SectionTitle>
 			<div className="flex flex-col gap-4">
-				{part.purchases.map((purchase) => (
-					<PurchaseBlock key={purchase.id} purchase={purchase} />
-				))}
+				{purchases.length > 0 ? (
+					purchases.map((purchase) => <PurchaseBlock key={purchase.id} purchase={purchase} />)
+				) : (
+					<div className="text-center text-muted-foreground">購入リクエストはありません</div>
+				)}
 			</div>
 		</Section>
 	)
 }
 
 type PurchaseBlockProps = {
-	purchase: PurchaseSectionProps["part"]["purchases"][number]
+	purchase: PurchaseSectionProps["purchases"][number]
 }
 
 export const PurchaseBlock = ({ purchase }: PurchaseBlockProps) => {

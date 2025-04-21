@@ -4,15 +4,25 @@ import { commitSession } from "~/services/session.server"
 
 export const prisma = new PrismaClient()
 
-export const errorRedirect =
-	(session: Session, redirectUrl = "/auth", message = "エラーが発生しました。") =>
-	async (error: unknown) => {
-		session.flash("error", { message })
-		console.error(error)
-		throw redirect(redirectUrl, { headers: { "Set-Cookie": await commitSession(session) } })
-	}
+export const createErrorRedirect =
+	(session: Session, redirectUrl = "./") =>
+	(message: string, redirectUrlOverride?: string) => ({
+		catch() {
+			return async (error: unknown) => {
+				session.flash("error", { message })
+				console.error(error)
+				throw redirect(redirectUrlOverride ?? redirectUrl, { headers: { "Set-Cookie": await commitSession(session) } })
+			}
+		},
+		async throw() {
+			session.flash("error", { message })
+			return redirect(redirectUrlOverride ?? redirectUrl, { headers: { "Set-Cookie": await commitSession(session) } })
+		},
+	})
 
-export const successRedirect = async (session: Session, redirectUrl = "./", message = "成功しました。") => {
-	session.flash("success", { message })
-	throw redirect(redirectUrl, { headers: { "Set-Cookie": await commitSession(session) } })
-}
+export const createSuccessRedirect =
+	(session: Session, redirectUrl = "./") =>
+	async (message: string, redirectUrlOverride?: string) => {
+		session.flash("success", { message })
+		throw redirect(redirectUrlOverride ?? redirectUrl, { headers: { "Set-Cookie": await commitSession(session) } })
+	}

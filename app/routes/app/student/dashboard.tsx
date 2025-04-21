@@ -2,22 +2,30 @@ import { Link } from "react-router"
 import { MainContainer, Section, Section2Column, SectionTitle } from "~/components/common/container"
 import { Button } from "~/components/ui/button"
 import { prisma } from "~/services/repository.server"
-import { verifyStudent } from "~/services/session.server"
+import { getSession, verifyStudent } from "~/services/session.server"
 import type { Route } from "./+types/dashboard"
 
 export const loader = async ({ request }: Route.LoaderArgs) => {
-	const studentId = await verifyStudent(request)
+	const session = await getSession(request.headers.get("Cookie"))
+	const studentId = await verifyStudent(session)
 	const wallets = await prisma.wallet.findMany({
 		where: {
-			parts: {
-				some: {
-					students: {
+			OR: [
+				{
+					parts: {
+						some: {
+							students: { some: { id: studentId } },
+						},
+					},
+				},
+				{
+					accountantStudents: {
 						some: {
 							id: studentId,
 						},
 					},
 				},
-			},
+			],
 		},
 		select: {
 			id: true,

@@ -6,6 +6,10 @@ import type { ReactNode } from "react"
 export const links: Route.LinksFunction = () => [
 	{ rel: "preconnect", href: "https://fonts.googleapis.com" },
 	{
+		rel: "icon",
+		href: "/icons/icon_test.png",
+	},
+	{
 		rel: "preconnect",
 		href: "https://fonts.gstatic.com",
 		crossOrigin: "anonymous",

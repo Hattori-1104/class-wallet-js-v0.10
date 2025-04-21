@@ -4,15 +4,7 @@ import { useState } from "react"
 import { Form, Link, redirect, useSearchParams } from "react-router"
 import { z } from "zod"
 import { Button } from "~/components/ui/button"
-import {
-	Dialog,
-	DialogClose,
-	DialogContent,
-	DialogDescription,
-	DialogFooter,
-	DialogHeader,
-	DialogTitle,
-} from "~/components/ui/dialog"
+import { Dialog, DialogClose, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "~/components/ui/dialog"
 import { Input } from "~/components/ui/input"
 import { Label } from "~/components/ui/label"
 import { Switch } from "~/components/ui/switch"
@@ -78,7 +70,7 @@ export const ProductAddForm = () => {
 					<DialogTitle>新規商品を追加</DialogTitle>
 					<DialogDescription>未登録の商品情報を入力してください。</DialogDescription>
 				</DialogHeader>
-				<Form {...getFormProps(form)} className="space-y-4 my-4">
+				<Form {...getFormProps(form)} className="space-y-4 my-4" replace>
 					<div className="space-y-4">
 						<div className="space-y-1">
 							<Label htmlFor={fields.name.id}>商品名</Label>

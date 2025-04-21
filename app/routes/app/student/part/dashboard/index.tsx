@@ -1,17 +1,19 @@
-import { Link } from "react-router"
+import { Form, Link } from "react-router"
 import { Section, Section2Column, SectionTitle } from "~/components/common/container"
 import { Note, Title } from "~/components/common/typography"
 import { Button } from "~/components/ui/button"
-import { errorRedirect, prisma } from "~/services/repository.server"
+import { createErrorRedirect, prisma } from "~/services/repository.server"
 import { getSession, verifyStudent } from "~/services/session.server"
-import { getPartActualUsage, getPartPlannedUsage } from "~/utilities/calc"
+import { getActualUsage, getPlannedUsage } from "~/utilities/calc"
 import type { Route } from "./+types/index"
 import { BudgetSection } from "./components/budget-section"
 import { ManagerSection } from "./components/manager-section"
 import { PurchaseSection } from "./components/purchase-section"
 
 export const loader = async ({ request, params: { partId } }: Route.LoaderArgs) => {
-	const studentId = await verifyStudent(request)
+	const session = await getSession(request.headers.get("Cookie"))
+	const studentId = await verifyStudent(session)
+	const errorRedirect = createErrorRedirect(session, "/app/student")
 	const part = await prisma.part
 		.findUniqueOrThrow({
 			where: {
@@ -30,6 +32,107 @@ export const loader = async ({ request, params: { partId } }: Route.LoaderArgs) 
 					select: {
 						id: true,
 						name: true,
+					},
+				},
+
+				wallet: {
+					select: {
+						id: true,
+						name: true,
+						accountantStudents: {
+							select: {
+								id: true,
+								name: true,
+							},
+							where: {
+								parts: {
+									some: {
+										id: partId,
+									},
+								},
+							},
+						},
+						teachers: {
+							select: {
+								id: true,
+								name: true,
+							},
+						},
+					},
+				},
+				_count: {
+					select: {
+						students: true,
+						purchases: {
+							where: {
+								NOT: {
+									OR: [
+										{
+											requestCert: {
+												approved: false,
+											},
+										},
+										{
+											teacherCert: {
+												approved: false,
+											},
+										},
+										{
+											accountantCert: {
+												approved: false,
+											},
+										},
+									],
+								},
+							},
+						},
+					},
+				},
+			},
+		})
+		.catch(errorRedirect("パートが存在しません。").catch())
+	const [
+		{
+			purchases: purchasesInProgress,
+			_count: { purchases: purchaseCountInProgress },
+		},
+		{ purchases: purchasesAll },
+	] = await Promise.all([
+		prisma.part.findUniqueOrThrow({
+			where: {
+				id: part.id,
+			},
+			select: {
+				_count: {
+					select: {
+						purchases: {
+							where: {
+								NOT: {
+									OR: [
+										{
+											requestCert: {
+												approved: false,
+											},
+										},
+										{
+											teacherCert: {
+												approved: false,
+											},
+										},
+										{
+											accountantCert: {
+												approved: false,
+											},
+										},
+										{
+											NOT: {
+												completedAt: null,
+											},
+										},
+									],
+								},
+							},
+						},
 					},
 				},
 				purchases: {
@@ -93,6 +196,7 @@ export const loader = async ({ request, params: { partId } }: Route.LoaderArgs) 
 								approved: true,
 							},
 						},
+						reportedAt: true,
 						returnedAt: true,
 						completedAt: true,
 					},
@@ -114,70 +218,45 @@ export const loader = async ({ request, params: { partId } }: Route.LoaderArgs) 
 										approved: false,
 									},
 								},
+								{
+									NOT: {
+										completedAt: null,
+									},
+								},
 							],
 						},
 					},
 				},
-				wallet: {
+			},
+		}),
+		prisma.part.findUniqueOrThrow({
+			where: {
+				id: part.id,
+			},
+			select: {
+				purchases: {
 					select: {
-						id: true,
-						name: true,
-						accountantStudents: {
+						reportedAt: true,
+						actualUsage: true,
+						items: {
 							select: {
-								id: true,
-								name: true,
-							},
-							where: {
-								parts: {
-									some: {
-										id: partId,
+								quantity: true,
+								product: {
+									select: {
+										price: true,
 									},
-								},
-							},
-						},
-						teachers: {
-							select: {
-								id: true,
-								name: true,
-							},
-						},
-					},
-				},
-				_count: {
-					select: {
-						students: true,
-						purchases: {
-							where: {
-								NOT: {
-									OR: [
-										{
-											requestCert: {
-												approved: false,
-											},
-										},
-										{
-											teacherCert: {
-												approved: false,
-											},
-										},
-										{
-											accountantCert: {
-												approved: false,
-											},
-										},
-									],
 								},
 							},
 						},
 					},
 				},
 			},
-		})
-		.catch(errorRedirect(await getSession(request.headers.get("Cookie")), "/app/student", "パートが存在しません。"))
-	return { part }
+		}),
+	]).catch(errorRedirect("パートが存在しません。").catch())
+	return { part, purchasesInProgress, purchasesAll, purchaseCountInProgress }
 }
 
-export default ({ loaderData: { part } }: Route.ComponentProps) => {
+export default ({ loaderData: { part, purchasesInProgress, purchasesAll, purchaseCountInProgress } }: Route.ComponentProps) => {
 	return (
 		<>
 			<Section>
@@ -194,17 +273,13 @@ export default ({ loaderData: { part } }: Route.ComponentProps) => {
 			<Section2Column>
 				<BudgetSection
 					budget={part.budget}
-					usage={getPartActualUsage(part)}
-					plannedUsage={getPartPlannedUsage(part)}
-					purchaseInProgress={part._count.purchases}
+					usage={getActualUsage(purchasesAll)}
+					plannedUsage={getPlannedUsage(purchasesInProgress)}
+					purchaseCountInProgress={purchaseCountInProgress}
 				/>
-				<ManagerSection
-					leaders={part.leaders}
-					accountantStudents={part.wallet.accountantStudents}
-					teachers={part.wallet.teachers}
-				/>
+				<ManagerSection leaders={part.leaders} accountantStudents={part.wallet.accountantStudents} teachers={part.wallet.teachers} />
 			</Section2Column>
-			<PurchaseSection part={part} />
+			<PurchaseSection purchases={purchasesInProgress} purchaseCountInProgress={purchaseCountInProgress} />
 		</>
 	)
 }

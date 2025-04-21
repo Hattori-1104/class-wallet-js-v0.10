@@ -25,7 +25,7 @@ export default ({ loaderData: { errorFlash, successFlash } }: Route.ComponentPro
 	return (
 		<>
 			<Toaster />
-			<div className="absolute inset-0 bg-zinc-50 flex flex-col">
+			<div className="absolute inset-0 min-h-svh bg-zinc-50 flex flex-col">
 				<Outlet />
 			</div>
 		</>

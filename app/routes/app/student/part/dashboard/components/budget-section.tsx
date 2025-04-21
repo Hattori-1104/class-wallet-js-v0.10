@@ -8,8 +8,8 @@ export function BudgetSection({
 	budget,
 	usage,
 	plannedUsage,
-	purchaseInProgress,
-}: { budget: number; usage: number; plannedUsage: number; purchaseInProgress: number }) {
+	purchaseCountInProgress: purchaseInProgress,
+}: { budget: number; usage: number; plannedUsage: number; purchaseCountInProgress: number }) {
 	return (
 		<Section>
 			<SectionTitle>

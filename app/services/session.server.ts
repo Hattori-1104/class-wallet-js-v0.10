@@ -1,6 +1,6 @@
-import { createCookieSessionStorage, redirect } from "react-router"
+import { type Session, createCookieSessionStorage, redirect } from "react-router"
 import { z } from "zod"
-import { prisma } from "~/services/repository.server"
+import { createErrorRedirect, prisma } from "~/services/repository.server"
 
 const sessionDataSchema = z.object({
 	user: z.object({
@@ -9,6 +9,7 @@ const sessionDataSchema = z.object({
 	}),
 	tempUserType: z.enum(["student", "teacher"]).optional(),
 	oauthState: z.string().optional(),
+	inviteUrl: z.string().url().optional(),
 })
 
 const sessionFlashSchema = z.object({
@@ -40,22 +41,49 @@ const sessionStorage = createCookieSessionStorage<SessionDataType, SessionFlashD
 
 export const { getSession, commitSession, destroySession } = sessionStorage
 
-export const verifyStudent = async (request: Request) => {
-	const session = await getSession(request.headers.get("Cookie"))
+export type SessionType = Session<SessionDataType, SessionFlashDataType>
+
+export const verifyStudent = async (session: SessionType) => {
 	const user = session.get("user")
-	if (!user) throw redirect("/auth")
-	if (user.type !== "student") throw redirect("/app/teacher")
-	const student = await prisma.student.findUniqueOrThrow({ where: { id: user.id } }).catch((e) => e)
-	if (student instanceof Error) throw redirect("/auth")
-	return user.id
+	const errorRedirect = createErrorRedirect(session, "/auth")
+	if (!user) throw await errorRedirect("ユーザーが見つかりません。").throw()
+	if (user.type !== "student") throw await errorRedirect("生徒ではありません。").throw()
+	const student = await prisma.student.findUniqueOrThrow({ where: { id: user.id } }).catch(errorRedirect("生徒が見つかりません。").catch())
+	return student.id
 }
 
-export const verifyTeacher = async (request: Request) => {
-	const session = await getSession(request.headers.get("Cookie"))
+export const verifyTeacher = async (session: SessionType) => {
 	const user = session.get("user")
-	if (!user) throw redirect("/auth")
-	if (user.type !== "teacher") throw redirect("/app/student")
-	const student = await prisma.teacher.findUniqueOrThrow({ where: { id: user.id } }).catch((e) => e)
-	if (student instanceof Error) throw redirect("/auth")
-	return user.id
+	const errorRedirect = createErrorRedirect(session, "/auth")
+	if (!user) throw await errorRedirect("ユーザーが見つかりません。").throw()
+	if (user.type !== "teacher") throw await errorRedirect("教師ではありません。").throw()
+	const teacher = await prisma.teacher.findUniqueOrThrow({ where: { id: user.id } }).catch(errorRedirect("教師が見つかりません。").catch())
+	return teacher.id
+}
+
+export const verifyUser = async (session: SessionType) => {
+	const user = session.get("user")
+	const errorRedirect = createErrorRedirect(session, "/auth")
+	if (!user) throw await errorRedirect("ユーザーが見つかりません。").throw()
+	if (user.type === "student") {
+		return { type: "student", id: await verifyStudent(session) }
+	}
+	if (user.type === "teacher") {
+		return { type: "teacher", id: await verifyTeacher(session) }
+	}
+	throw await errorRedirect("ユーザーが見つかりません。").throw()
+}
+
+// 本番の権限を持つ先生と生徒を追加
+export const verifyAdmin = async (session: SessionType) => {
+	const user = session.get("user")
+	const errorRedirect = createErrorRedirect(session, "/auth")
+	if (!user) throw await errorRedirect("ユーザーが見つかりません。").throw()
+	if (user.type === "student") {
+		if (user.id === "dev-student" && process.env.NODE_ENV === "development") return { type: "student", id: user.id }
+	}
+	if (user.type === "teacher") {
+		if (user.id === "dev-teacher" && process.env.NODE_ENV === "development") return { type: "teacher", id: user.id }
+	}
+	throw await errorRedirect("ユーザーが見つかりません。").throw()
 }

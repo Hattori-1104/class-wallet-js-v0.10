@@ -1,32 +1,37 @@
 import { ChevronLeft } from "lucide-react"
-import { Link, Outlet } from "react-router"
+import { Outlet, useNavigate } from "react-router"
+import { MainContainer } from "~/components/common/container"
+import { Header } from "~/components/common/header"
 import { Button } from "~/components/ui/button"
-import { prisma } from "~/services/repository.server"
-import { verifyStudent } from "~/services/session.server"
+import { createErrorRedirect, prisma } from "~/services/repository.server"
+import { getSession, verifyStudent } from "~/services/session.server"
 import type { Route } from "./+types/layout"
 
 export const loader = async ({ request }: Route.LoaderArgs) => {
-	const student = await verifyStudent(request)
-	const part = await prisma.part.findFirstOrThrow({
-		where: { students: { some: { id: student } } },
-		select: { id: true },
-	})
+	const session = await getSession(request.headers.get("Cookie"))
+	const student = await verifyStudent(session)
+	const errorRedirect = createErrorRedirect(session, "/app/student")
+	const part = await prisma.part
+		.findFirstOrThrow({
+			where: { students: { some: { id: student } } },
+			select: { id: true },
+		})
+		.catch(errorRedirect("パートを取得できませんでした。").catch())
 	return { part }
 }
 
-export default ({ loaderData: { part } }: Route.ComponentProps) => (
-	<>
-		<header className="h-16 border-b shrink-0">
-			<div className="container mx-auto px-8 h-full flex flex-row items-center justify-between">
-				<Button variant={"outline"} size={"icon"} asChild>
-					<Link to={`/app/student/part/${part.id}`}>
-						<ChevronLeft />
-					</Link>
+export default ({ loaderData: { part } }: Route.ComponentProps) => {
+	const navigate = useNavigate()
+	return (
+		<>
+			<Header>
+				<Button variant={"ghost"} className="size-12" onClick={() => navigate(-1)}>
+					<ChevronLeft />
 				</Button>
-			</div>
-		</header>
-		<div className="container mx-auto px-8">
-			<Outlet />
-		</div>
-	</>
-)
+			</Header>
+			<MainContainer>
+				<Outlet />
+			</MainContainer>
+		</>
+	)
+}

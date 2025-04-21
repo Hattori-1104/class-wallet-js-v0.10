@@ -1,4 +1,5 @@
 import { Form, useSearchParams } from "react-router"
+import { z } from "zod"
 import { Section } from "~/components/common/container"
 import { Button } from "~/components/ui/button"
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "~/components/ui/dialog"
@@ -11,21 +12,27 @@ export const CertificateFormSection = ({ roll }: CertificateFormSectionProps) =>
 	const [searchParams, setSearchParams] = useSearchParams()
 	const formMode = searchParams.get("certificate-form")
 	const onOpenChange = () => {
-		setSearchParams((prev) => {
-			if (prev.has("certificate-form")) prev.delete("certificate-form")
-			return prev
-		})
+		setSearchParams(
+			(prev) => {
+				if (prev.has("certificate-form")) prev.delete("certificate-form")
+				return prev
+			},
+			{ replace: true },
+		)
 	}
 	const close = () => {
-		setSearchParams((prev) => {
-			prev.delete("certificate-form")
-			return prev
-		})
+		setSearchParams(
+			(prev) => {
+				prev.delete("certificate-form")
+				return prev
+			},
+			{ replace: true },
+		)
 	}
 	if (roll)
 		return (
 			<Section>
-				<Form className="flex flex-row gap-4 w-full">
+				<Form className="flex flex-row gap-4 w-full" replace>
 					<Button variant={"destructive"} className="grow" name="certificate-form" value="refuse">
 						拒否する
 					</Button>
@@ -39,7 +46,8 @@ export const CertificateFormSection = ({ roll }: CertificateFormSectionProps) =>
 							<DialogTitle>本当に拒否しますか？</DialogTitle>
 							<DialogDescription>証明書が発行されます。</DialogDescription>
 						</DialogHeader>
-						<Form method={"POST"} className="w-full flex flex-row gap-4">
+						<Form method={"POST"} className="w-full flex flex-row gap-4" replace>
+							<input name="intent" value="approval" hidden readOnly />
 							<input name="roll" value={roll} hidden readOnly />
 							<Button variant={"outline"} className="grow" type="button" onClick={() => close()}>
 								キャンセル
@@ -57,6 +65,7 @@ export const CertificateFormSection = ({ roll }: CertificateFormSectionProps) =>
 							<DialogDescription>証明書が発行されます。</DialogDescription>
 						</DialogHeader>
 						<Form method={"POST"} className="w-full flex flex-row gap-4">
+							<input name="intent" value="approval" hidden readOnly />
 							<input name="roll" value={roll} hidden readOnly />
 							<Button variant={"outline"} className="grow" type="button" onClick={() => close()}>
 								キャンセル

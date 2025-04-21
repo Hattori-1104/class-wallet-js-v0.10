@@ -1,20 +1,23 @@
 import { useMemo } from "react"
-import { redirect } from "react-router"
 import { z } from "zod"
 import { Section, SectionTitle } from "~/components/common/container"
-import { errorRedirect, prisma, successRedirect } from "~/services/repository.server"
-import { commitSession, getSession, verifyStudent } from "~/services/session.server"
-import { getPurchaseState } from "~/utilities/calc"
-import { formatDiffDate } from "~/utilities/display"
-import { Certification } from "../new/components/certification"
+import { createErrorRedirect, createSuccessRedirect, prisma } from "~/services/repository.server"
+import { getSession, verifyStudent } from "~/services/session.server"
+import { getPurchasePlannedUsage, getPurchaseState } from "~/utilities/calc"
+import { formatDiffDate, formatMoney } from "~/utilities/display"
 import type { Route } from "./+types/index"
 import { CertificateFormSection } from "./components/certificate-form-section"
+import { Certification } from "./components/certification"
 import { CertificationSection } from "./components/certification-section"
+import { Confirmation } from "./components/confirmation"
 import { PurchaseItemTable } from "./components/purchase-item-table"
+import { ReportFormSection } from "./components/report-form-section"
 import { TODOSection } from "./components/todo-section"
 
 export const loader = async ({ request, params: { partId, purchaseId } }: Route.LoaderArgs) => {
-	const studentId = await verifyStudent(request)
+	const session = await getSession(request.headers.get("Cookie"))
+	const studentId = await verifyStudent(session)
+	const errorRedirect = createErrorRedirect(session, `/app/student/part/${partId}`)
 	const purchase = await prisma.purchase
 		.findUniqueOrThrow({
 			where: {
@@ -86,6 +89,7 @@ export const loader = async ({ request, params: { partId, purchaseId } }: Route.
 						approved: true,
 					},
 				},
+				reportedAt: true,
 				returnedAt: true,
 				completedAt: true,
 				part: {
@@ -112,18 +116,13 @@ export const loader = async ({ request, params: { partId, purchaseId } }: Route.
 				},
 			},
 		})
-		.catch(
-			errorRedirect(
-				await getSession(request.headers.get("Cookie")),
-				`/app/student/part/${partId}`,
-				"購入リクエストが存在しません",
-			),
-		)
+		.catch(errorRedirect("購入リクエストが存在しません。").catch())
 	return { purchase, studentId }
 }
 
 export default ({ loaderData: { purchase, studentId } }: Route.ComponentProps) => {
-	const [inProgress, TODOMessage] = useMemo(() => getPurchaseState(purchase), [purchase])
+	const [inProgress, TODOMessage, state] = useMemo(() => getPurchaseState(purchase), [purchase])
+	const plannedUsage = useMemo(() => getPurchasePlannedUsage(purchase), [purchase])
 	const roll = new Set(purchase.part.leaders.map((leader) => leader.id)).has(studentId)
 		? 1
 		: new Set(purchase.part.wallet.accountantStudents.map((accountant) => accountant.id)).has(studentId)
@@ -135,9 +134,7 @@ export default ({ loaderData: { purchase, studentId } }: Route.ComponentProps) =
 			<Section>
 				<SectionTitle className="flex flex-row justify-between items-baseline flex-wrap">
 					<h1 className="font-bold text-lg">{purchase.label}</h1>
-					<p className="text-muted-foreground leading-none">
-						最終更新 : {formatDiffDate(purchase.updatedAt ?? purchase.createdAt, Date.now())}
-					</p>
+					<p className="text-muted-foreground leading-none">最終更新 : {formatDiffDate(purchase.updatedAt ?? purchase.createdAt, Date.now())}</p>
 				</SectionTitle>
 				<PurchaseItemTable purchase={purchase} />
 			</Section>
@@ -146,93 +143,113 @@ export default ({ loaderData: { purchase, studentId } }: Route.ComponentProps) =
 					<Certification certification={purchase.requestCert} message="購入をリクエスト" />
 					<Certification certification={purchase.accountantCert} message="責任者による承認" />
 					<Certification certification={purchase.teacherCert} message="教師による承認" />
-					<Certification certification={purchase.accountantCert} message="責任者による承認" />
-					<Certification certification={purchase.accountantCert} message="責任者による承認" />
+					<Confirmation completedAt={purchase.reportedAt} completedBy={purchase.requestCert.signedBy.name} message="買い出しを完了" />
 				</div>
 			</CertificationSection>
-			<CertificateFormSection roll={roll} />
+			{state === "accountant-waiting" && <CertificateFormSection roll={roll} />}
+			{state === "purchase-waiting" && <ReportFormSection plannedUsage={plannedUsage} />}
+			{state === "return-waiting" && (
+				<div className="space-y-4">
+					<div className="flex flex-row justify-between">
+						<span className="font-bold">実際の使用額：</span>
+						<span className="font-bold">{formatMoney(Number(purchase.actualUsage || 0))}</span>
+					</div>
+					<div className="flex flex-row justify-between">
+						<span className="font-bold">お釣り：</span>
+						<span className="font-bold">{formatMoney(plannedUsage - Number(purchase.actualUsage || 0))}</span>
+					</div>
+				</div>
+			)}
 		</>
 	)
 }
 
-const formDataSchema = z.object({ action: z.enum(["refuse", "approve"]), roll: z.enum(["1", "2", "0"]) })
+const approvalFormDataSchema = z.object({ action: z.enum(["refuse", "approve"]), roll: z.enum(["1", "2", "0"]) })
 
 export const action = async ({ request, params: { partId, purchaseId } }: Route.ActionArgs) => {
 	const session = await getSession(request.headers.get("Cookie"))
 	const formData = await request.formData()
-	const { action, roll } = await formDataSchema
-		.parseAsync(Object.fromEntries(formData.entries()))
-		.catch(errorRedirect(session, `/app/student/part/${partId}`, "購入承認操作に失敗しました。"))
-
-	const studentId = await verifyStudent(request)
-	if (roll === "1") {
-		await prisma.purchase
-			.update({
-				where: {
-					id: purchaseId,
-					part: {
-						leaders: {
-							some: {
-								id: studentId,
-							},
-						},
-					},
-				},
-				data: {
-					accountantCert: {
-						create: {
-							approved: action === "approve",
-							signedBy: {
-								connect: {
-									id: studentId,
-								},
-							},
-						},
-					},
-				},
-			})
-			.catch(errorRedirect(session, `/app/student/part/${partId}`, "購入承認操作に失敗しました。"))
-		return successRedirect(
-			session,
-			`/app/student/part/${partId}`,
-			`購入リクエストを${action === "approve" ? "承認" : "拒否"}しました。`,
-		)
-	}
-	if (roll === "2") {
-		await prisma.purchase
-			.update({
-				where: {
-					id: purchaseId,
-					part: {
-						wallet: {
-							accountantStudents: {
+	const errorRedirect = createErrorRedirect(session, `/app/student/part/${partId}`)
+	const successRedirect = createSuccessRedirect(session, `/app/student/part/${partId}`)
+	const intent = formData.get("intent")
+	const studentId = await verifyStudent(session)
+	if (intent === "approval") {
+		const result = await approvalFormDataSchema.parseAsync(Object.fromEntries(formData.entries())).catch(errorRedirect("購入承認操作に失敗しました。").catch())
+		if (result.roll === "1") {
+			await prisma.purchase
+				.update({
+					where: {
+						id: purchaseId,
+						part: {
+							leaders: {
 								some: {
 									id: studentId,
 								},
 							},
 						},
 					},
-				},
-				data: {
-					accountantCert: {
-						create: {
-							approved: action === "approve",
-							signedBy: {
-								connect: {
-									id: studentId,
+					data: {
+						accountantCert: {
+							create: {
+								approved: result.action === "approve",
+								signedBy: {
+									connect: {
+										id: studentId,
+									},
 								},
 							},
 						},
 					},
-				},
-			})
-			.catch(errorRedirect(session, `/app/student/part/${partId}`, "購入承認操作に失敗しました。"))
-		return successRedirect(
-			session,
-			`/app/student/part/${partId}`,
-			`購入リクエストを${action === "approve" ? "承認" : "拒否"}しました。`,
-		)
+				})
+				.catch(errorRedirect("購入承認操作に失敗しました。").catch())
+			return successRedirect(`購入リクエストを${result.action === "approve" ? "承認" : "拒否"}しました。`)
+		}
+		if (result.roll === "2") {
+			await prisma.purchase
+				.update({
+					where: {
+						id: purchaseId,
+						part: {
+							wallet: {
+								accountantStudents: {
+									some: {
+										id: studentId,
+									},
+								},
+							},
+						},
+					},
+					data: {
+						accountantCert: {
+							create: {
+								approved: result.action === "approve",
+								signedBy: {
+									connect: {
+										id: studentId,
+									},
+								},
+							},
+						},
+					},
+				})
+				.catch(errorRedirect("購入承認操作に失敗しました。").catch())
+			return successRedirect(`購入リクエストを${result.action === "approve" ? "承認" : "拒否"}しました。`)
+		}
+		errorRedirect("購入承認操作を行う権限がありません。").throw()
 	}
-	session.flash("error", { message: "購入承認操作を行う権限ありません。" })
-	return redirect(`/app/student/part/${partId}`, { headers: { "Set-Cookie": await commitSession(session) } })
+	if (intent === "report") {
+		const actualUsage = Number(formData.get("actualUsage"))
+		// 実際の使用額と予定額が一致した場合、購入完了とする
+		const purchase = await prisma.purchase.findUniqueOrThrow({
+			where: { id: purchaseId },
+			select: { items: { select: { product: { select: { price: true } }, quantity: true } } },
+		})
+		if (actualUsage === getPurchasePlannedUsage(purchase)) {
+			await prisma.purchase.update({ where: { id: purchaseId }, data: { actualUsage, reportedAt: new Date(), completedAt: new Date() } })
+			return successRedirect("購入を完了しました。")
+		}
+		await prisma.purchase.update({ where: { id: purchaseId }, data: { actualUsage, reportedAt: new Date() } })
+		return successRedirect("使用額を報告しました。")
+	}
+	errorRedirect("操作を行う権限がありません。").throw()
 }

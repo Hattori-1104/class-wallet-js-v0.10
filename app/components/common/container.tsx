@@ -1,8 +1,8 @@
 import type { ReactNode } from "react"
 import { cn } from "~/lib/utils"
 
-export const MainContainer = ({ children }: { children: ReactNode }) => {
-	return <div className="grow container mx-auto px-8 overflow-y-auto scrollbar-hidden">{children}</div>
+export const MainContainer = ({ children, className }: { children: ReactNode; className?: string }) => {
+	return <div className={cn("grow container mx-auto px-8 overflow-y-scroll scrollbar-hidden", className)}>{children}</div>
 }
 
 export const CenterCardContainer = ({ children }: { children: ReactNode }) => {
@@ -15,8 +15,8 @@ export const CenterCardContainer = ({ children }: { children: ReactNode }) => {
 	)
 }
 
-export const Section = ({ children }: { children: ReactNode }) => {
-	return <section className="my-8 w-full">{children}</section>
+export const Section = ({ children, className }: { children: ReactNode; className?: string }) => {
+	return <section className={cn("my-8 w-full", className)}>{children}</section>
 }
 export const SectionTitle = ({ children, className }: { children: ReactNode; className?: string }) => {
 	return <div className={cn("my-8", className)}>{children}</div>

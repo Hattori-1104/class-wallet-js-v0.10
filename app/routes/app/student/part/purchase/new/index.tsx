@@ -10,7 +10,7 @@ import { Button } from "~/components/ui/button"
 import { Input } from "~/components/ui/input"
 import { Label } from "~/components/ui/label"
 import { Separator } from "~/components/ui/separator"
-import { errorRedirect, prisma, successRedirect } from "~/services/repository.server"
+import { createErrorRedirect, createSuccessRedirect, prisma } from "~/services/repository.server"
 import { getSession, verifyStudent } from "~/services/session.server"
 import { useProductAddStore } from "~/stores/product-add"
 import { useProductSelectStore } from "~/stores/product-select"
@@ -46,7 +46,9 @@ const purchaseBodySchema = z.object({
 type purchaseBodyType = z.infer<typeof purchaseBodySchema>
 
 export const loader = async ({ request }: Route.LoaderArgs) => {
-	const studentId = await verifyStudent(request)
+	const session = await getSession(request.headers.get("Cookie"))
+	const studentId = await verifyStudent(session)
+	const errorRedirect = createErrorRedirect(session, "/app/student")
 	const part = await prisma.part
 		.findFirstOrThrow({
 			where: {
@@ -57,17 +59,19 @@ export const loader = async ({ request }: Route.LoaderArgs) => {
 				},
 			},
 		})
-		.catch(errorRedirect(await getSession(request.headers.get("Cookie")), "/app/student"))
-	const products = await prisma.product.findMany({
-		where: {
-			isShared: true,
-		},
-		select: {
-			id: true,
-			name: true,
-			price: true,
-		},
-	})
+		.catch(errorRedirect("パートを取得できませんでした。").catch())
+	const products = await prisma.product
+		.findMany({
+			where: {
+				isShared: true,
+			},
+			select: {
+				id: true,
+				name: true,
+				price: true,
+			},
+		})
+		.catch(errorRedirect("商品を取得できませんでした。").catch())
 	return { products, part }
 }
 
@@ -92,9 +96,7 @@ export default ({ loaderData: { part, products } }: Route.ComponentProps) => {
 			partId: part.id,
 			label: label || getTempLabel,
 			addedProducts: productAddStore.getAllAsObject(),
-			selectedProducts: productSelectStore
-				.getAllAsObject()
-				.map((product) => ({ id: product.id, quantity: product.quantity })),
+			selectedProducts: productSelectStore.getAllAsObject().map((product) => ({ id: product.id, quantity: product.quantity })),
 		}
 		fetcher.submit(body, {
 			method: "post",
@@ -109,7 +111,7 @@ export default ({ loaderData: { part, products } }: Route.ComponentProps) => {
 					<Label>購入リクエストの説明</Label>
 					<Input value={label} onChange={(e) => setLabel(e.target.value)} placeholder={getTempLabel || "省略可能"} />
 				</div>
-				<Form className="flex flex-row gap-4 w-full">
+				<Form className="flex flex-row gap-4 w-full" replace={true}>
 					<Button variant="outline" className="grow justify-between" name="form" value="select">
 						商品を選択
 						<Plus className="opacity-50" />
@@ -126,12 +128,7 @@ export default ({ loaderData: { part, products } }: Route.ComponentProps) => {
 						<ProductItem key={product.id} store={productSelectStore} purchaseItem={product} type="selected" />
 					))}
 					{productAddStore.getAllAsObject().map((product) => (
-						<ProductItem
-							key={product.id}
-							store={productAddStore}
-							purchaseItem={product}
-							type={product.isShared ? "shared" : "private"}
-						/>
+						<ProductItem key={product.id} store={productAddStore} purchaseItem={product} type={product.isShared ? "shared" : "private"} />
 					))}
 				</div>
 				<Separator />
@@ -145,12 +142,7 @@ export default ({ loaderData: { part, products } }: Route.ComponentProps) => {
 							キャンセル
 						</Button>
 					</Link>
-					<Button
-						className="flex-1"
-						type="submit"
-						onClick={handleSubmit}
-						disabled={getTotalPrice === 0 || fetcher.state !== "idle"}
-					>
+					<Button className="flex-1" type="submit" onClick={handleSubmit} disabled={getTotalPrice === 0 || fetcher.state !== "idle"}>
 						{fetcher.state === "submitting" && <Loader2 className="animate-spin" />}
 						{fetcher.state === "submitting" ? "送信中..." : "購入リクエスト"}
 					</Button>
@@ -161,17 +153,12 @@ export default ({ loaderData: { part, products } }: Route.ComponentProps) => {
 }
 
 export const action = async ({ request, params: { partId } }: Route.ActionArgs) => {
-	const studentId = await verifyStudent(request)
+	const session = await getSession(request.headers.get("Cookie"))
+	const studentId = await verifyStudent(session)
 	const body = await request.json()
-	const { addedProducts, selectedProducts, label } = await purchaseBodySchema
-		.parseAsync(body)
-		.catch(
-			errorRedirect(
-				await getSession(request.headers.get("Cookie")),
-				`/app/student/part/${partId}`,
-				"購入のリクエストに失敗しました。",
-			),
-		)
+	const errorRedirect = createErrorRedirect(session, `/app/student/part/${partId}`)
+	const successRedirect = createSuccessRedirect(session, `/app/student/part/${partId}`)
+	const { addedProducts, selectedProducts, label } = await purchaseBodySchema.parseAsync(body).catch(errorRedirect("購入のリクエストに失敗しました。").catch())
 	await prisma.purchase
 		.create({
 			data: {
@@ -213,16 +200,6 @@ export const action = async ({ request, params: { partId } }: Route.ActionArgs) 
 				},
 			},
 		})
-		.catch(
-			errorRedirect(
-				await getSession(request.headers.get("Cookie")),
-				`/app/student/part/${partId}`,
-				"購入のリクエストに失敗しました。",
-			),
-		)
-	await successRedirect(
-		await getSession(request.headers.get("Cookie")),
-		`/app/student/part/${partId}`,
-		"購入リクエストを送信しました。",
-	)
+		.catch(errorRedirect("購入のリクエストに失敗しました。").catch())
+	return successRedirect("購入リクエストを送信しました。")
 }

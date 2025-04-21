@@ -5,6 +5,7 @@ import { Link } from "react-router"
 import { Section, SectionTitle } from "~/components/common/container"
 import { Title } from "~/components/common/typography"
 import { Badge } from "~/components/ui/badge"
+import { NotificationDot } from "~/components/utility/notification-dot"
 import { getPurchaseState } from "~/utilities/calc"
 import { formatMoney } from "~/utilities/display"
 
@@ -109,7 +110,7 @@ export const PurchaseSection = ({ wallet }: PurchaseSectionProps) => {
 		<Section>
 			<SectionTitle className="flex flex-row items-center justify-between">
 				<Title>進行中の購入リクエスト</Title>
-				<Badge>{purchaseInProgress}件</Badge>
+				<NotificationDot count={purchaseInProgress} />
 			</SectionTitle>
 			<div className="flex flex-col gap-4">
 				{wallet.parts.map((part) =>
