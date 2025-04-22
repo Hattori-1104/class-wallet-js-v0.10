@@ -3,15 +3,7 @@ import { Check } from "lucide-react"
 import { useSearchParams } from "react-router"
 import { Button } from "~/components/ui/button"
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "~/components/ui/command"
-import {
-	Dialog,
-	DialogClose,
-	DialogContent,
-	DialogDescription,
-	DialogFooter,
-	DialogHeader,
-	DialogTitle,
-} from "~/components/ui/dialog"
+import { Dialog, DialogClose, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "~/components/ui/dialog"
 import { ScrollArea } from "~/components/ui/scroll-area"
 import { cn } from "~/lib/utils"
 import { useProductSelectStore } from "~/stores/product-select"
@@ -37,8 +29,8 @@ export const ProductSelection = ({ products }: { products: Pick<Product, "id" | 
 		<Dialog open={isOpen} onOpenChange={onOpenChange}>
 			<DialogContent>
 				<DialogHeader>
-					<DialogTitle>新規商品を追加</DialogTitle>
-					<DialogDescription>未登録の商品情報を入力してください。</DialogDescription>
+					<DialogTitle>商品を選択</DialogTitle>
+					<DialogDescription>登録・共有された商品から選択可能です。</DialogDescription>
 				</DialogHeader>
 				<Command className="w-full border">
 					<CommandInput placeholder="商品を選択" className="h-9" autoFocus={false} />
@@ -62,9 +54,7 @@ export const ProductSelection = ({ products }: { products: Pick<Product, "id" | 
 											<div className="text-base">{product.name}</div>
 											<div className="text-sm text-muted-foreground leading-none">¥{product.price}</div>
 										</div>
-										<Check
-											className={cn("ml-auto", productSelectStore.find(product.id) ? "opacity-100" : "opacity-0")}
-										/>
+										<Check className={cn("ml-auto", productSelectStore.find(product.id) ? "opacity-100" : "opacity-0")} />
 									</CommandItem>
 								))}
 							</CommandGroup>
