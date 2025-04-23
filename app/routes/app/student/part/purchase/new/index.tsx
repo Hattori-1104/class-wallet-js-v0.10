@@ -185,7 +185,7 @@ export const action = async ({ request, params: { partId } }: Route.ActionArgs) 
 								create: {
 									name: product.info.name,
 									price: product.info.price,
-									doesShare: product.isShared,
+									isShared: product.isShared,
 								},
 							},
 							quantity: product.quantity,

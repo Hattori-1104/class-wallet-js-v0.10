@@ -65,7 +65,7 @@ export default ({
 			<Form method="POST" {...getFormProps(form)}>
 				<div className="space-y-6">
 					<div className="space-y-1">
-						<Label htmlFor={fields.name.id}>ウォレット名</Label>
+						<Label htmlFor={fields.name.id}>パート名</Label>
 						<Input {...getInputProps(fields.name, { type: "text" })} />
 						<div className="text-red-500 text-sm">{fields.name.errors?.join(", ")}</div>
 					</div>

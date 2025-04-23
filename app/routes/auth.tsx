@@ -42,18 +42,18 @@ export const action = async ({ request, params: { action } }: Route.ActionArgs) 
 	const formData = await request.formData()
 	const userType = formData.get("user-type")
 	const session = await getSession(request.headers.get("Cookie"))
-	if (userType === "dev-student") {
+	if (userType?.toString().startsWith("dev-student")) {
 		session.set("user", {
 			type: "student",
-			id: "dev-student",
+			id: userType.toString(),
 		})
 		session.flash("success", { message: "ログインしました。" })
 		return redirect("/app/student", { headers: { "Set-Cookie": await commitSession(session) } })
 	}
-	if (userType === "dev-teacher") {
+	if (userType?.toString().startsWith("dev-teacher")) {
 		session.set("user", {
 			type: "teacher",
-			id: "dev-teacher",
+			id: userType.toString(),
 		})
 		session.flash("success", { message: "ログインしました。" })
 		return redirect("/app/teacher", { headers: { "Set-Cookie": await commitSession(session) } })

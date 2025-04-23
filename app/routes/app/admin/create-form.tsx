@@ -65,7 +65,7 @@ export const action = async ({ request }: Route.ActionArgs) => {
 			data: {
 				event: {
 					connect: {
-						id: "16646ca5-21f7-4227-86a4-55bc1c3ad6d8",
+						id: "defa131b-142d-45a4-915f-5c1a59eb3e4e",
 					},
 				},
 				name,
