@@ -1,6 +1,7 @@
 import { Section, SectionTitle } from "~/components/common/container"
 import { AccountantBadge, LeaderBadge } from "~/components/utility/manager-badge"
-import { createErrorRedirect, prisma } from "~/services/repository.server"
+import { prisma } from "~/services/repository.server"
+import { createErrorRedirect } from "~/services/session.server"
 import { getSession, verifyStudent } from "~/services/session.server"
 import type { Route } from "./+types/member"
 

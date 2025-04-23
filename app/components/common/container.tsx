@@ -5,7 +5,7 @@ export const MainContainer = ({ children, className }: { children: ReactNode; cl
 	return <div className={cn("grow container mx-auto px-8 overflow-y-scroll scrollbar-hidden", className)}>{children}</div>
 }
 
-export const CenterCardContainer = ({ children }: { children: ReactNode }) => {
+export const LimitedContainer = ({ children }: { children: ReactNode }) => {
 	return (
 		<div className="grow flex items-center justify-center">
 			<div className="container min-[64rem]:max-w-5xl px-8 desk:border desk:rounded-2xl desk:shadow-md">

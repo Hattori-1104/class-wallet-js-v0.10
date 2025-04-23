@@ -1,13 +1,13 @@
 import { KeyRound } from "lucide-react"
 import { Form, Link, data, redirect } from "react-router"
-import { CenterCardContainer, Section, SectionTitle } from "~/components/common/container"
+import { LimitedContainer, Section, SectionTitle } from "~/components/common/container"
 import { Button } from "~/components/ui/button"
 import { commitSession, getSession } from "~/services/session.server"
 import type { Route } from "./+types/auth"
 
 export default ({}: Route.ComponentProps) => {
 	return (
-		<CenterCardContainer>
+		<LimitedContainer>
 			<Section>
 				<SectionTitle>認証</SectionTitle>
 				<Form method={"POST"}>
@@ -29,7 +29,7 @@ export default ({}: Route.ComponentProps) => {
 					</div>
 				</Form>
 			</Section>
-		</CenterCardContainer>
+		</LimitedContainer>
 	)
 }
 

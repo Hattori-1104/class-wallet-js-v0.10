@@ -4,14 +4,14 @@ import { toast } from "sonner"
 import { MainContainer, Section, SectionTitle } from "~/components/common/container"
 import { Title } from "~/components/common/typography"
 import { Button } from "~/components/ui/button"
-import { createErrorRedirect, createSuccessRedirect, prisma } from "~/services/repository.server"
-import { getSession } from "~/services/session.server"
+import { prisma } from "~/services/repository.server"
+import { createErrorRedirect, createSuccessRedirect, requireSession } from "~/services/session.server"
 import { verifyAdmin } from "~/services/session.server"
 import { formatMoney } from "~/utilities/display"
 import type { Route } from "./+types/wallets"
 
 export const loader = async ({ request }: Route.LoaderArgs) => {
-	const session = await getSession(request.headers.get("Cookie"))
+	const session = await requireSession(request)
 	verifyAdmin(session)
 
 	const wallets = await prisma.wallet.findMany({
@@ -98,7 +98,7 @@ export const action = async ({ request }: Route.ActionArgs) => {
 	if (typeof id !== "string") {
 		return null
 	}
-	const session = await getSession(request.headers.get("Cookie"))
+	const session = await requireSession(request)
 	const errorRedirect = createErrorRedirect(session, "/auth")
 	verifyAdmin(session)
 

@@ -2,11 +2,11 @@ import { Link } from "react-router"
 import { MainContainer, Section, SectionTitle } from "~/components/common/container"
 import { Title } from "~/components/common/typography"
 import { Button } from "~/components/ui/button"
-import { getSession, verifyAdmin } from "~/services/session.server"
+import { requireSession, verifyAdmin } from "~/services/session.server"
 import type { Route } from "./+types/index"
 
 export const loader = async ({ request }: Route.LoaderArgs) => {
-	const session = await getSession(request.headers.get("Cookie"))
+	const session = await requireSession(request)
 	await verifyAdmin(session)
 }
 

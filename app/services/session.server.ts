@@ -1,6 +1,6 @@
 import { type Session, createCookieSessionStorage, redirect } from "react-router"
 import { z } from "zod"
-import { createErrorRedirect, prisma } from "~/services/repository.server"
+import { prisma } from "~/services/repository.server"
 
 const sessionDataSchema = z.object({
 	user: z.object({
@@ -43,6 +43,8 @@ export const { getSession, commitSession, destroySession } = sessionStorage
 
 export type SessionType = Session<SessionDataType, SessionFlashDataType>
 
+export const requireSession = async (request: Request) => getSession(request.headers.get("Cookie"))
+
 export const verifyStudent = async (session: SessionType) => {
 	const user = session.get("user")
 	const errorRedirect = createErrorRedirect(session, "/auth")
@@ -61,7 +63,7 @@ export const verifyTeacher = async (session: SessionType) => {
 	return teacher.id
 }
 
-export const verifyUser = async (session: SessionType) => {
+export const verifyUser = async (session: SessionType): Promise<{ type: "student" | "teacher"; id: string }> => {
 	const user = session.get("user")
 	const errorRedirect = createErrorRedirect(session, "/auth")
 	if (!user) throw await errorRedirect("ユーザーが見つかりません。").throw()
@@ -75,6 +77,7 @@ export const verifyUser = async (session: SessionType) => {
 }
 
 // 本番の権限を持つ先生と生徒を追加
+// ここは変更必須
 export const verifyAdmin = async (session: SessionType) => {
 	const user = session.get("user")
 	const errorRedirect = createErrorRedirect(session, "/auth")
@@ -86,4 +89,32 @@ export const verifyAdmin = async (session: SessionType) => {
 		if (user.id === "dev-teacher" && process.env.NODE_ENV === "development") return { type: "teacher", id: user.id }
 	}
 	throw await errorRedirect("ユーザーが見つかりません。").throw()
+}
+
+export const createErrorRedirect =
+	(session: Session, redirectUrl = "./") =>
+	(message: string, redirectUrlOverride?: string) => ({
+		catch() {
+			return async (error: unknown) => {
+				session.flash("error", { message })
+				console.error(error)
+				throw redirect(redirectUrlOverride ?? redirectUrl, { headers: { "Set-Cookie": await commitSession(session) } })
+			}
+		},
+		async throw() {
+			session.flash("error", { message })
+			return redirect(redirectUrlOverride ?? redirectUrl, { headers: { "Set-Cookie": await commitSession(session) } })
+		},
+	})
+
+export const createSuccessRedirect =
+	(session: Session, redirectUrl = "./") =>
+	async (message: string, redirectUrlOverride?: string) => {
+		session.flash("success", { message })
+		throw redirect(redirectUrlOverride ?? redirectUrl, { headers: { "Set-Cookie": await commitSession(session) } })
+	}
+
+export const userNotFoundRedirect = async (session: Session) => {
+	const errorRedirect = createErrorRedirect(session, "/auth")
+	return await errorRedirect("ユーザーが見つかりません。").throw()
 }

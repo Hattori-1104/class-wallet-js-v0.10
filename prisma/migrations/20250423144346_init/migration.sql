@@ -47,46 +47,84 @@ CREATE TABLE `Event` (
 ) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
 -- CreateTable
-CREATE TABLE `StudentCertification` (
-    `id` VARCHAR(191) NOT NULL,
-    `createdAt` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
-    `approved` BOOLEAN NOT NULL DEFAULT true,
-    `signedById` VARCHAR(191) NOT NULL,
-
-    PRIMARY KEY (`id`)
-) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
-
--- CreateTable
-CREATE TABLE `TeacherCertification` (
-    `id` VARCHAR(191) NOT NULL,
-    `createdAt` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
-    `approved` BOOLEAN NOT NULL DEFAULT true,
-    `signedById` VARCHAR(191) NOT NULL,
-
-    PRIMARY KEY (`id`)
-) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
-
--- CreateTable
 CREATE TABLE `Purchase` (
     `id` VARCHAR(191) NOT NULL,
-    `receiptNumber` INTEGER NULL,
     `label` VARCHAR(191) NOT NULL,
     `createdAt` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
-    `updatedAt` DATETIME(3) NULL,
-    `returnedAt` DATETIME(3) NULL,
-    `completedAt` DATETIME(3) NULL,
-    `checkedAt` DATETIME(3) NULL,
+    `plannedUsage` INTEGER NOT NULL,
     `actualUsage` INTEGER NULL,
+    `receiptNumber` INTEGER NULL,
+    `updatedAt` DATETIME(3) NULL,
     `partId` VARCHAR(191) NOT NULL,
-    `requestCertId` VARCHAR(191) NOT NULL,
-    `accountantCertId` VARCHAR(191) NULL,
-    `teacherCertId` VARCHAR(191) NULL,
+    `stateId` VARCHAR(191) NOT NULL,
 
-    UNIQUE INDEX `Purchase_requestCertId_key`(`requestCertId`),
-    UNIQUE INDEX `Purchase_accountantCertId_key`(`accountantCertId`),
-    UNIQUE INDEX `Purchase_teacherCertId_key`(`teacherCertId`),
+    UNIQUE INDEX `Purchase_stateId_key`(`stateId`),
     INDEX `Purchase_partId_idx`(`partId`),
     PRIMARY KEY (`id`)
+) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+
+-- CreateTable
+CREATE TABLE `PurchaseState` (
+    `id` VARCHAR(191) NOT NULL,
+
+    PRIMARY KEY (`id`)
+) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+
+-- CreateTable
+CREATE TABLE `PurchaseStateRequest` (
+    `stateId` VARCHAR(191) NOT NULL,
+    `approved` BOOLEAN NOT NULL DEFAULT false,
+    `byId` VARCHAR(191) NOT NULL,
+    `at` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
+
+    PRIMARY KEY (`stateId`)
+) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+
+-- CreateTable
+CREATE TABLE `PurchaseStateAccountantApproval` (
+    `stateId` VARCHAR(191) NOT NULL,
+    `approved` BOOLEAN NOT NULL DEFAULT false,
+    `byId` VARCHAR(191) NOT NULL,
+    `at` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
+
+    PRIMARY KEY (`stateId`)
+) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+
+-- CreateTable
+CREATE TABLE `PurchaseStateTeacherApproval` (
+    `stateId` VARCHAR(191) NOT NULL,
+    `approved` BOOLEAN NOT NULL DEFAULT false,
+    `byId` VARCHAR(191) NOT NULL,
+    `at` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
+
+    PRIMARY KEY (`stateId`)
+) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+
+-- CreateTable
+CREATE TABLE `PurchaseStateGivenMoney` (
+    `stateId` VARCHAR(191) NOT NULL,
+    `amount` INTEGER NOT NULL,
+    `at` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
+
+    PRIMARY KEY (`stateId`)
+) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+
+-- CreateTable
+CREATE TABLE `PurchaseStateUsageReport` (
+    `stateId` VARCHAR(191) NOT NULL,
+    `actualUsage` INTEGER NOT NULL,
+    `at` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
+
+    PRIMARY KEY (`stateId`)
+) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+
+-- CreateTable
+CREATE TABLE `PurchaseStateReceipt` (
+    `stateId` VARCHAR(191) NOT NULL,
+    `receiptIndex` INTEGER NOT NULL,
+    `at` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
+
+    PRIMARY KEY (`stateId`)
 ) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
 -- CreateTable
@@ -105,7 +143,7 @@ CREATE TABLE `Product` (
     `name` VARCHAR(191) NOT NULL,
     `price` INTEGER NOT NULL,
     `description` VARCHAR(191) NULL,
-    `IsShared` BOOLEAN NOT NULL DEFAULT false,
+    `isShared` BOOLEAN NOT NULL DEFAULT false,
 
     PRIMARY KEY (`id`)
 ) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
@@ -153,22 +191,37 @@ ALTER TABLE `Part` ADD CONSTRAINT `Part_walletId_fkey` FOREIGN KEY (`walletId`) 
 ALTER TABLE `Wallet` ADD CONSTRAINT `Wallet_eventId_fkey` FOREIGN KEY (`eventId`) REFERENCES `Event`(`id`) ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE `StudentCertification` ADD CONSTRAINT `StudentCertification_signedById_fkey` FOREIGN KEY (`signedById`) REFERENCES `Student`(`id`) ON DELETE CASCADE ON UPDATE CASCADE;
-
--- AddForeignKey
-ALTER TABLE `TeacherCertification` ADD CONSTRAINT `TeacherCertification_signedById_fkey` FOREIGN KEY (`signedById`) REFERENCES `Teacher`(`id`) ON DELETE CASCADE ON UPDATE CASCADE;
-
--- AddForeignKey
 ALTER TABLE `Purchase` ADD CONSTRAINT `Purchase_partId_fkey` FOREIGN KEY (`partId`) REFERENCES `Part`(`id`) ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE `Purchase` ADD CONSTRAINT `Purchase_requestCertId_fkey` FOREIGN KEY (`requestCertId`) REFERENCES `StudentCertification`(`id`) ON DELETE CASCADE ON UPDATE CASCADE;
+ALTER TABLE `Purchase` ADD CONSTRAINT `Purchase_stateId_fkey` FOREIGN KEY (`stateId`) REFERENCES `PurchaseState`(`id`) ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE `Purchase` ADD CONSTRAINT `Purchase_accountantCertId_fkey` FOREIGN KEY (`accountantCertId`) REFERENCES `StudentCertification`(`id`) ON DELETE SET NULL ON UPDATE CASCADE;
+ALTER TABLE `PurchaseStateRequest` ADD CONSTRAINT `PurchaseStateRequest_stateId_fkey` FOREIGN KEY (`stateId`) REFERENCES `PurchaseState`(`id`) ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE `Purchase` ADD CONSTRAINT `Purchase_teacherCertId_fkey` FOREIGN KEY (`teacherCertId`) REFERENCES `TeacherCertification`(`id`) ON DELETE SET NULL ON UPDATE CASCADE;
+ALTER TABLE `PurchaseStateRequest` ADD CONSTRAINT `PurchaseStateRequest_byId_fkey` FOREIGN KEY (`byId`) REFERENCES `Student`(`id`) ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE `PurchaseStateAccountantApproval` ADD CONSTRAINT `PurchaseStateAccountantApproval_stateId_fkey` FOREIGN KEY (`stateId`) REFERENCES `PurchaseState`(`id`) ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE `PurchaseStateAccountantApproval` ADD CONSTRAINT `PurchaseStateAccountantApproval_byId_fkey` FOREIGN KEY (`byId`) REFERENCES `Student`(`id`) ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE `PurchaseStateTeacherApproval` ADD CONSTRAINT `PurchaseStateTeacherApproval_stateId_fkey` FOREIGN KEY (`stateId`) REFERENCES `PurchaseState`(`id`) ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE `PurchaseStateTeacherApproval` ADD CONSTRAINT `PurchaseStateTeacherApproval_byId_fkey` FOREIGN KEY (`byId`) REFERENCES `Teacher`(`id`) ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE `PurchaseStateGivenMoney` ADD CONSTRAINT `PurchaseStateGivenMoney_stateId_fkey` FOREIGN KEY (`stateId`) REFERENCES `PurchaseState`(`id`) ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE `PurchaseStateUsageReport` ADD CONSTRAINT `PurchaseStateUsageReport_stateId_fkey` FOREIGN KEY (`stateId`) REFERENCES `PurchaseState`(`id`) ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE `PurchaseStateReceipt` ADD CONSTRAINT `PurchaseStateReceipt_stateId_fkey` FOREIGN KEY (`stateId`) REFERENCES `PurchaseState`(`id`) ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE `PurchaseItem` ADD CONSTRAINT `PurchaseItem_purchaseId_fkey` FOREIGN KEY (`purchaseId`) REFERENCES `Purchase`(`id`) ON DELETE CASCADE ON UPDATE CASCADE;

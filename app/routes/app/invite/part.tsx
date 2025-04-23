@@ -4,7 +4,8 @@ import { SectionTitle } from "~/components/common/container"
 import { Section } from "~/components/common/container"
 import { Note, Title } from "~/components/common/typography"
 import { Button } from "~/components/ui/button"
-import { createErrorRedirect, createSuccessRedirect, prisma } from "~/services/repository.server"
+import { prisma } from "~/services/repository.server"
+import { createErrorRedirect, createSuccessRedirect } from "~/services/session.server"
 import { getSession, verifyStudent } from "~/services/session.server"
 import type { Route } from "./+types/part"
 
@@ -51,7 +52,7 @@ export default ({ loaderData: { part } }: Route.ComponentProps) => {
 							<Button type="submit" variant="destructive" className="grow" name="action" value="reject">
 								拒否する
 							</Button>
-							<Button type="submit" variant="default" className="grow" name="action" value="accept">
+							<Button type="submit" variant="positive" className="grow" name="action" value="accept">
 								参加する
 							</Button>
 						</div>

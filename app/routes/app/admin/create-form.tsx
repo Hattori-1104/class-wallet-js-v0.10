@@ -7,8 +7,8 @@ import { Title } from "~/components/common/typography"
 import { Button } from "~/components/ui/button"
 import { Input } from "~/components/ui/input"
 import { Label } from "~/components/ui/label"
-import { createErrorRedirect, createSuccessRedirect, prisma } from "~/services/repository.server"
-import { getSession } from "~/services/session.server"
+import { prisma } from "~/services/repository.server"
+import { createErrorRedirect, createSuccessRedirect, requireSession } from "~/services/session.server"
 import type { Route } from "./+types/create-form"
 
 const NewWalletSchema = z.object({
@@ -31,7 +31,7 @@ export default ({ actionData }: Route.ComponentProps) => {
 				<SectionTitle>
 					<Title>ウォレット作成</Title>
 				</SectionTitle>
-				<Form method="POST" {...getFormProps(form)}>
+				<Form method="post" {...getFormProps(form)}>
 					<div className="space-y-6">
 						<div className="space-y-1">
 							<Label htmlFor={fields.name.id}>ウォレット名</Label>
@@ -52,13 +52,10 @@ export default ({ actionData }: Route.ComponentProps) => {
 }
 
 export const action = async ({ request }: Route.ActionArgs) => {
-	const formData = await request.formData()
-	const result = parseWithZod(formData, { schema: NewWalletSchema })
-	if (result.status !== "success") {
-		return result.reply()
-	}
+	const result = parseWithZod(await request.formData(), { schema: NewWalletSchema })
+	if (result.status !== "success") return result.reply()
 	const { name, budget } = result.value
-	const session = await getSession(request.headers.get("Cookie"))
+	const session = await requireSession(request)
 	const errorRedirect = createErrorRedirect(session, "/app/admin/create-form")
 	await prisma.wallet
 		.create({

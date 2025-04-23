@@ -44,7 +44,12 @@ export default [
 					route("create-form", "routes/app/admin/create-form.tsx"),
 				]),
 			]),
-			...prefix("/invite", [route("wallet/:walletId", "routes/app/invite/wallet.tsx"), route("part/:partId", "routes/app/invite/part.tsx")]),
+			...prefix("/invite", [
+				route("wallet/:walletId", "routes/app/invite/wallet.tsx"),
+				route("wallet/:walletId/accountant", "routes/app/invite/wallet-accountant.tsx"),
+				route("wallet/:walletId/teacher", "routes/app/invite/wallet-teacher.tsx"),
+				route("part/:partId", "routes/app/invite/part.tsx"),
+			]),
 		]),
 	]),
 	...prefix("/test", [route("icon", "routes/test/icon.tsx")]),

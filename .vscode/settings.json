@@ -1,13 +1,14 @@
 {
-	"editor.formatOnSave": true,
 	"editor.defaultFormatter": "biomejs.biome",
 	"[typescript]": {
+		"editor.formatOnSave": true,
 		"editor.defaultFormatter": "biomejs.biome",
 		"editor.codeActionsOnSave": {
 			"source.organizeImports.biome": "explicit",
 		}
 	},
 	"[typescriptreact]": {
+		"editor.formatOnSave": true,
 		"editor.defaultFormatter": "biomejs.biome",
 		"editor.codeActionsOnSave": {
 			"source.organizeImports.biome": "explicit",
