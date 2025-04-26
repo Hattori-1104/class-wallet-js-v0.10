@@ -5,9 +5,9 @@ import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, Command
 
 import { getFormProps, getInputProps, useForm } from "@conform-to/react"
 import { parseWithZod } from "@conform-to/zod"
-import { Check, Minus, Plus } from "lucide-react"
-import { useState } from "react"
-import { Form } from "react-router"
+import { Check, Minus, PlaneLanding, Plus } from "lucide-react"
+import { useMemo, useState } from "react"
+import { Form, Link, useFetcher, useNavigate, useSubmit } from "react-router"
 import { create } from "zustand"
 import { LightBox } from "~/components/common/box"
 import { Aside, Distant } from "~/components/common/placement"
@@ -16,6 +16,7 @@ import {
 	Dialog,
 	DialogContent,
 	DialogDescription,
+	DialogFooter,
 	DialogHeader,
 	DialogTitle,
 	DialogTrigger,
@@ -25,8 +26,8 @@ import { Label } from "~/components/ui/label"
 import { Switch } from "~/components/ui/switch"
 import { FormBody, FormField, FormFooter } from "~/components/utility/form"
 import { cn } from "~/lib/utils"
-import { prisma } from "~/services/repository.server"
-import { requireSession, verifyStudent } from "~/services/session.server"
+import { partWithUserWhereQuery, prisma } from "~/services/repository.server"
+import { createErrorRedirect, createSuccessRedirect, requireSession, verifyStudent } from "~/services/session.server"
 import { getSwitchProps } from "~/utilities/conform-helper"
 import { formatMoney } from "~/utilities/display"
 import type { Route } from "./+types/purchase-new"
@@ -46,9 +47,11 @@ type CreateProduct = z.infer<typeof createProductSchema>
 
 const purchaseRequestSchema = z.object({
 	label: z.string(),
+	plannedUsage: z.number().min(0),
 	selectedProducts: z.array(selectedProductSchema),
 	createdProducts: z.array(createProductSchema),
 })
+type PurchaseRequest = z.infer<typeof purchaseRequestSchema>
 
 const useSelectedProductStore = create<{
 	selectedProductSet: Map<string, number>
@@ -57,6 +60,7 @@ const useSelectedProductStore = create<{
 	getAsObject: () => { id: string; quantity: number }[]
 	addQuantity: (id: string, quantity: number) => void
 	setQuantity: (id: string, quantity: number) => void
+	clear: () => void
 }>((set, get) => ({
 	selectedProductSet: new Map(),
 	isSelected: (id: string) => get().selectedProductSet.has(id),
@@ -100,6 +104,9 @@ const useSelectedProductStore = create<{
 			return { selectedProductSet: newSet }
 		})
 	},
+	clear: () => {
+		set({ selectedProductSet: new Map() })
+	},
 }))
 
 const useCreatedProductStore = create<{
@@ -108,6 +115,7 @@ const useCreatedProductStore = create<{
 	removeProduct: (id: string) => void
 	addQuantity: (id: string, quantity: number) => void
 	setQuantity: (id: string, quantity: number) => void
+	clear: () => void
 }>((set) => ({
 	createdProductSet: new Map(),
 	addProduct: (product) => {
@@ -151,6 +159,9 @@ const useCreatedProductStore = create<{
 			return { createdProductSet: newSet }
 		})
 	},
+	clear: () => {
+		set({ createdProductSet: new Map() })
+	},
 }))
 
 export const loader = async ({ params: { partId }, request }: Route.LoaderArgs) => {
@@ -171,6 +182,8 @@ export const loader = async ({ params: { partId }, request }: Route.LoaderArgs) 
 }
 
 export default ({ loaderData: { sharedProducts } }: Route.ComponentProps) => {
+	const navigate = useNavigate()
+	const submit = useSubmit()
 	const {
 		isSelected,
 		toggleSelect,
@@ -185,6 +198,47 @@ export default ({ loaderData: { sharedProducts } }: Route.ComponentProps) => {
 		setQuantity: setCreatedQuantity,
 	} = useCreatedProductStore()
 	const [createProductDialogOpen, setCreateProductDialogOpen] = useState(false)
+	const [submitDialogOpen, setSubmitDialogOpen] = useState(false)
+	const [label, setLabel] = useState("")
+	const [plannedUsage, setPlannedUsage] = useState<number | null>(null)
+
+	const defaultLabel = useMemo(() => {
+		return [
+			...selectedProductSet
+				.entries()
+				.map(([id, quantity]) => {
+					const product = sharedProducts.find((product) => product.id === id)
+					if (!product) return null
+					return `${product.name} ${quantity}個`
+				})
+				.filter((item) => item),
+			...createdProductSet.entries().map(([_, product]) => {
+				return `${product.name} ${product.quantity}個`
+			}),
+		].join(",")
+	}, [selectedProductSet, createdProductSet, sharedProducts])
+	const defaultPlannedUsage = useMemo(() => {
+		return (
+			Array.from(selectedProductSet.entries()).reduce(
+				(acc, [id, quantity]) => acc + quantity * sharedProducts.find((product) => product.id === id)!.price,
+				0,
+			) +
+			Array.from(createdProductSet.entries()).reduce((acc, [_, product]) => acc + product.quantity * product.price, 0)
+		)
+	}, [selectedProductSet, createdProductSet, sharedProducts])
+
+	const handleSubmit = () => {
+		const purchaseRequest: PurchaseRequest = {
+			label: label || defaultLabel,
+			plannedUsage: plannedUsage || defaultPlannedUsage,
+			selectedProducts: Array.from(selectedProductSet.entries()).map(([id, quantity]) => ({ id, quantity })),
+			createdProducts: Array.from(createdProductSet.entries()).map(([id, product]) => ({ id, ...product })),
+		}
+		submit(purchaseRequest, {
+			method: "POST",
+			encType: "application/json",
+		})
+	}
 	return (
 		<Section>
 			<SectionTitle>
@@ -296,7 +350,7 @@ export default ({ loaderData: { sharedProducts } }: Route.ComponentProps) => {
 					</Dialog>
 				</Aside>
 			</SectionContent>
-			<SectionContent>
+			<SectionContent className="space-y-2">
 				{Array.from(selectedProductSet.keys()).map((id) => {
 					const product = sharedProducts.find((product) => product.id === id)
 					if (!product) return null
@@ -324,6 +378,63 @@ export default ({ loaderData: { sharedProducts } }: Route.ComponentProps) => {
 					)
 				})}
 			</SectionContent>
+			<SectionContent>
+				<FormBody>
+					<FormField label="購入リクエスト名" name="purchaseLabel">
+						<Input value={label} onChange={(e) => setLabel(e.target.value)} placeholder={defaultLabel} />
+					</FormField>
+					<FormField label="使用予定額" name="plannedUsage">
+						<Input
+							value={plannedUsage ?? ""}
+							onChange={(e) => {
+								const value = Number.parseInt(e.target.value)
+								if (Number.isNaN(value)) {
+									setPlannedUsage(null)
+								} else {
+									setPlannedUsage(value)
+								}
+							}}
+							type="number"
+							className="no-spin text-right"
+							placeholder={formatMoney(defaultPlannedUsage)}
+						/>
+					</FormField>
+				</FormBody>
+			</SectionContent>
+			<SectionContent>
+				<Aside>
+					<Button variant="outline" className="grow" onClick={() => navigate(-1)}>
+						キャンセル
+					</Button>
+					<Dialog open={submitDialogOpen} onOpenChange={() => setSubmitDialogOpen((prev) => !prev)}>
+						<DialogTrigger asChild>
+							<Button variant="default" className="grow" disabled={!(label || defaultLabel)}>
+								リクエストを送信
+							</Button>
+						</DialogTrigger>
+						<DialogContent>
+							<DialogHeader>
+								<DialogTitle>リクエストの送信</DialogTitle>
+								<DialogDescription>この内容でリクエストを送信します。</DialogDescription>
+							</DialogHeader>
+							<LightBox>
+								<Distant>
+									<Title className="block text-wrap">{label || defaultLabel}</Title>
+									<Note className="block shrink-0 text-right">{formatMoney(plannedUsage ?? defaultPlannedUsage)}</Note>
+								</Distant>
+							</LightBox>
+							<DialogFooter>
+								<Button variant="outline" className="grow" onClick={() => setSubmitDialogOpen(false)}>
+									キャンセル
+								</Button>
+								<Button variant="default" className="grow" onClick={handleSubmit}>
+									リクエストを送信
+								</Button>
+							</DialogFooter>
+						</DialogContent>
+					</Dialog>
+				</Aside>
+			</SectionContent>
 		</Section>
 	)
 }
@@ -342,10 +453,10 @@ function PurchaseItem({
 	setQuantity: (id: string, quantity: number) => void
 }) {
 	return (
-		<LightBox key={id}>
+		<LightBox key={id} className="py-3 px-4">
 			<Distant>
 				<div>
-					<Heading>{product.name}</Heading>
+					<p>{product.name}</p>
 					<Note>{formatMoney(product.price)}</Note>
 				</div>
 				<Aside gap="xs">
@@ -365,4 +476,73 @@ function PurchaseItem({
 			</Distant>
 		</LightBox>
 	)
+}
+
+export const action = async ({ request, params: { partId } }: Route.ActionArgs) => {
+	const session = await requireSession(request)
+	const student = await verifyStudent(session)
+	const errorRedirect = createErrorRedirect(session, "/app/student/part")
+	const part = await prisma.part
+		.findUniqueOrThrow({
+			where: {
+				...partWithUserWhereQuery(partId, student.id),
+			},
+		})
+		.catch(errorRedirect("パートが見つかりません。").catch())
+
+	const result = await purchaseRequestSchema
+		.parseAsync(await request.json())
+		.catch(errorRedirect("購入リクエストの形式が正しくありません。", `app/student/part/${partId}/new-purchase`).catch())
+
+	await prisma.purchase
+		.create({
+			data: {
+				label: result.label,
+				plannedUsage: result.plannedUsage,
+				part: {
+					connect: {
+						id: part.id,
+					},
+				},
+				state: {
+					create: {
+						request: {
+							create: {
+								approved: true,
+								by: {
+									connect: {
+										id: student.id,
+									},
+								},
+							},
+						},
+					},
+				},
+				items: {
+					create: [
+						...result.selectedProducts.map((product) => ({
+							product: {
+								connect: {
+									id: product.id,
+								},
+							},
+						})),
+						...result.createdProducts.map((product) => ({
+							product: {
+								create: {
+									name: product.name,
+									price: product.price,
+									isShared: product.isShared,
+								},
+								quantity: product.quantity,
+							},
+						})),
+					],
+				},
+			},
+		})
+		.catch(errorRedirect("購入リクエストの作成に失敗しました。").catch())
+
+	const successRedirect = createSuccessRedirect(session, `/app/student/part/${partId}`)
+	return successRedirect("購入リクエストを送信しました。")
 }
