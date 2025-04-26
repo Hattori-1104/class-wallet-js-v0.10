@@ -14,7 +14,7 @@
 		"enabled": true,
 		"indentStyle": "tab",
 		"indentWidth": 2,
-		"lineWidth": 160
+		"lineWidth": 120
 	},
 	"organizeImports": {
 		"enabled": true
@@ -28,7 +28,8 @@
 				"useSelfClosingElements": "warn",
 				"useBlockStatements": "off",
 				"noImplicitBoolean": "off",
-				"useNamingConvention": "off"
+				"useNamingConvention": "off",
+				"noNonNullAssertion": "off"
 			},
 			"correctness": {
 				"noEmptyPattern": "off",

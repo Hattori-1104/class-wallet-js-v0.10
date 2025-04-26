@@ -2,6 +2,14 @@ import { ChevronLeft, LogOut } from "lucide-react"
 import { Form, Outlet, useNavigate } from "react-router"
 import { Header } from "~/components/common/header"
 import { Button } from "~/components/ui/button"
+import { requireSession } from "~/services/session.server"
+import { verifyAdmin } from "~/services/session.server"
+import type { Route } from "./+types/layout"
+
+export const loader = async ({ request }: Route.LoaderArgs) => {
+	const session = await requireSession(request)
+	await verifyAdmin(session)
+}
 
 export default () => {
 	const navigate = useNavigate()

@@ -24,6 +24,7 @@
 	"editor.insertSpaces": true,
 	"typescript.updateImportsOnFileMove.enabled": "always",
 	"cSpell.words": [
+		"autoincrement",
 		"cmdk",
 		"isbot",
 		"shadcn",

@@ -8,7 +8,7 @@ import { prisma } from "~/services/repository.server"
 import { createErrorRedirect, createSuccessRedirect, requireSession } from "~/services/session.server"
 import { verifyAdmin } from "~/services/session.server"
 import { formatMoney } from "~/utilities/display"
-import type { Route } from "./+types/wallets"
+import type { Route } from "./+types/wallet"
 
 export const loader = async ({ request }: Route.LoaderArgs) => {
 	const session = await requireSession(request)
@@ -44,12 +44,12 @@ export default ({ loaderData }: Route.ComponentProps) => {
 		<MainContainer>
 			<Section>
 				<SectionTitle>
-					<Title>ウォレット作成</Title>
+					<Title>ウォレット</Title>
 				</SectionTitle>
 			</Section>
 			<div className="space-y-6">
 				<Button asChild>
-					<Link to="/app/admin/create-form">
+					<Link to="/app/admin/wallet/create">
 						<Plus />
 						<span>新しくウォレットを作成</span>
 					</Link>

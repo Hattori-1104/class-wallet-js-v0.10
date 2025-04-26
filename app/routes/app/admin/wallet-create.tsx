@@ -8,8 +8,13 @@ import { Button } from "~/components/ui/button"
 import { Input } from "~/components/ui/input"
 import { Label } from "~/components/ui/label"
 import { prisma } from "~/services/repository.server"
-import { createErrorRedirect, createSuccessRedirect, requireSession } from "~/services/session.server"
-import type { Route } from "./+types/create-form"
+import { createErrorRedirect, createSuccessRedirect, requireSession, verifyAdmin } from "~/services/session.server"
+import type { Route } from "./+types/wallet-create"
+
+export const loader = async ({ request }: Route.LoaderArgs) => {
+	const session = await requireSession(request)
+	await verifyAdmin(session)
+}
 
 const NewWalletSchema = z.object({
 	name: z.string().min(1),
@@ -56,7 +61,7 @@ export const action = async ({ request }: Route.ActionArgs) => {
 	if (result.status !== "success") return result.reply()
 	const { name, budget } = result.value
 	const session = await requireSession(request)
-	const errorRedirect = createErrorRedirect(session, "/app/admin/create-form")
+	const errorRedirect = createErrorRedirect(session, "/app/admin/wallet-create")
 	await prisma.wallet
 		.create({
 			data: {
@@ -70,6 +75,6 @@ export const action = async ({ request }: Route.ActionArgs) => {
 			},
 		})
 		.catch(errorRedirect("ウォレットを作成できませんでした。").catch())
-	const successRedirect = createSuccessRedirect(session, "/app/admin/wallets")
+	const successRedirect = createSuccessRedirect(session, "/app/admin/wallet")
 	return successRedirect("ウォレットを作成しました。")
 }

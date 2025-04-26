@@ -1,3 +1,4 @@
+import type { Student, Teacher } from "@prisma/client"
 import { type Session, createCookieSessionStorage, redirect } from "react-router"
 import { z } from "zod"
 import { prisma } from "~/services/repository.server"
@@ -45,33 +46,33 @@ export type SessionType = Session<SessionDataType, SessionFlashDataType>
 
 export const requireSession = async (request: Request) => getSession(request.headers.get("Cookie"))
 
-export const verifyStudent = async (session: SessionType) => {
+export async function verifyStudent(session: SessionType): Promise<Student> {
 	const user = session.get("user")
 	const errorRedirect = createErrorRedirect(session, "/auth")
 	if (!user) throw await errorRedirect("ユーザーが見つかりません。").throw()
 	if (user.type !== "student") throw await errorRedirect("生徒ではありません。").throw()
 	const student = await prisma.student.findUniqueOrThrow({ where: { id: user.id } }).catch(errorRedirect("生徒が見つかりません。").catch())
-	return student.id
+	return student
 }
 
-export const verifyTeacher = async (session: SessionType) => {
+export async function verifyTeacher(session: SessionType): Promise<Teacher> {
 	const user = session.get("user")
 	const errorRedirect = createErrorRedirect(session, "/auth")
 	if (!user) throw await errorRedirect("ユーザーが見つかりません。").throw()
 	if (user.type !== "teacher") throw await errorRedirect("教師ではありません。").throw()
 	const teacher = await prisma.teacher.findUniqueOrThrow({ where: { id: user.id } }).catch(errorRedirect("教師が見つかりません。").catch())
-	return teacher.id
+	return teacher
 }
 
-export const verifyUser = async (session: SessionType): Promise<{ type: "student" | "teacher"; id: string }> => {
+export const verifyUser = async (session: SessionType): Promise<{ type: "student"; student: Student } | { type: "teacher"; teacher: Teacher }> => {
 	const user = session.get("user")
 	const errorRedirect = createErrorRedirect(session, "/auth")
 	if (!user) throw await errorRedirect("ユーザーが見つかりません。").throw()
 	if (user.type === "student") {
-		return { type: "student", id: await verifyStudent(session) }
+		return { type: "student", student: await verifyStudent(session) }
 	}
 	if (user.type === "teacher") {
-		return { type: "teacher", id: await verifyTeacher(session) }
+		return { type: "teacher", teacher: await verifyTeacher(session) }
 	}
 	throw await errorRedirect("ユーザーが見つかりません。").throw()
 }
@@ -83,10 +84,10 @@ export const verifyAdmin = async (session: SessionType) => {
 	const errorRedirect = createErrorRedirect(session, "/auth")
 	if (!user) throw await errorRedirect("ユーザーが見つかりません。").throw()
 	if (user.type === "student") {
-		if (user.id === "dev-student" && process.env.NODE_ENV === "development") return { type: "student", id: user.id }
+		if (user.id === "dev-student" && process.env.NODE_ENV === "development") return { type: "student", student: await verifyStudent(session) }
 	}
 	if (user.type === "teacher") {
-		if (user.id === "dev-teacher" && process.env.NODE_ENV === "development") return { type: "teacher", id: user.id }
+		if (user.id === "dev-teacher" && process.env.NODE_ENV === "development") return { type: "teacher", teacher: await verifyTeacher(session) }
 	}
 	throw await errorRedirect("ユーザーが見つかりません。").throw()
 }

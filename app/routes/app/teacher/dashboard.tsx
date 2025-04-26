@@ -1,5 +1,5 @@
 import { Link } from "react-router"
-import { MainContainer, Section, Section2Column, SectionTitle } from "~/components/common/container"
+import { HorizonContainer, MainContainer, Section, SectionTitle } from "~/components/common/container"
 import { Button } from "~/components/ui/button"
 import { prisma } from "~/services/repository.server"
 import { getSession, verifyTeacher } from "~/services/session.server"

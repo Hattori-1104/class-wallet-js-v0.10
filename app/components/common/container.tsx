@@ -1,3 +1,4 @@
+import { Slot } from "@radix-ui/react-slot"
 import type { ReactNode } from "react"
 import { cn } from "~/lib/utils"
 
@@ -21,7 +22,22 @@ export const Section = ({ children, className }: { children: ReactNode; classNam
 export const SectionTitle = ({ children, className }: { children: ReactNode; className?: string }) => {
 	return <div className={cn("my-8", className)}>{children}</div>
 }
+export const SectionContent = ({
+	children,
+	className,
+	asChild,
+	...props
+}: { children: ReactNode; className?: string; asChild?: boolean } & React.ComponentProps<typeof Slot>) => {
+	if (asChild) {
+		return (
+			<Slot className={cn("my-6", className)} {...props}>
+				{children}
+			</Slot>
+		)
+	}
+	return <div className={cn("my-6", className)}>{children}</div>
+}
 
-export function Section2Column({ className, children }: { className?: string; children: ReactNode }) {
+export function HorizonContainer({ className, children }: { className?: string; children: ReactNode }) {
 	return <div className={cn("contents w-full sm:flex sm:flex-row sm:gap-8 sm:my-[-2rem]", className)}>{children}</div>
 }

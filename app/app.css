@@ -4,8 +4,7 @@
 @custom-variant dark (&:is(.dark *));
 
 @theme {
-	--font-sans: "Inter", ui-sans-serif, system-ui, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol",
-		"Noto Color Emoji";
+	--font-sans: "Inter", ui-sans-serif, system-ui, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
 }
 
 html,
@@ -140,6 +139,12 @@ body {
 	}
 	.scrollbar-hidden::-webkit-scrollbar {
 		display: none;
+	}
+	.no-spin::-webkit-inner-spin-button,
+	.no-spin::-webkit-outer-spin-button {
+		-webkit-appearance: none;
+		margin: 0;
+		-moz-appearance: textfield;
 	}
 }
 

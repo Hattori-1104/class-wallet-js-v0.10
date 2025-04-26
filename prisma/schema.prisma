@@ -68,15 +68,12 @@ model Event {
 }
 
 model Purchase {
-  id            String         @id @default(uuid())
-  label         String
-  items         PurchaseItem[]
-  createdAt     DateTime       @default(now())
-  plannedUsage  Int
-  actualUsage   Int?
-  receiptNumber Int?
+  id        String         @id @default(uuid())
+  label     String
+  items     PurchaseItem[]
+  createdAt DateTime       @default(now())
 
-  updatedAt DateTime? @updatedAt
+  updatedAt DateTime @default(now()) @updatedAt
 
   partId String
   part   Part   @relation(fields: [partId], references: [id], onDelete: Cascade)
@@ -97,7 +94,8 @@ model PurchaseState {
   teacherApproval    PurchaseStateTeacherApproval?
   givenMoney         PurchaseStateGivenMoney?
   usageReport        PurchaseStateUsageReport?
-  receipt            PurchaseStateReceipt?
+  receiptSubmission  PurchaseStateReceiptSubmission?
+  fishingReturned    PurchaseStateFishingReturned?
 }
 
 // リクエスト
@@ -147,11 +145,18 @@ model PurchaseStateUsageReport {
 }
 
 // レシート提出
-model PurchaseStateReceipt {
+model PurchaseStateReceiptSubmission {
   stateId      String        @id
   state        PurchaseState @relation(fields: [stateId], references: [id], onDelete: Cascade)
   receiptIndex Int
   at           DateTime      @default(now())
+}
+
+// おつり釣り返却
+model PurchaseStateFishingReturned {
+  stateId String        @id
+  state   PurchaseState @relation(fields: [stateId], references: [id], onDelete: Cascade)
+  at      DateTime      @default(now())
 }
 
 model PurchaseItem {

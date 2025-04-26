@@ -1,5 +1,5 @@
 import { useMemo } from "react"
-import { Section, Section2Column, SectionTitle } from "~/components/common/container"
+import { HorizonContainer, Section, SectionTitle } from "~/components/common/container"
 import { Title } from "~/components/common/typography"
 import { prisma } from "~/services/repository.server"
 import { createErrorRedirect } from "~/services/session.server"
@@ -185,10 +185,10 @@ export default ({ loaderData: { wallet } }: Route.ComponentProps) => {
 					<Title>{wallet.name}</Title>
 				</SectionTitle>
 			</Section>
-			<Section2Column>
+			<HorizonContainer>
 				<ManagerSection leaders={leaders} accountantStudents={wallet.accountantStudents} teachers={wallet.teachers} />
 				<BudgetSection budget={wallet.budget} usage={actualUsage} plannedUsage={plannedUsage} purchaseInProgress={purchaseInProgress} />
-			</Section2Column>
+			</HorizonContainer>
 			<PurchaseSection wallet={wallet} />
 		</>
 	)

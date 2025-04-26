@@ -18,7 +18,7 @@ export default () => {
 					<Title>管理者ページ</Title>
 				</SectionTitle>
 				<Button asChild>
-					<Link to="/app/admin/wallets">ウォレット・予算作成</Link>
+					<Link to="/app/admin/wallet">ウォレット・予算作成</Link>
 				</Button>
 			</Section>
 		</MainContainer>

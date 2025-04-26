@@ -12,18 +12,18 @@ const ActionSchema = z.object({
 	action: z.enum(["accept", "reject"]),
 })
 
-const queryIsAccountant = (walletId: string, userId: string) =>
-	prisma.student.findUnique({ where: { id: userId, wallets: { some: { id: walletId } } }, select: { id: true } })
+const queryIsAccountant = async (walletId: string, userId: string) =>
+	Boolean(await prisma.student.findUnique({ where: { id: userId, wallets: { some: { id: walletId } } }, select: { id: true } }))
 
 export const loader = async ({ request, params: { walletId } }: Route.LoaderArgs) => {
 	const session = await requireSession(request)
-	const userId = await verifyStudent(session)
+	const student = await verifyStudent(session)
 	const errorRedirect = createErrorRedirect(session, "/app")
 
 	const wallet = await prisma.wallet
 		.findUniqueOrThrow({ where: { id: walletId }, select: { name: true, teachers: { select: { name: true } } } })
 		.catch(errorRedirect("ウォレットが見つかりません。").catch())
-	const isAccountant = await queryIsAccountant(walletId, userId)
+	const isAccountant = await queryIsAccountant(walletId, student.id)
 	return { wallet, isAccountant }
 }
 
@@ -56,7 +56,7 @@ export default ({ loaderData: { wallet, isAccountant } }: Route.ComponentProps) 
 
 export const action = async ({ request, params: { walletId } }: Route.ActionArgs) => {
 	const session = await requireSession(request)
-	const userId = await verifyStudent(session)
+	const student = await verifyStudent(session)
 	const errorRedirect = createErrorRedirect(session, "/app")
 	const successRedirect = createSuccessRedirect(session, "/app")
 
@@ -65,18 +65,18 @@ export const action = async ({ request, params: { walletId } }: Route.ActionArgs
 	const { action } = result.value
 
 	if (action === "accept") {
-		await prisma.student
-			.update({ where: { id: userId }, data: { wallets: { connect: { id: walletId } } } })
+		const wallet = await prisma.wallet
+			.update({ where: { id: walletId }, data: { accountantStudents: { connect: { id: student.id } } }, select: { name: true } })
 			.catch(errorRedirect("ウォレットの参加に失敗しました。").catch())
-		return successRedirect("ウォレットの参加に成功しました。")
+		return successRedirect(`${wallet.name}のHR会計として参加しました。`)
 	}
 	if (action === "reject") {
-		const isAccountant = await queryIsAccountant(walletId, userId)
+		const isAccountant = await queryIsAccountant(walletId, student.id)
 		if (isAccountant) {
-			await prisma.student
-				.update({ where: { id: userId }, data: { wallets: { disconnect: { id: walletId } } } })
+			const wallet = await prisma.wallet
+				.update({ where: { id: walletId }, data: { accountantStudents: { disconnect: { id: student.id } } }, select: { name: true } })
 				.catch(errorRedirect("ウォレットの辞任に失敗しました。").catch())
-			return successRedirect("ウォレットの辞任に成功しました。")
+			return successRedirect(`${wallet.name}のHR会計を辞任しました。`)
 		}
 		return successRedirect("招待を拒否しました。")
 	}
