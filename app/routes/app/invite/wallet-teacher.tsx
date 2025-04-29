@@ -4,16 +4,13 @@ import { z } from "zod"
 import { LimitedContainer, Section, SectionTitle } from "~/components/common/container"
 import { Title } from "~/components/common/typography"
 import { Button } from "~/components/ui/button"
-import { prisma } from "~/services/repository.server"
+import { prisma, queryIsHomeroomTeacher } from "~/services/repository.server"
 import { createErrorRedirect, createSuccessRedirect, requireSession, verifyTeacher } from "~/services/session.server"
 import type { Route } from "./+types/wallet-teacher"
 
 const ActionSchema = z.object({
 	action: z.enum(["accept", "reject"]),
 })
-
-const queryIsHomeroomTeacher = (walletId: string, teacherId: string) =>
-	prisma.student.findUnique({ where: { id: teacherId, wallets: { some: { id: walletId } } }, select: { id: true } })
 
 export const loader = async ({ request, params: { walletId } }: Route.LoaderArgs) => {
 	const session = await requireSession(request)
@@ -68,7 +65,11 @@ export const action = async ({ request, params: { walletId } }: Route.ActionArgs
 		const isHomeroomTeacher = await queryIsHomeroomTeacher(walletId, teacher.id)
 		if (isHomeroomTeacher) {
 			const wallet = await prisma.wallet
-				.update({ where: { id: walletId }, data: { teachers: { disconnect: { id: teacher.id } } }, select: { name: true } })
+				.update({
+					where: { id: walletId },
+					data: { teachers: { disconnect: { id: teacher.id } } },
+					select: { name: true },
+				})
 				.catch(errorRedirect("ウォレットの辞任に失敗しました。").catch())
 			return successRedirect(`${wallet.name}の担任教師を辞任しました。`)
 		}

@@ -50,24 +50,27 @@ CREATE TABLE `Event` (
 CREATE TABLE `Purchase` (
     `id` VARCHAR(191) NOT NULL,
     `label` VARCHAR(191) NOT NULL,
-    `createdAt` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
     `plannedUsage` INTEGER NOT NULL,
-    `actualUsage` INTEGER NULL,
-    `receiptNumber` INTEGER NULL,
-    `updatedAt` DATETIME(3) NULL,
+    `createdAt` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
+    `updatedAt` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
     `partId` VARCHAR(191) NOT NULL,
-    `stateId` VARCHAR(191) NOT NULL,
 
-    UNIQUE INDEX `Purchase_stateId_key`(`stateId`),
     INDEX `Purchase_partId_idx`(`partId`),
     PRIMARY KEY (`id`)
 ) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
 -- CreateTable
 CREATE TABLE `PurchaseState` (
-    `id` VARCHAR(191) NOT NULL,
+    `purchaseId` VARCHAR(191) NOT NULL,
+    `request` ENUM('Approved', 'Rejected', 'Pending') NOT NULL DEFAULT 'Pending',
+    `accountantApproval` ENUM('Approved', 'Rejected', 'Pending') NOT NULL DEFAULT 'Pending',
+    `teacherApproval` ENUM('Approved', 'Rejected', 'Pending') NOT NULL DEFAULT 'Pending',
+    `givenMoney` ENUM('Fulfilled', 'Pending') NOT NULL DEFAULT 'Pending',
+    `usageReport` ENUM('Fulfilled', 'Pending') NOT NULL DEFAULT 'Pending',
+    `receiptSubmission` ENUM('Fulfilled', 'Pending') NOT NULL DEFAULT 'Pending',
+    `changeReturn` ENUM('Fulfilled', 'Pending') NOT NULL DEFAULT 'Pending',
 
-    PRIMARY KEY (`id`)
+    PRIMARY KEY (`purchaseId`)
 ) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
 -- CreateTable
@@ -119,9 +122,17 @@ CREATE TABLE `PurchaseStateUsageReport` (
 ) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
 -- CreateTable
-CREATE TABLE `PurchaseStateReceipt` (
+CREATE TABLE `PurchaseStateReceiptSubmission` (
     `stateId` VARCHAR(191) NOT NULL,
     `receiptIndex` INTEGER NOT NULL,
+    `at` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
+
+    PRIMARY KEY (`stateId`)
+) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+
+-- CreateTable
+CREATE TABLE `PurchaseStateChangeReturn` (
+    `stateId` VARCHAR(191) NOT NULL,
     `at` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
 
     PRIMARY KEY (`stateId`)
@@ -194,34 +205,37 @@ ALTER TABLE `Wallet` ADD CONSTRAINT `Wallet_eventId_fkey` FOREIGN KEY (`eventId`
 ALTER TABLE `Purchase` ADD CONSTRAINT `Purchase_partId_fkey` FOREIGN KEY (`partId`) REFERENCES `Part`(`id`) ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE `Purchase` ADD CONSTRAINT `Purchase_stateId_fkey` FOREIGN KEY (`stateId`) REFERENCES `PurchaseState`(`id`) ON DELETE CASCADE ON UPDATE CASCADE;
+ALTER TABLE `PurchaseState` ADD CONSTRAINT `PurchaseState_purchaseId_fkey` FOREIGN KEY (`purchaseId`) REFERENCES `Purchase`(`id`) ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE `PurchaseStateRequest` ADD CONSTRAINT `PurchaseStateRequest_stateId_fkey` FOREIGN KEY (`stateId`) REFERENCES `PurchaseState`(`id`) ON DELETE CASCADE ON UPDATE CASCADE;
+ALTER TABLE `PurchaseStateRequest` ADD CONSTRAINT `PurchaseStateRequest_stateId_fkey` FOREIGN KEY (`stateId`) REFERENCES `PurchaseState`(`purchaseId`) ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE `PurchaseStateRequest` ADD CONSTRAINT `PurchaseStateRequest_byId_fkey` FOREIGN KEY (`byId`) REFERENCES `Student`(`id`) ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE `PurchaseStateAccountantApproval` ADD CONSTRAINT `PurchaseStateAccountantApproval_stateId_fkey` FOREIGN KEY (`stateId`) REFERENCES `PurchaseState`(`id`) ON DELETE CASCADE ON UPDATE CASCADE;
+ALTER TABLE `PurchaseStateAccountantApproval` ADD CONSTRAINT `PurchaseStateAccountantApproval_stateId_fkey` FOREIGN KEY (`stateId`) REFERENCES `PurchaseState`(`purchaseId`) ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE `PurchaseStateAccountantApproval` ADD CONSTRAINT `PurchaseStateAccountantApproval_byId_fkey` FOREIGN KEY (`byId`) REFERENCES `Student`(`id`) ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE `PurchaseStateTeacherApproval` ADD CONSTRAINT `PurchaseStateTeacherApproval_stateId_fkey` FOREIGN KEY (`stateId`) REFERENCES `PurchaseState`(`id`) ON DELETE CASCADE ON UPDATE CASCADE;
+ALTER TABLE `PurchaseStateTeacherApproval` ADD CONSTRAINT `PurchaseStateTeacherApproval_stateId_fkey` FOREIGN KEY (`stateId`) REFERENCES `PurchaseState`(`purchaseId`) ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE `PurchaseStateTeacherApproval` ADD CONSTRAINT `PurchaseStateTeacherApproval_byId_fkey` FOREIGN KEY (`byId`) REFERENCES `Teacher`(`id`) ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE `PurchaseStateGivenMoney` ADD CONSTRAINT `PurchaseStateGivenMoney_stateId_fkey` FOREIGN KEY (`stateId`) REFERENCES `PurchaseState`(`id`) ON DELETE CASCADE ON UPDATE CASCADE;
+ALTER TABLE `PurchaseStateGivenMoney` ADD CONSTRAINT `PurchaseStateGivenMoney_stateId_fkey` FOREIGN KEY (`stateId`) REFERENCES `PurchaseState`(`purchaseId`) ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE `PurchaseStateUsageReport` ADD CONSTRAINT `PurchaseStateUsageReport_stateId_fkey` FOREIGN KEY (`stateId`) REFERENCES `PurchaseState`(`id`) ON DELETE CASCADE ON UPDATE CASCADE;
+ALTER TABLE `PurchaseStateUsageReport` ADD CONSTRAINT `PurchaseStateUsageReport_stateId_fkey` FOREIGN KEY (`stateId`) REFERENCES `PurchaseState`(`purchaseId`) ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE `PurchaseStateReceipt` ADD CONSTRAINT `PurchaseStateReceipt_stateId_fkey` FOREIGN KEY (`stateId`) REFERENCES `PurchaseState`(`id`) ON DELETE CASCADE ON UPDATE CASCADE;
+ALTER TABLE `PurchaseStateReceiptSubmission` ADD CONSTRAINT `PurchaseStateReceiptSubmission_stateId_fkey` FOREIGN KEY (`stateId`) REFERENCES `PurchaseState`(`purchaseId`) ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE `PurchaseStateChangeReturn` ADD CONSTRAINT `PurchaseStateChangeReturn_stateId_fkey` FOREIGN KEY (`stateId`) REFERENCES `PurchaseState`(`purchaseId`) ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE `PurchaseItem` ADD CONSTRAINT `PurchaseItem_purchaseId_fkey` FOREIGN KEY (`purchaseId`) REFERENCES `Purchase`(`id`) ON DELETE CASCADE ON UPDATE CASCADE;

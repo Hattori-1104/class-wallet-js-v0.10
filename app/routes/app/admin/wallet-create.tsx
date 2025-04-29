@@ -61,13 +61,13 @@ export const action = async ({ request }: Route.ActionArgs) => {
 	if (result.status !== "success") return result.reply()
 	const { name, budget } = result.value
 	const session = await requireSession(request)
-	const errorRedirect = createErrorRedirect(session, "/app/admin/wallet-create")
+	const errorRedirect = createErrorRedirect(session, "/app/admin/wallet/create")
 	await prisma.wallet
 		.create({
 			data: {
 				event: {
 					connect: {
-						id: "defa131b-142d-45a4-915f-5c1a59eb3e4e",
+						id: "nishikosai",
 					},
 				},
 				name,

@@ -1,6 +1,6 @@
-import { type Prisma, PrismaClient } from "@prisma/client"
+import { type Prisma, PrismaClient, type PurchaseState } from "@prisma/client"
 
-export const prisma = new PrismaClient()
+export const prisma = new PrismaClient().$extends({})
 
 export const partWithUserWhereQuery = (partId: string, userId: string) =>
 	({
@@ -22,23 +22,103 @@ export const walletWithAccountantWhereQuery = (walletId: string, userId: string)
 		},
 	}) satisfies Prisma.WalletWhereInput
 
-export const purchaseStateCompletedWhereQuery = () =>
+export const purchaseStateAllSelectQuery = () =>
 	({
-		NOT: {
-			accountantApproval: { approved: true },
-			teacherApproval: { approved: true },
-			givenMoney: { isNot: null },
-			usageReport: { isNot: null },
-			receiptSubmission: { isNot: null },
-			fishingReturned: { isNot: null },
+		requests: {
+			orderBy: {
+				at: "desc",
+			},
+			select: {
+				approved: true,
+				by: {
+					select: {
+						name: true,
+					},
+				},
+				at: true,
+			},
 		},
-	}) satisfies Prisma.PurchaseStateWhereInput
+		accountantApprovals: {
+			orderBy: {
+				at: "desc",
+			},
+			select: {
+				approved: true,
+				by: {
+					select: {
+						name: true,
+					},
+				},
+				at: true,
+			},
+		},
+		teacherApprovals: {
+			orderBy: {
+				at: "desc",
+			},
+			select: {
+				approved: true,
+				by: {
+					select: {
+						name: true,
+					},
+				},
+				at: true,
+			},
+		},
+		givenMoneys: {
+			orderBy: {
+				at: "desc",
+			},
+			select: {
+				amount: true,
+				at: true,
+			},
+		},
+		usageReports: {
+			orderBy: {
+				at: "desc",
+			},
+			select: {
+				actualUsage: true,
+				at: true,
+			},
+		},
+		changeReturns: {
+			orderBy: {
+				at: "desc",
+			},
+			select: {
+				at: true,
+			},
+		},
+		receiptSubmissions: {
+			orderBy: {
+				at: "desc",
+			},
+			select: {
+				at: true,
+				receiptIndex: true,
+			},
+		},
+	}) satisfies Prisma.PurchaseStateSelect
 
-// 拒否されていない & 未完了
-export const purchaseStateInProgressWhereQuery = () =>
-	({
-		request: { approved: true },
-		accountantApproval: { isNot: { approved: false } },
-		teacherApproval: { isNot: { approved: false } },
-		...purchaseStateCompletedWhereQuery(),
-	}) satisfies Prisma.PurchaseStateWhereInput
+export type PurchaseProcedure = keyof Omit<PurchaseState, "purchaseId">
+
+export const queryIsBelonging = async (partId: string, userId: string) =>
+	Boolean(
+		await prisma.part.findUnique({ where: { id: partId, students: { some: { id: userId } } }, select: { id: true } }),
+	)
+export const queryIsLeader = async (partId: string, userId: string) =>
+	Boolean(
+		await prisma.part.findUnique({ where: { id: partId, leaders: { some: { id: userId } } }, select: { id: true } }),
+	)
+export const queryIsAccountant = async (walletId: string, userId: string) =>
+	Boolean(
+		await prisma.student.findUnique({
+			where: { id: userId, wallets: { some: { id: walletId } } },
+			select: { id: true },
+		}),
+	)
+export const queryIsHomeroomTeacher = (walletId: string, teacherId: string) =>
+	prisma.student.findUnique({ where: { id: teacherId, wallets: { some: { id: walletId } } }, select: { id: true } })

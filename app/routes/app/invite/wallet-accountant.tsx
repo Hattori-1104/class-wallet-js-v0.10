@@ -4,16 +4,13 @@ import { z } from "zod"
 import { LimitedContainer, Section, SectionTitle } from "~/components/common/container"
 import { Note, Title } from "~/components/common/typography"
 import { Button } from "~/components/ui/button"
-import { prisma } from "~/services/repository.server"
+import { prisma, queryIsAccountant } from "~/services/repository.server"
 import { createErrorRedirect, createSuccessRedirect, requireSession, verifyStudent } from "~/services/session.server"
 import type { Route } from "./+types/wallet-accountant"
 
 const ActionSchema = z.object({
 	action: z.enum(["accept", "reject"]),
 })
-
-const queryIsAccountant = async (walletId: string, userId: string) =>
-	Boolean(await prisma.student.findUnique({ where: { id: userId, wallets: { some: { id: walletId } } }, select: { id: true } }))
 
 export const loader = async ({ request, params: { walletId } }: Route.LoaderArgs) => {
 	const session = await requireSession(request)
@@ -37,7 +34,9 @@ export default ({ loaderData: { wallet, isAccountant } }: Route.ComponentProps) 
 						<Title>{wallet.name}</Title>
 						<Note>
 							<span>担当教師：</span>
-							<span>{wallet.teachers.length > 0 ? wallet.teachers.map((teacher) => teacher.name).join(", ") : "未設定"}</span>
+							<span>
+								{wallet.teachers.length > 0 ? wallet.teachers.map((teacher) => teacher.name).join(", ") : "未設定"}
+							</span>
 						</Note>
 					</div>
 				</SectionTitle>
@@ -66,7 +65,11 @@ export const action = async ({ request, params: { walletId } }: Route.ActionArgs
 
 	if (action === "accept") {
 		const wallet = await prisma.wallet
-			.update({ where: { id: walletId }, data: { accountantStudents: { connect: { id: student.id } } }, select: { name: true } })
+			.update({
+				where: { id: walletId },
+				data: { accountantStudents: { connect: { id: student.id } } },
+				select: { name: true },
+			})
 			.catch(errorRedirect("ウォレットの参加に失敗しました。").catch())
 		return successRedirect(`${wallet.name}のHR会計として参加しました。`)
 	}
@@ -74,7 +77,11 @@ export const action = async ({ request, params: { walletId } }: Route.ActionArgs
 		const isAccountant = await queryIsAccountant(walletId, student.id)
 		if (isAccountant) {
 			const wallet = await prisma.wallet
-				.update({ where: { id: walletId }, data: { accountantStudents: { disconnect: { id: student.id } } }, select: { name: true } })
+				.update({
+					where: { id: walletId },
+					data: { accountantStudents: { disconnect: { id: student.id } } },
+					select: { name: true },
+				})
 				.catch(errorRedirect("ウォレットの辞任に失敗しました。").catch())
 			return successRedirect(`${wallet.name}のHR会計を辞任しました。`)
 		}

@@ -3,10 +3,18 @@ import { PrismaClient } from "@prisma/client"
 const prisma = new PrismaClient()
 
 async function main() {
-	await prisma.product.create({
+	await prisma.student.create({
 		data: {
-			name: "テスト商品",
-			price: 1000,
+			id: "dev-student",
+			name: "テスト学生",
+			email: "test@example.com",
+		},
+	})
+	await prisma.teacher.create({
+		data: {
+			id: "dev-teacher",
+			name: "テスト教師",
+			email: "test@example.com",
 		},
 	})
 	await prisma.event.create({

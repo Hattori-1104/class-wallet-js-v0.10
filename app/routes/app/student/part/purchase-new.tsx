@@ -424,12 +424,14 @@ export default ({ loaderData: { sharedProducts } }: Route.ComponentProps) => {
 								</Distant>
 							</LightBox>
 							<DialogFooter>
-								<Button variant="outline" className="grow" onClick={() => setSubmitDialogOpen(false)}>
-									キャンセル
-								</Button>
-								<Button variant="default" className="grow" onClick={handleSubmit}>
-									リクエストを送信
-								</Button>
+								<Aside>
+									<Button variant="outline" className="grow" onClick={() => setSubmitDialogOpen(false)}>
+										キャンセル
+									</Button>
+									<Button variant="default" className="grow" onClick={handleSubmit}>
+										リクエストを送信
+									</Button>
+								</Aside>
 							</DialogFooter>
 						</DialogContent>
 					</Dialog>
@@ -506,7 +508,7 @@ export const action = async ({ request, params: { partId } }: Route.ActionArgs) 
 				},
 				state: {
 					create: {
-						request: {
+						requests: {
 							create: {
 								approved: true,
 								by: {

@@ -78,30 +78,48 @@ model Purchase {
   partId String
   part   Part   @relation(fields: [partId], references: [id], onDelete: Cascade)
 
-  stateId String        @unique
-  state   PurchaseState @relation(fields: [stateId], references: [id], onDelete: Cascade)
+  state PurchaseState?
 
   @@index([partId])
 }
 
 // 状態管理
-model PurchaseState {
-  id       String    @id @default(uuid())
-  purchase Purchase?
+enum Approval {
+  Approved
+  Rejected
+  Pending
+}
 
-  request            PurchaseStateRequest?
-  accountantApproval PurchaseStateAccountantApproval?
-  teacherApproval    PurchaseStateTeacherApproval?
-  givenMoney         PurchaseStateGivenMoney?
-  usageReport        PurchaseStateUsageReport?
-  receiptSubmission  PurchaseStateReceiptSubmission?
-  fishingReturned    PurchaseStateFishingReturned?
+enum State {
+  Fulfilled
+  Pending
+}
+
+model PurchaseState {
+  purchaseId String   @id @default(uuid())
+  purchase   Purchase @relation(fields: [purchaseId], references: [id], onDelete: Cascade)
+
+  request            Approval @default(Pending)
+  accountantApproval Approval @default(Pending)
+  teacherApproval    Approval @default(Pending)
+  givenMoney         State    @default(Pending)
+  usageReport        State    @default(Pending)
+  receiptSubmission  State    @default(Pending)
+  changeReturn       State    @default(Pending)
+
+  requests            PurchaseStateRequest[]
+  accountantApprovals PurchaseStateAccountantApproval[]
+  teacherApprovals    PurchaseStateTeacherApproval[]
+  givenMoneys         PurchaseStateGivenMoney[]
+  usageReports        PurchaseStateUsageReport[]
+  receiptSubmissions  PurchaseStateReceiptSubmission[]
+  changeReturns       PurchaseStateChangeReturn[]
 }
 
 // リクエスト
 model PurchaseStateRequest {
   stateId  String        @id
-  state    PurchaseState @relation(fields: [stateId], references: [id], onDelete: Cascade)
+  state    PurchaseState @relation(fields: [stateId], references: [purchaseId], onDelete: Cascade)
   approved Boolean       @default(false)
   byId     String
   by       Student       @relation(name: "RequestedBy", fields: [byId], references: [id], onDelete: Cascade)
@@ -111,7 +129,7 @@ model PurchaseStateRequest {
 // 会計承認
 model PurchaseStateAccountantApproval {
   stateId  String        @id
-  state    PurchaseState @relation(fields: [stateId], references: [id], onDelete: Cascade)
+  state    PurchaseState @relation(fields: [stateId], references: [purchaseId], onDelete: Cascade)
   approved Boolean       @default(false)
   byId     String
   by       Student       @relation(name: "ApprovedBy", fields: [byId], references: [id], onDelete: Cascade)
@@ -121,7 +139,7 @@ model PurchaseStateAccountantApproval {
 // 教師承認
 model PurchaseStateTeacherApproval {
   stateId  String        @id
-  state    PurchaseState @relation(fields: [stateId], references: [id], onDelete: Cascade)
+  state    PurchaseState @relation(fields: [stateId], references: [purchaseId], onDelete: Cascade)
   approved Boolean       @default(false)
   byId     String
   by       Teacher       @relation(name: "ApprovedBy", fields: [byId], references: [id], onDelete: Cascade)
@@ -131,7 +149,7 @@ model PurchaseStateTeacherApproval {
 // お金の受け渡し
 model PurchaseStateGivenMoney {
   stateId String        @id
-  state   PurchaseState @relation(fields: [stateId], references: [id], onDelete: Cascade)
+  state   PurchaseState @relation(fields: [stateId], references: [purchaseId], onDelete: Cascade)
   amount  Int
   at      DateTime      @default(now())
 }
@@ -139,7 +157,7 @@ model PurchaseStateGivenMoney {
 // 使用額の報告
 model PurchaseStateUsageReport {
   stateId     String        @id
-  state       PurchaseState @relation(fields: [stateId], references: [id], onDelete: Cascade)
+  state       PurchaseState @relation(fields: [stateId], references: [purchaseId], onDelete: Cascade)
   actualUsage Int
   at          DateTime      @default(now())
 }
@@ -147,15 +165,15 @@ model PurchaseStateUsageReport {
 // レシート提出
 model PurchaseStateReceiptSubmission {
   stateId      String        @id
-  state        PurchaseState @relation(fields: [stateId], references: [id], onDelete: Cascade)
+  state        PurchaseState @relation(fields: [stateId], references: [purchaseId], onDelete: Cascade)
   receiptIndex Int
   at           DateTime      @default(now())
 }
 
-// おつり釣り返却
-model PurchaseStateFishingReturned {
+// おつり返却
+model PurchaseStateChangeReturn {
   stateId String        @id
-  state   PurchaseState @relation(fields: [stateId], references: [id], onDelete: Cascade)
+  state   PurchaseState @relation(fields: [stateId], references: [purchaseId], onDelete: Cascade)
   at      DateTime      @default(now())
 }
 

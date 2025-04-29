@@ -26,17 +26,17 @@ export default [
 					]),
 				]),
 			]),
-			...prefix("/teacher", [
-				layout("routes/app/teacher/layout.tsx", [index("routes/app/teacher/dashboard.tsx")]),
-				...prefix("wallet/:walletId", [
-					layout("routes/app/teacher/wallet/layout.tsx", [
-						index("routes/app/teacher/wallet/dashboard/index.tsx"),
-						route("member", "routes/app/teacher/wallet/member.tsx"),
-						route("purchase", "routes/app/teacher/wallet/purchase/index.tsx"),
-					]),
-					route("purchase", "routes/app/teacher/wallet/purchase/layout.tsx", [route(":purchaseId", "routes/app/teacher/wallet/purchase/detail/index.tsx")]),
-				]),
-			]),
+			// ...prefix("/teacher", [
+			// 	layout("routes/app/teacher/layout.tsx", [index("routes/app/teacher/dashboard.tsx")]),
+			// 	...prefix("wallet/:walletId", [
+			// 		layout("routes/app/teacher/wallet/layout.tsx", [
+			// 			index("routes/app/teacher/wallet/dashboard/index.tsx"),
+			// 			route("member", "routes/app/teacher/wallet/member.tsx"),
+			// 			route("purchase", "routes/app/teacher/wallet/purchase/index.tsx"),
+			// 		]),
+			// 		route("purchase", "routes/app/teacher/wallet/purchase/layout.tsx", [route(":purchaseId", "routes/app/teacher/wallet/purchase/detail/index.tsx")]),
+			// 	]),
+			// ]),
 			...prefix("/admin", [
 				layout("routes/app/admin/layout.tsx", [
 					index("routes/app/admin/index.tsx"),

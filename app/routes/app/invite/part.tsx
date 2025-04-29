@@ -7,19 +7,13 @@ import { LimitedContainer } from "~/components/common/container"
 import { Note, Title } from "~/components/common/typography"
 import { Button } from "~/components/ui/button"
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "~/components/ui/collapsible"
-import { prisma } from "~/services/repository.server"
+import { prisma, queryIsBelonging, queryIsLeader } from "~/services/repository.server"
 import { createErrorRedirect, createSuccessRedirect, requireSession, verifyStudent } from "~/services/session.server"
 import type { Route } from "./+types/part"
 
 const ActionSchema = z.object({
 	action: z.enum(["accept", "reject", "leave", "leader-accept", "leader-leave"]),
 })
-
-const queryIsBelonging = async (partId: string, userId: string) =>
-	Boolean(await prisma.part.findUnique({ where: { id: partId, students: { some: { id: userId } } }, select: { id: true } }))
-
-const queryIsLeader = async (partId: string, userId: string) =>
-	Boolean(await prisma.part.findUnique({ where: { id: partId, leaders: { some: { id: userId } } }, select: { id: true } }))
 
 export const loader = async ({ request, params: { partId } }: Route.LoaderArgs) => {
 	const session = await requireSession(request)
@@ -28,7 +22,12 @@ export const loader = async ({ request, params: { partId } }: Route.LoaderArgs) 
 	const part = await prisma.part
 		.findUniqueOrThrow({
 			where: { id: partId },
-			select: { name: true, wallet: { select: { name: true, teachers: { select: { name: true } }, accountantStudents: { select: { name: true } } } } },
+			select: {
+				name: true,
+				wallet: {
+					select: { name: true, teachers: { select: { name: true } }, accountantStudents: { select: { name: true } } },
+				},
+			},
 		})
 		.catch(errorRedirect("パートが見つかりません。").catch())
 	const isBelonging = await queryIsBelonging(partId, student.id)
@@ -48,12 +47,18 @@ export default ({ loaderData: { part, isBelonging, isLeader } }: Route.Component
 						</Title>
 						<Note>
 							<span>担当教師：</span>
-							<span>{part.wallet.teachers.length > 0 ? part.wallet.teachers.map((teacher) => teacher.name).join(", ") : "未設定"}</span>
+							<span>
+								{part.wallet.teachers.length > 0
+									? part.wallet.teachers.map((teacher) => teacher.name).join(", ")
+									: "未設定"}
+							</span>
 						</Note>
 						<Note>
 							<span>会計：</span>
 							<span>
-								{part.wallet.accountantStudents.length > 0 ? part.wallet.accountantStudents.map((accountant) => accountant.name).join(", ") : "未設定"}
+								{part.wallet.accountantStudents.length > 0
+									? part.wallet.accountantStudents.map((accountant) => accountant.name).join(", ")
+									: "未設定"}
 							</span>
 						</Note>
 					</div>
@@ -109,7 +114,11 @@ export const action = async ({ request, params: { partId } }: Route.ActionArgs) 
 
 	if (action === "accept") {
 		const part = await prisma.part
-			.update({ where: { id: partId }, data: { students: { connect: { id: student.id } } }, select: { id: true, name: true } })
+			.update({
+				where: { id: partId },
+				data: { students: { connect: { id: student.id } } },
+				select: { id: true, name: true },
+			})
 			.catch(errorRedirect("パートの参加に失敗しました。").catch())
 		return successRedirect(`${part.name}に参加しました。`, `/app/student/part/${part.id}`)
 	}

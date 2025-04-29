@@ -8,7 +8,7 @@ import { AccountantBadge, TeacherBadge } from "~/components/utility/manager-badg
 import { LeaderBadge } from "~/components/utility/manager-badge"
 import { NotificationDot } from "~/components/utility/notification-dot"
 import { UserItem } from "~/components/utility/user"
-import { partWithUserWhereQuery, prisma, purchaseStateInProgressWhereQuery } from "~/services/repository.server"
+import { partWithUserWhereQuery, prisma, purchaseStateAllSelectQuery } from "~/services/repository.server"
 import { requireSession } from "~/services/session.server"
 import { verifyStudent } from "~/services/session.server"
 import { computePlannedUsage } from "~/utilities/compute"
@@ -60,7 +60,7 @@ export const loader = async ({ request, params: { partId } }: Route.LoaderArgs) 
 		prisma.purchase.findMany({
 			where: {
 				part: partWithUserWhereQuery(partId, student.id),
-				state: purchaseStateInProgressWhereQuery(),
+				state: { isNot: null },
 			},
 			select: {
 				id: true,
@@ -81,16 +81,7 @@ export const loader = async ({ request, params: { partId } }: Route.LoaderArgs) 
 				},
 				state: {
 					select: {
-						request: {
-							select: {
-								by: {
-									select: {
-										id: true,
-										name: true,
-									},
-								},
-							},
-						},
+						...purchaseStateAllSelectQuery(),
 					},
 				},
 			},
@@ -164,7 +155,7 @@ export default ({ loaderData: { part, purchasesInProgress } }: Route.ComponentPr
 									</Distant>
 									{/* 保留！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！ */}
 									<Distant>
-										<span>{purchase.state.request?.by.name}がリクエスト</span>
+										<span>{purchase.state?.requests[0]?.by.name}がリクエスト</span>
 										<span className="italic">{formatMoney(computePlannedUsage(purchase))}</span>
 									</Distant>
 								</LightBox>

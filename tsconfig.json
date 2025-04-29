@@ -16,6 +16,7 @@
     "baseUrl": ".",
     "paths": {
       "~/*": ["./app/*"],
+      "prisma/*": ["./prisma/*"]
     },
     "esModuleInterop": true,
     "verbatimModuleSyntax": true,

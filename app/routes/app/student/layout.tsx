@@ -8,7 +8,7 @@ import type { Route } from "./+types/layout"
 
 export const loader = async ({ request }: Route.LoaderArgs) => {
 	const session = await requireSession(request)
-	const student = await verifyStudent(session, true)
+	const student = await verifyStudent(session)
 
 	return { student }
 }
