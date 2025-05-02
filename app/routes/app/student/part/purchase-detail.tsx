@@ -1,6 +1,7 @@
 import { cva } from "class-variance-authority"
 import { Ban, Check, CircleAlert, Flag, X } from "lucide-react"
 import { memo, useMemo } from "react"
+import { Link } from "react-router"
 import { LightBox } from "~/components/common/box"
 import { Section, SectionContent, SectionTitle } from "~/components/common/container"
 import { Aside } from "~/components/common/placement"
@@ -8,13 +9,14 @@ import { Title } from "~/components/common/typography"
 import { cn } from "~/lib/utils"
 import {
 	type PurchaseProcedure,
+	partPersonInChargeSelectQuery,
 	partWithUserWhereQuery,
 	prisma,
-	purchaseStateAllSelectQuery,
-	queryIsAccountant,
-	queryIsLeader,
+	purchaseItemSelectQuery,
+	purchaseStateSelectQuery,
 } from "~/services/repository.server"
 import { createErrorRedirect, requireSession, verifyStudent } from "~/services/session.server"
+import { formatMoney } from "~/utilities/display"
 import type { Route } from "./+types/purchase-detail"
 
 export const loader = async ({ params: { partId, purchaseId }, request }: Route.LoaderArgs) => {
@@ -26,48 +28,28 @@ export const loader = async ({ params: { partId, purchaseId }, request }: Route.
 		.findUniqueOrThrow({
 			where: {
 				id: purchaseId,
-				part: {
-					...partWithUserWhereQuery(partId, student.id),
-				},
-				state: { isNot: null },
+				part: partWithUserWhereQuery(partId, student.id),
 			},
-			select: {
-				id: true,
-				label: true,
-				createdAt: true,
-				updatedAt: true,
-				plannedUsage: true,
-				items: {
-					select: {
-						id: true,
-						quantity: true,
-						product: {
-							select: {
-								id: true,
-								name: true,
-								price: true,
-							},
-						},
-					},
-				},
+			include: {
 				state: {
-					select: {
-						...purchaseStateAllSelectQuery(),
-					},
+					select: purchaseStateSelectQuery(),
+				},
+				items: {
+					select: purchaseItemSelectQuery(),
+				},
+				part: {
+					select: partPersonInChargeSelectQuery(),
 				},
 			},
 		})
 		.catch(errorRedirect("購入情報が見つかりません").catch())
-	const isLeader = await queryIsLeader(partId, student.id)
-	const isAccountant = await queryIsAccountant(partId, student.id)
-	purchase.state
-	return { purchase, isLeader, isAccountant }
+	return { purchase }
 }
 
 type State = "fulfilled" | "failed" | "pending"
 type AdditionalState = "disabled" | "skipped" | "warning"
 
-export default ({ loaderData: { purchase, isLeader, isAccountant } }: Route.ComponentProps) => {
+export default ({ loaderData: { purchase } }: Route.ComponentProps) => {
 	// biome-ignore lint/complexity/noExcessiveCognitiveComplexity: 状態の条件分岐
 	const { currentState, instructions, recommended } = useMemo(() => {
 		const currentState: Record<PurchaseProcedure, { baseState: State } & { [key in AdditionalState]?: boolean }> = {
@@ -80,7 +62,7 @@ export default ({ loaderData: { purchase, isLeader, isAccountant } }: Route.Comp
 			changeReturn: { baseState: "pending", disabled: true },
 		}
 		let recommended: PurchaseProcedure | null = null
-		const instructions: Record<PurchaseProcedure, { default: string; overridden?: string }> = {
+		const instructions: Record<PurchaseProcedure, { default: string; override?: string }> = {
 			request: { default: "購入リクエスト" },
 			accountantApproval: { default: "会計承認" },
 			teacherApproval: { default: "教師承認" },
@@ -149,6 +131,7 @@ export default ({ loaderData: { purchase, isLeader, isAccountant } }: Route.Comp
 				}
 				if (givenMoneyState) {
 					currentState.givenMoney.baseState = "fulfilled"
+					instructions.givenMoney.override = `支給：${formatMoney(givenMoneyState.amount)}`
 				}
 			}
 			if (!givenMoneyState && usageReportState) {
@@ -160,6 +143,7 @@ export default ({ loaderData: { purchase, isLeader, isAccountant } }: Route.Comp
 			currentState.usageReport.disabled = false
 			if (usageReportState) {
 				currentState.usageReport.baseState = "fulfilled"
+				instructions.usageReport.override = `購入：${formatMoney(usageReportState.actualUsage)}`
 			}
 			if (accountantApprovalState?.approved && teacherApprovalState?.approved) {
 				if (givenMoneyState) {
@@ -171,25 +155,43 @@ export default ({ loaderData: { purchase, isLeader, isAccountant } }: Route.Comp
 		}
 		// お釣りの返却（差額の是正）
 		if (requestState?.approved) {
-			if (usageReportState) {
-				currentState.changeReturn.disabled = false
-				if (changeReturnState) {
-					currentState.changeReturn.baseState = "fulfilled"
-				} else {
-					recommended = "changeReturn"
+			if (teacherApprovalState?.approved && accountantApprovalState?.approved) {
+				if (usageReportState) {
+					currentState.changeReturn.disabled = false
+					const compensation = (givenMoneyState?.amount ?? 0) - usageReportState.actualUsage
+					if (compensation === 0) {
+						currentState.changeReturn.skipped = true
+					}
+					if (compensation > 0) {
+						instructions.changeReturn.override = `返却：${formatMoney(compensation)}`
+					}
+					if (compensation < 0) {
+						instructions.changeReturn.override = `補填：${formatMoney(-compensation)}`
+					}
+					if (changeReturnState) {
+						currentState.changeReturn.baseState = "fulfilled"
+					} else {
+						recommended = "changeReturn"
+					}
 				}
+			} else {
+				currentState.changeReturn.skipped = true
 			}
 		}
 		// レシート提出
 		if (requestState?.approved) {
-			if (usageReportState) {
-				currentState.receiptSubmission.disabled = false
-				if (receiptSubmissionState) {
-					currentState.receiptSubmission.baseState = "fulfilled"
+			if (accountantApprovalState?.approved && teacherApprovalState?.approved) {
+				if (usageReportState) {
+					currentState.receiptSubmission.disabled = false
+					if (receiptSubmissionState) {
+						currentState.receiptSubmission.baseState = "fulfilled"
+					}
+					if (changeReturnState) {
+						recommended = "receiptSubmission"
+					}
 				}
-				if (changeReturnState) {
-					recommended = "receiptSubmission"
-				}
+			} else {
+				currentState.receiptSubmission.skipped = true
 			}
 		}
 
@@ -199,7 +201,8 @@ export default ({ loaderData: { purchase, isLeader, isAccountant } }: Route.Comp
 	const StateBoxFactory = memo(({ name, className }: { name: PurchaseProcedure; className?: string }) => {
 		return (
 			<StateBox
-				label={instructions[name].overridden ?? instructions[name].default}
+				link={name}
+				label={instructions[name].override ?? instructions[name].default}
 				state={currentState[name]}
 				recommended={recommended === name}
 				className={className}
@@ -226,7 +229,9 @@ export default ({ loaderData: { purchase, isLeader, isAccountant } }: Route.Comp
 					<Aside gap="sm">
 						<StateBoxFactory name="usageReport" />
 					</Aside>
-					<div className="font-bold">完了</div>
+					{currentState.changeReturn.skipped !== true && currentState.receiptSubmission.skipped !== true && (
+						<div className="font-bold">完了</div>
+					)}
 					<Aside gap="sm">
 						<StateBoxFactory name="changeReturn" />
 						<StateBoxFactory name="receiptSubmission" />
@@ -238,11 +243,13 @@ export default ({ loaderData: { purchase, isLeader, isAccountant } }: Route.Comp
 }
 
 function StateBox({
+	link,
 	label,
 	state,
 	recommended,
 	className,
 }: {
+	link: string
 	label: string
 	state: { baseState: State } & { [key in AdditionalState]?: boolean }
 	recommended?: boolean
@@ -269,11 +276,16 @@ function StateBox({
 		if (state.baseState === "pending" && recommended) return <Flag size={16} />
 	})
 	return (
-		<LightBox className={cn(stateVariants({ baseState: state.baseState, disabled: state.disabled }), className)}>
-			<Aside gap="xs">
-				<Icon />
-				<div className="text-center">{label}</div>
-			</Aside>
+		<LightBox
+			asChild
+			className={cn(stateVariants({ baseState: state.baseState, disabled: state.disabled }), className)}
+		>
+			<Link to={link}>
+				<Aside gap="xs">
+					<Icon />
+					<div className="text-center">{label}</div>
+				</Aside>
+			</Link>
 		</LightBox>
 	)
 }
