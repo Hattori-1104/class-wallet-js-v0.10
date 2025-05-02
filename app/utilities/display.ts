@@ -1,5 +1,5 @@
 export const formatMoney = (money: number) =>
-	money.toLocaleString("ja-JP", { style: "currency", currency: "JPY" }).replace("￥", "¥ ")
+	money.toLocaleString("ja-JP", { style: "currency", currency: "JPY" }).replace("-￥", "¥ -").replace("￥", "¥ ")
 
 export const formatDiffDate = (date: Date, now: ReturnType<typeof Date.now>) => {
 	// 秒数

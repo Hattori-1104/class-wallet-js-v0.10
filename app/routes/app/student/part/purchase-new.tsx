@@ -5,6 +5,7 @@ import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, Command
 
 import { getFormProps, getInputProps, useForm } from "@conform-to/react"
 import { parseWithZod } from "@conform-to/zod"
+import type { Prisma } from "@prisma/client"
 import { Check, Minus, PlaneLanding, Plus } from "lucide-react"
 import { useMemo, useState } from "react"
 import { Form, Link, useFetcher, useNavigate, useSubmit } from "react-router"
@@ -31,7 +32,6 @@ import { createErrorRedirect, createSuccessRedirect, requireSession, verifyStude
 import { getSwitchProps } from "~/utilities/conform-helper"
 import { formatMoney } from "~/utilities/display"
 import type { Route } from "./+types/purchase-new"
-
 const selectedProductSchema = z.object({
 	id: z.string(),
 	quantity: z.number().min(1),
@@ -40,7 +40,7 @@ const selectedProductSchema = z.object({
 const createProductSchema = z.object({
 	name: z.string(),
 	price: z.number().min(0),
-	quantity: z.number().min(1),
+	quantity: z.number().min(1).default(1),
 	isShared: z.boolean().default(false),
 })
 type CreateProduct = z.infer<typeof createProductSchema>
@@ -306,6 +306,9 @@ export default ({ loaderData: { sharedProducts } }: Route.ComponentProps) => {
 									},
 									shouldRevalidate: "onBlur",
 									shouldValidate: "onInput",
+									defaultValue: {
+										quantity: 1,
+									},
 								})
 								return (
 									<Form {...getFormProps(form)}>
@@ -317,7 +320,7 @@ export default ({ loaderData: { sharedProducts } }: Route.ComponentProps) => {
 												<Input {...getInputProps(fields.price, { type: "number" })} />
 											</FormField>
 											<FormField label="数量" name={fields.quantity.id} error={fields.quantity.errors}>
-												<Input {...getInputProps(fields.quantity, { type: "number" })} />
+												<Input {...getInputProps(fields.quantity, { type: "number" })} placeholder="1" />
 											</FormField>
 											<FormField name={fields.isShared.id} error={fields.isShared.errors}>
 												<Distant>
@@ -483,7 +486,7 @@ function PurchaseItem({
 export const action = async ({ request, params: { partId } }: Route.ActionArgs) => {
 	const session = await requireSession(request)
 	const student = await verifyStudent(session)
-	const errorRedirect = createErrorRedirect(session, "/app/student/part")
+	const errorRedirect = createErrorRedirect(session, `app/student/part/${partId}`)
 	const part = await prisma.part
 		.findUniqueOrThrow({
 			where: {
@@ -522,23 +525,29 @@ export const action = async ({ request, params: { partId } }: Route.ActionArgs) 
 				},
 				items: {
 					create: [
-						...result.selectedProducts.map((product) => ({
-							product: {
-								connect: {
-									id: product.id,
-								},
-							},
-						})),
-						...result.createdProducts.map((product) => ({
-							product: {
-								create: {
-									name: product.name,
-									price: product.price,
-									isShared: product.isShared,
-								},
-								quantity: product.quantity,
-							},
-						})),
+						...result.selectedProducts.map(
+							(product) =>
+								({
+									product: {
+										connect: {
+											id: product.id,
+										},
+									},
+								}) satisfies Prisma.PurchaseItemCreateWithoutPurchaseInput,
+						),
+						...result.createdProducts.map(
+							(product) =>
+								({
+									product: {
+										create: {
+											name: product.name,
+											price: product.price,
+											isShared: product.isShared,
+										},
+									},
+									quantity: product.quantity,
+								}) satisfies Prisma.PurchaseItemCreateWithoutPurchaseInput,
+						),
 					],
 				},
 			},

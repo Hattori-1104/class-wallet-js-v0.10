@@ -1,0 +1,13 @@
+---
+description: 
+globs: 
+alwaysApply: false
+---
+---
+description: Apply this rule to the entire repository
+globs: 
+alwaysApply: true
+---
+このプロジェクトに関する情報を教えます。
+
+ - 使用しているフレームワークはReact Router v7です。

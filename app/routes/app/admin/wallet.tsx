@@ -1,6 +1,7 @@
 import { Link2, Plus, Trash2 } from "lucide-react"
 import { Link, useFetcher } from "react-router"
 import { toast } from "sonner"
+import { LightBox } from "~/components/common/box"
 import { MainContainer, Section, SectionTitle } from "~/components/common/container"
 import { Title } from "~/components/common/typography"
 import { Button } from "~/components/ui/button"
@@ -41,7 +42,7 @@ export default ({ loaderData }: Route.ComponentProps) => {
 	}
 	const { wallets } = loaderData
 	return (
-		<MainContainer>
+		<>
 			<Section>
 				<SectionTitle>
 					<Title>ウォレット</Title>
@@ -56,7 +57,7 @@ export default ({ loaderData }: Route.ComponentProps) => {
 				</Button>
 				<div className="space-y-6">
 					{wallets.map((wallet) => (
-						<div key={wallet.id} className="border rounded-xl p-4 space-y-4">
+						<LightBox key={wallet.id} className="p-4 space-y-4">
 							<div className="flex flex-row justify-between">
 								<div>
 									<Title>{wallet.name}</Title>
@@ -65,7 +66,10 @@ export default ({ loaderData }: Route.ComponentProps) => {
 
 								<div className="flex flex-row gap-2">
 									{wallet.parts.length === 0 && (
-										<Button variant={"destructive"} onClick={() => fetcher.submit({ id: wallet.id }, { method: "POST" })}>
+										<Button
+											variant={"destructive"}
+											onClick={() => fetcher.submit({ id: wallet.id }, { method: "POST" })}
+										>
 											<Trash2 />
 											<span>ウォレットを削除</span>
 										</Button>
@@ -84,11 +88,11 @@ export default ({ loaderData }: Route.ComponentProps) => {
 									</div>
 								))}
 							</div>
-						</div>
+						</LightBox>
 					))}
 				</div>
 			</div>
-		</MainContainer>
+		</>
 	)
 }
 
@@ -107,6 +111,6 @@ export const action = async ({ request }: Route.ActionArgs) => {
 			where: { id },
 		})
 		.catch(errorRedirect)
-	const successRedirect = createSuccessRedirect(session, "/app/admin/wallets")
+	const successRedirect = createSuccessRedirect(session, "/app/admin/wallet")
 	return successRedirect("ウォレットを削除しました。")
 }

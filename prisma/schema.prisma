@@ -78,7 +78,8 @@ model Purchase {
   partId String
   part   Part   @relation(fields: [partId], references: [id], onDelete: Cascade)
 
-  state PurchaseState?
+  stateId String        @unique
+  state   PurchaseState @relation(fields: [stateId], references: [id], onDelete: Cascade)
 
   @@index([partId])
 }
@@ -96,8 +97,10 @@ enum State {
 }
 
 model PurchaseState {
-  purchaseId String   @id @default(uuid())
-  purchase   Purchase @relation(fields: [purchaseId], references: [id], onDelete: Cascade)
+  id       String    @id @default(uuid())
+  purchase Purchase?
+
+  updatedAt DateTime @default(now()) @updatedAt
 
   request            Approval @default(Pending)
   accountantApproval Approval @default(Pending)
@@ -118,8 +121,9 @@ model PurchaseState {
 
 // リクエスト
 model PurchaseStateRequest {
-  stateId  String        @id
-  state    PurchaseState @relation(fields: [stateId], references: [purchaseId], onDelete: Cascade)
+  id       String        @id @default(uuid())
+  stateId  String
+  state    PurchaseState @relation(fields: [stateId], references: [id], onDelete: Cascade)
   approved Boolean       @default(false)
   byId     String
   by       Student       @relation(name: "RequestedBy", fields: [byId], references: [id], onDelete: Cascade)
@@ -128,8 +132,9 @@ model PurchaseStateRequest {
 
 // 会計承認
 model PurchaseStateAccountantApproval {
-  stateId  String        @id
-  state    PurchaseState @relation(fields: [stateId], references: [purchaseId], onDelete: Cascade)
+  id       String        @id @default(uuid())
+  stateId  String
+  state    PurchaseState @relation(fields: [stateId], references: [id], onDelete: Cascade)
   approved Boolean       @default(false)
   byId     String
   by       Student       @relation(name: "ApprovedBy", fields: [byId], references: [id], onDelete: Cascade)
@@ -138,8 +143,9 @@ model PurchaseStateAccountantApproval {
 
 // 教師承認
 model PurchaseStateTeacherApproval {
-  stateId  String        @id
-  state    PurchaseState @relation(fields: [stateId], references: [purchaseId], onDelete: Cascade)
+  id       String        @id @default(uuid())
+  stateId  String
+  state    PurchaseState @relation(fields: [stateId], references: [id], onDelete: Cascade)
   approved Boolean       @default(false)
   byId     String
   by       Teacher       @relation(name: "ApprovedBy", fields: [byId], references: [id], onDelete: Cascade)
@@ -148,32 +154,36 @@ model PurchaseStateTeacherApproval {
 
 // お金の受け渡し
 model PurchaseStateGivenMoney {
-  stateId String        @id
-  state   PurchaseState @relation(fields: [stateId], references: [purchaseId], onDelete: Cascade)
+  id      String        @id @default(uuid())
+  stateId String
+  state   PurchaseState @relation(fields: [stateId], references: [id], onDelete: Cascade)
   amount  Int
   at      DateTime      @default(now())
 }
 
 // 使用額の報告
 model PurchaseStateUsageReport {
-  stateId     String        @id
-  state       PurchaseState @relation(fields: [stateId], references: [purchaseId], onDelete: Cascade)
+  id          String        @id @default(uuid())
+  stateId     String
+  state       PurchaseState @relation(fields: [stateId], references: [id], onDelete: Cascade)
   actualUsage Int
   at          DateTime      @default(now())
 }
 
 // レシート提出
 model PurchaseStateReceiptSubmission {
-  stateId      String        @id
-  state        PurchaseState @relation(fields: [stateId], references: [purchaseId], onDelete: Cascade)
+  id           String        @id @default(uuid())
+  stateId      String
+  state        PurchaseState @relation(fields: [stateId], references: [id], onDelete: Cascade)
   receiptIndex Int
   at           DateTime      @default(now())
 }
 
 // おつり返却
 model PurchaseStateChangeReturn {
-  stateId String        @id
-  state   PurchaseState @relation(fields: [stateId], references: [purchaseId], onDelete: Cascade)
+  id      String        @id @default(uuid())
+  stateId String
+  state   PurchaseState @relation(fields: [stateId], references: [id], onDelete: Cascade)
   at      DateTime      @default(now())
 }
 

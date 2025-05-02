@@ -6,7 +6,7 @@ import { MainContainer, Section, SectionTitle } from "~/components/common/contai
 import { Title } from "~/components/common/typography"
 import { Button } from "~/components/ui/button"
 import { Input } from "~/components/ui/input"
-import { Label } from "~/components/ui/label"
+import { FormBody, FormField } from "~/components/utility/form"
 import { prisma } from "~/services/repository.server"
 import { createErrorRedirect, createSuccessRedirect, requireSession, verifyAdmin } from "~/services/session.server"
 import type { Route } from "./+types/wallet-create"
@@ -14,6 +14,7 @@ import type { Route } from "./+types/wallet-create"
 export const loader = async ({ request }: Route.LoaderArgs) => {
 	const session = await requireSession(request)
 	await verifyAdmin(session)
+	return null
 }
 
 const NewWalletSchema = z.object({
@@ -31,28 +32,22 @@ export default ({ actionData }: Route.ComponentProps) => {
 		shouldValidate: "onInput",
 	})
 	return (
-		<MainContainer>
-			<Section>
-				<SectionTitle>
-					<Title>ウォレット作成</Title>
-				</SectionTitle>
-				<Form method="post" {...getFormProps(form)}>
-					<div className="space-y-6">
-						<div className="space-y-1">
-							<Label htmlFor={fields.name.id}>ウォレット名</Label>
-							<Input {...getInputProps(fields.name, { type: "text" })} />
-							<div className="text-red-500 text-sm">{fields.name.errors?.join(", ")}</div>
-						</div>
-						<div className="space-y-1">
-							<Label htmlFor={fields.budget.id}>予算</Label>
-							<Input {...getInputProps(fields.budget, { type: "number" })} />
-							<div className="text-red-500 text-sm">{fields.budget.errors?.join(", ")}</div>
-						</div>
-						<Button type="submit">作成</Button>
-					</div>
-				</Form>
-			</Section>
-		</MainContainer>
+		<Section>
+			<SectionTitle>
+				<Title>ウォレット作成</Title>
+			</SectionTitle>
+			<Form method="post" {...getFormProps(form)}>
+				<FormBody>
+					<FormField label="ウォレット名" name={fields.name.id} error={fields.name.errors}>
+						<Input {...getInputProps(fields.name, { type: "text" })} />
+					</FormField>
+					<FormField label="予算" name={fields.budget.id} error={fields.budget.errors}>
+						<Input {...getInputProps(fields.budget, { type: "number" })} />
+					</FormField>
+					<Button type="submit">作成</Button>
+				</FormBody>
+			</Form>
+		</Section>
 	)
 }
 
@@ -62,12 +57,13 @@ export const action = async ({ request }: Route.ActionArgs) => {
 	const { name, budget } = result.value
 	const session = await requireSession(request)
 	const errorRedirect = createErrorRedirect(session, "/app/admin/wallet/create")
+	const EVENT_ID = process.env.EVENT_ID ?? "test"
 	await prisma.wallet
 		.create({
 			data: {
 				event: {
 					connect: {
-						id: "nishikosai",
+						id: EVENT_ID,
 					},
 				},
 				name,

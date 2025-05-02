@@ -1,4 +1,5 @@
 import { type Prisma, PrismaClient, type PurchaseState } from "@prisma/client"
+import _ from "lodash"
 
 export const prisma = new PrismaClient().$extends({})
 
@@ -11,7 +12,40 @@ export const partWithUserWhereQuery = (partId: string, userId: string) =>
 			},
 		},
 	}) satisfies Prisma.PartWhereInput
-
+export const partWithPurchaseWhereQuery = (partId: string, purchaseId: string) =>
+	({
+		id: partId,
+		purchases: {
+			some: {
+				id: purchaseId,
+			},
+		},
+	}) satisfies Prisma.PartWhereInput
+export const partPersonInChargeSelectQuery = (query: Prisma.PartSelect = {}) =>
+	_.merge<Prisma.PartSelect, Prisma.PartSelect>(query, {
+		leaders: {
+			select: {
+				id: true,
+				name: true,
+			},
+		},
+		wallet: {
+			select: {
+				accountantStudents: {
+					select: {
+						id: true,
+						name: true,
+					},
+				},
+				teachers: {
+					select: {
+						id: true,
+						name: true,
+					},
+				},
+			},
+		},
+	})
 export const walletWithAccountantWhereQuery = (walletId: string, userId: string) =>
 	({
 		id: walletId,
@@ -22,7 +56,7 @@ export const walletWithAccountantWhereQuery = (walletId: string, userId: string)
 		},
 	}) satisfies Prisma.WalletWhereInput
 
-export const purchaseStateAllSelectQuery = () =>
+export const purchaseStateSelectQuery = () =>
 	({
 		requests: {
 			orderBy: {
@@ -102,8 +136,20 @@ export const purchaseStateAllSelectQuery = () =>
 			},
 		},
 	}) satisfies Prisma.PurchaseStateSelect
+export const purchaseItemSelectQuery = () =>
+	({
+		id: true,
+		quantity: true,
+		product: {
+			select: {
+				id: true,
+				name: true,
+				price: true,
+			},
+		},
+	}) satisfies Prisma.PurchaseItemSelect
 
-export type PurchaseProcedure = keyof Omit<PurchaseState, "purchaseId">
+export type PurchaseProcedure = keyof Omit<PurchaseState, "id">
 
 export const queryIsBelonging = async (partId: string, userId: string) =>
 	Boolean(

@@ -12,15 +12,13 @@ export const loader = async ({ request }: Route.LoaderArgs) => {
 
 export default () => {
 	return (
-		<MainContainer>
-			<Section>
-				<SectionTitle>
-					<Title>管理者ページ</Title>
-				</SectionTitle>
-				<Button asChild>
-					<Link to="/app/admin/wallet">ウォレット・予算作成</Link>
-				</Button>
-			</Section>
-		</MainContainer>
+		<Section>
+			<SectionTitle>
+				<Title>管理者ページ</Title>
+			</SectionTitle>
+			<Button asChild>
+				<Link to="/app/admin/wallet">ウォレット・予算作成</Link>
+			</Button>
+		</Section>
 	)
 }

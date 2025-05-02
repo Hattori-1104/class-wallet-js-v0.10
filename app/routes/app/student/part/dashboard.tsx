@@ -8,7 +8,13 @@ import { AccountantBadge, TeacherBadge } from "~/components/utility/manager-badg
 import { LeaderBadge } from "~/components/utility/manager-badge"
 import { NotificationDot } from "~/components/utility/notification-dot"
 import { UserItem } from "~/components/utility/user"
-import { partWithUserWhereQuery, prisma, purchaseStateAllSelectQuery } from "~/services/repository.server"
+import {
+	partPersonInChargeSelectQuery,
+	partWithUserWhereQuery,
+	prisma,
+	purchaseItemSelectQuery,
+	purchaseStateSelectQuery,
+} from "~/services/repository.server"
 import { requireSession } from "~/services/session.server"
 import { verifyStudent } from "~/services/session.server"
 import { computePlannedUsage } from "~/utilities/compute"
@@ -23,66 +29,37 @@ export const loader = async ({ request, params: { partId } }: Route.LoaderArgs) 
 			where: {
 				...partWithUserWhereQuery(partId, student.id),
 			},
-			select: {
-				id: true,
-				name: true,
-				leaders: {
-					select: {
-						id: true,
-						name: true,
-					},
-				},
+			include: {
 				students: {
 					select: {
 						id: true,
 						name: true,
 					},
 				},
-				wallet: {
-					select: {
-						name: true,
-						accountantStudents: {
-							select: {
-								id: true,
-								name: true,
-							},
-						},
-						teachers: {
-							select: {
-								id: true,
-								name: true,
-							},
+				...partPersonInChargeSelectQuery({
+					wallet: {
+						select: {
+							name: true,
 						},
 					},
-				},
+				}),
 			},
 		}),
 		prisma.purchase.findMany({
 			where: {
 				part: partWithUserWhereQuery(partId, student.id),
-				state: { isNot: null },
 			},
-			select: {
-				id: true,
-				label: true,
-				updatedAt: true,
+			include: {
 				items: {
-					select: {
-						id: true,
-						quantity: true,
-						product: {
-							select: {
-								id: true,
-								name: true,
-								price: true,
-							},
-						},
-					},
+					select: purchaseItemSelectQuery(),
 				},
 				state: {
-					select: {
-						...purchaseStateAllSelectQuery(),
-					},
+					select: purchaseStateSelectQuery(),
+				},
+			},
+			orderBy: {
+				state: {
+					updatedAt: "desc",
 				},
 			},
 		}),
