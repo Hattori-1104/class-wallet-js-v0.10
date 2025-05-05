@@ -72,13 +72,13 @@ export default ({ loaderData: { purchase } }: Route.ComponentProps) => {
 			receiptSubmission: { default: "レシート提出" },
 		}
 		// メインロジック
-		const requestState = purchase.state?.requests?.[0]
-		const accountantApprovalState = purchase.state?.accountantApprovals?.[0]
-		const teacherApprovalState = purchase.state?.teacherApprovals?.[0]
-		const givenMoneyState = purchase.state?.givenMoneys?.[0]
-		const usageReportState = purchase.state?.usageReports?.[0]
-		const changeReturnState = purchase.state?.changeReturns?.[0]
-		const receiptSubmissionState = purchase.state?.receiptSubmissions?.[0]
+		const requestState = purchase.state?.request
+		const accountantApprovalState = purchase.state?.accountantApproval
+		const teacherApprovalState = purchase.state?.teacherApproval
+		const givenMoneyState = purchase.state?.givenMoney
+		const usageReportState = purchase.state?.usageReport
+		const changeReturnState = purchase.state?.changeReturn
+		const receiptSubmissionState = purchase.state?.receiptSubmission
 
 		// リクエスト
 		if (requestState) {
@@ -101,9 +101,6 @@ export default ({ loaderData: { purchase } }: Route.ComponentProps) => {
 			if (teacherApprovalState?.approved !== false) {
 				recommended = "accountantApproval"
 			}
-		} else {
-			currentState.accountantApproval.disabled = false
-			currentState.accountantApproval.baseState = "failed"
 		}
 		// 教師承認
 		if (requestState?.approved) {
@@ -118,9 +115,6 @@ export default ({ loaderData: { purchase } }: Route.ComponentProps) => {
 			if (accountantApprovalState?.approved) {
 				recommended = "teacherApproval"
 			}
-		} else {
-			currentState.teacherApproval.disabled = false
-			currentState.teacherApproval.baseState = "failed"
 		}
 		// 現金受け取り
 		if (requestState?.approved) {

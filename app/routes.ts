@@ -12,12 +12,14 @@ export default [
 					layout("routes/app/student/part/layout.tsx", [
 						index("routes/app/student/part/dashboard.tsx"),
 						route("member", "routes/app/student/part/member.tsx"),
-						route("purchase", "routes/app/student/part/purchase.tsx"),
+						route("purchase", "routes/app/student/part/purchase-summary.tsx"),
 					]),
 					layout("routes/app/student/part/layout-push.tsx", [
 						route("purchase/new", "routes/app/student/part/purchase-new.tsx"),
+						...prefix("purchase/:purchaseId", [index("routes/app/student/part/purchase-detail.tsx")]),
+					]),
+					layout("routes/app/student/part/purchase-state/layout.tsx", [
 						...prefix("purchase/:purchaseId", [
-							index("routes/app/student/part/purchase-detail.tsx"),
 							route("request", "routes/app/student/part/purchase-state/request.tsx"),
 							route("accountantApproval", "routes/app/student/part/purchase-state/accountant-approval.tsx"),
 							route("teacherApproval", "routes/app/student/part/purchase-state/teacher-approval.tsx"),

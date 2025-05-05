@@ -50,9 +50,7 @@ CREATE TABLE `Event` (
 CREATE TABLE `Purchase` (
     `id` VARCHAR(191) NOT NULL,
     `label` VARCHAR(191) NOT NULL,
-    `plannedUsage` INTEGER NOT NULL,
     `createdAt` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
-    `updatedAt` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
     `partId` VARCHAR(191) NOT NULL,
     `stateId` VARCHAR(191) NOT NULL,
 
@@ -64,13 +62,7 @@ CREATE TABLE `Purchase` (
 -- CreateTable
 CREATE TABLE `PurchaseState` (
     `id` VARCHAR(191) NOT NULL,
-    `request` ENUM('Approved', 'Rejected', 'Pending') NOT NULL DEFAULT 'Pending',
-    `accountantApproval` ENUM('Approved', 'Rejected', 'Pending') NOT NULL DEFAULT 'Pending',
-    `teacherApproval` ENUM('Approved', 'Rejected', 'Pending') NOT NULL DEFAULT 'Pending',
-    `givenMoney` ENUM('Fulfilled', 'Pending') NOT NULL DEFAULT 'Pending',
-    `usageReport` ENUM('Fulfilled', 'Pending') NOT NULL DEFAULT 'Pending',
-    `receiptSubmission` ENUM('Fulfilled', 'Pending') NOT NULL DEFAULT 'Pending',
-    `changeReturn` ENUM('Fulfilled', 'Pending') NOT NULL DEFAULT 'Pending',
+    `updatedAt` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
 
     PRIMARY KEY (`id`)
 ) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
@@ -83,6 +75,7 @@ CREATE TABLE `PurchaseStateRequest` (
     `byId` VARCHAR(191) NOT NULL,
     `at` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
 
+    UNIQUE INDEX `PurchaseStateRequest_stateId_key`(`stateId`),
     PRIMARY KEY (`id`)
 ) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
@@ -94,6 +87,7 @@ CREATE TABLE `PurchaseStateAccountantApproval` (
     `byId` VARCHAR(191) NOT NULL,
     `at` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
 
+    UNIQUE INDEX `PurchaseStateAccountantApproval_stateId_key`(`stateId`),
     PRIMARY KEY (`id`)
 ) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
@@ -105,6 +99,7 @@ CREATE TABLE `PurchaseStateTeacherApproval` (
     `byId` VARCHAR(191) NOT NULL,
     `at` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
 
+    UNIQUE INDEX `PurchaseStateTeacherApproval_stateId_key`(`stateId`),
     PRIMARY KEY (`id`)
 ) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
@@ -115,6 +110,7 @@ CREATE TABLE `PurchaseStateGivenMoney` (
     `amount` INTEGER NOT NULL,
     `at` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
 
+    UNIQUE INDEX `PurchaseStateGivenMoney_stateId_key`(`stateId`),
     PRIMARY KEY (`id`)
 ) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
@@ -125,6 +121,7 @@ CREATE TABLE `PurchaseStateUsageReport` (
     `actualUsage` INTEGER NOT NULL,
     `at` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
 
+    UNIQUE INDEX `PurchaseStateUsageReport_stateId_key`(`stateId`),
     PRIMARY KEY (`id`)
 ) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
@@ -135,6 +132,7 @@ CREATE TABLE `PurchaseStateReceiptSubmission` (
     `receiptIndex` INTEGER NOT NULL,
     `at` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
 
+    UNIQUE INDEX `PurchaseStateReceiptSubmission_stateId_key`(`stateId`),
     PRIMARY KEY (`id`)
 ) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
@@ -144,6 +142,7 @@ CREATE TABLE `PurchaseStateChangeReturn` (
     `stateId` VARCHAR(191) NOT NULL,
     `at` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
 
+    UNIQUE INDEX `PurchaseStateChangeReturn_stateId_key`(`stateId`),
     PRIMARY KEY (`id`)
 ) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 

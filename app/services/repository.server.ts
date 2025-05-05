@@ -21,8 +21,8 @@ export const partWithPurchaseWhereQuery = (partId: string, purchaseId: string) =
 			},
 		},
 	}) satisfies Prisma.PartWhereInput
-export const partPersonInChargeSelectQuery = (query: Prisma.PartSelect = {}) =>
-	_.merge<Prisma.PartSelect, Prisma.PartSelect>(query, {
+export const partPersonInChargeSelectQuery = () =>
+	({
 		leaders: {
 			select: {
 				id: true,
@@ -45,7 +45,7 @@ export const partPersonInChargeSelectQuery = (query: Prisma.PartSelect = {}) =>
 				},
 			},
 		},
-	})
+	}) satisfies Prisma.PartSelect
 export const walletWithAccountantWhereQuery = (walletId: string, userId: string) =>
 	({
 		id: walletId,
@@ -58,78 +58,60 @@ export const walletWithAccountantWhereQuery = (walletId: string, userId: string)
 
 export const purchaseStateSelectQuery = () =>
 	({
-		requests: {
-			orderBy: {
-				at: "desc",
-			},
+		request: {
 			select: {
 				approved: true,
 				by: {
 					select: {
+						id: true,
 						name: true,
 					},
 				},
 				at: true,
 			},
 		},
-		accountantApprovals: {
-			orderBy: {
-				at: "desc",
-			},
+		accountantApproval: {
 			select: {
 				approved: true,
 				by: {
 					select: {
+						id: true,
 						name: true,
 					},
 				},
 				at: true,
 			},
 		},
-		teacherApprovals: {
-			orderBy: {
-				at: "desc",
-			},
+		teacherApproval: {
 			select: {
 				approved: true,
 				by: {
 					select: {
+						id: true,
 						name: true,
 					},
 				},
 				at: true,
 			},
 		},
-		givenMoneys: {
-			orderBy: {
-				at: "desc",
-			},
+		givenMoney: {
 			select: {
 				amount: true,
 				at: true,
 			},
 		},
-		usageReports: {
-			orderBy: {
-				at: "desc",
-			},
+		usageReport: {
 			select: {
 				actualUsage: true,
 				at: true,
 			},
 		},
-		changeReturns: {
-			orderBy: {
-				at: "desc",
-			},
+		changeReturn: {
 			select: {
 				at: true,
 			},
 		},
-		receiptSubmissions: {
-			orderBy: {
-				at: "desc",
-			},
+		receiptSubmission: {
 			select: {
 				at: true,
 				receiptIndex: true,
@@ -149,7 +131,14 @@ export const purchaseItemSelectQuery = () =>
 		},
 	}) satisfies Prisma.PurchaseItemSelect
 
-export type PurchaseProcedure = keyof Omit<PurchaseState, "id">
+export type PurchaseProcedure =
+	| "request"
+	| "accountantApproval"
+	| "teacherApproval"
+	| "givenMoney"
+	| "usageReport"
+	| "receiptSubmission"
+	| "changeReturn"
 
 export const queryIsBelonging = async (partId: string, userId: string) =>
 	Boolean(

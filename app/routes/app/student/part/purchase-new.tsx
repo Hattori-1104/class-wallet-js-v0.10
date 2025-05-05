@@ -497,7 +497,9 @@ export const action = async ({ request, params: { partId } }: Route.ActionArgs) 
 
 	const result = await purchaseRequestSchema
 		.parseAsync(await request.json())
-		.catch(errorRedirect("購入リクエストの形式が正しくありません。", `app/student/part/${partId}/new-purchase`).catch())
+		.catch(
+			errorRedirect("購入リクエストの形式が正しくありません。", `/app/student/part/${partId}/new-purchase`).catch(),
+		)
 
 	await prisma.purchase
 		.create({
@@ -511,7 +513,7 @@ export const action = async ({ request, params: { partId } }: Route.ActionArgs) 
 				},
 				state: {
 					create: {
-						requests: {
+						request: {
 							create: {
 								approved: true,
 								by: {

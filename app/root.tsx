@@ -7,7 +7,7 @@ export const links: Route.LinksFunction = () => [
 	{ rel: "preconnect", href: "https://fonts.googleapis.com" },
 	{
 		rel: "icon",
-		href: "/icons/icon_test.png",
+		href: "/icon.png",
 	},
 	{
 		rel: "preconnect",

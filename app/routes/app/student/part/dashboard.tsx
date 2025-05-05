@@ -4,12 +4,12 @@ import { HorizonContainer, Section, SectionTitle } from "~/components/common/con
 import { Distant } from "~/components/common/placement"
 import { Heading, NoData, Note, Title } from "~/components/common/typography"
 import { Button } from "~/components/ui/button"
+import { BudgetGauge } from "~/components/utility/gauge"
 import { AccountantBadge, TeacherBadge } from "~/components/utility/manager-badge"
 import { LeaderBadge } from "~/components/utility/manager-badge"
 import { NotificationDot } from "~/components/utility/notification-dot"
 import { UserItem } from "~/components/utility/user"
 import {
-	partPersonInChargeSelectQuery,
 	partWithUserWhereQuery,
 	prisma,
 	purchaseItemSelectQuery,
@@ -17,14 +17,13 @@ import {
 } from "~/services/repository.server"
 import { requireSession } from "~/services/session.server"
 import { verifyStudent } from "~/services/session.server"
-import { computePlannedUsage } from "~/utilities/compute"
 import { formatDiffDate, formatMoney } from "~/utilities/display"
 import type { Route } from "./+types/dashboard"
 
 export const loader = async ({ request, params: { partId } }: Route.LoaderArgs) => {
 	const session = await requireSession(request)
 	const student = await verifyStudent(session)
-	const [part, purchasesInProgress] = await Promise.all([
+	const [part, purchases] = await Promise.all([
 		prisma.part.findUniqueOrThrow({
 			where: {
 				...partWithUserWhereQuery(partId, student.id),
@@ -36,13 +35,29 @@ export const loader = async ({ request, params: { partId } }: Route.LoaderArgs) 
 						name: true,
 					},
 				},
-				...partPersonInChargeSelectQuery({
-					wallet: {
-						select: {
-							name: true,
+				leaders: {
+					select: {
+						id: true,
+						name: true,
+					},
+				},
+				wallet: {
+					select: {
+						name: true,
+						accountantStudents: {
+							select: {
+								id: true,
+								name: true,
+							},
+						},
+						teachers: {
+							select: {
+								id: true,
+								name: true,
+							},
 						},
 					},
-				}),
+				},
 			},
 		}),
 		prisma.purchase.findMany({
@@ -54,7 +69,10 @@ export const loader = async ({ request, params: { partId } }: Route.LoaderArgs) 
 					select: purchaseItemSelectQuery(),
 				},
 				state: {
-					select: purchaseStateSelectQuery(),
+					select: {
+						updatedAt: true,
+						...purchaseStateSelectQuery(),
+					},
 				},
 			},
 			orderBy: {
@@ -65,10 +83,27 @@ export const loader = async ({ request, params: { partId } }: Route.LoaderArgs) 
 		}),
 	])
 
-	return { part, purchasesInProgress }
+	return { part, purchases }
 }
 
-export default ({ loaderData: { part, purchasesInProgress } }: Route.ComponentProps) => {
+export default ({ loaderData: { part, purchases } }: Route.ComponentProps) => {
+	const actualUsage = purchases.reduce((acc, purchase) => {
+		if (
+			purchase.state.request?.approved &&
+			purchase.state.usageReport &&
+			purchase.state.changeReturn &&
+			purchase.state.receiptSubmission
+		) {
+			return acc + purchase.state.usageReport.actualUsage
+		}
+		return acc
+	}, 0)
+	const plannedUsage = purchases.reduce((acc, purchase) => {
+		if (purchase.state.request?.approved && !(purchase.state.changeReturn && purchase.state.receiptSubmission)) {
+			return acc + purchase.plannedUsage
+		}
+		return acc
+	}, 0)
 	return (
 		<>
 			<Section>
@@ -87,6 +122,17 @@ export default ({ loaderData: { part, purchasesInProgress } }: Route.ComponentPr
 					<SectionTitle>
 						<Title>残り予算</Title>
 					</SectionTitle>
+					<div className="w-full space-y-2">
+						<Distant>
+							<span>残り予算</span>
+							<span>{formatMoney(part.budget - actualUsage)}</span>
+						</Distant>
+						<BudgetGauge budget={part.budget} actualUsage={actualUsage} plannedUsage={plannedUsage} />
+						<Distant>
+							<span>使用予定</span>
+							<span>{formatMoney(plannedUsage)}</span>
+						</Distant>
+					</div>
 				</Section>
 				<Section>
 					<SectionTitle>
@@ -118,23 +164,49 @@ export default ({ loaderData: { part, purchasesInProgress } }: Route.ComponentPr
 				<SectionTitle>
 					<Distant>
 						<Title>進行中の購入</Title>
-						<NotificationDot count={purchasesInProgress.length} />
+						<NotificationDot count={purchases.length} />
 					</Distant>
 				</SectionTitle>
 				<div className="space-y-4">
-					{purchasesInProgress.length > 0 ? (
-						purchasesInProgress.map((purchase, index) => (
-							<Link key={purchase.id + index} to={`/app/student/part/${part.id}/purchase/${purchase.id}`}>
+					{purchases.length > 0 ? (
+						purchases.map((purchase, index) => (
+							<Link
+								key={purchase.id + index}
+								to={`/app/student/part/${part.id}/purchase/${purchase.id}`}
+								className="block"
+							>
 								<LightBox className="space-y-2">
 									<Distant>
 										<Heading className="shrink text-wrap">{purchase.label}</Heading>
-										<Note className="shrink-0">{formatDiffDate(purchase.updatedAt, Date.now())}</Note>
+										<Note className="shrink-0">{formatDiffDate(purchase.state.updatedAt, Date.now())}</Note>
 									</Distant>
-									{/* 保留！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！ */}
-									<Distant>
-										<span>{purchase.state?.requests[0]?.by.name}がリクエスト</span>
-										<span className="italic">{formatMoney(computePlannedUsage(purchase))}</span>
-									</Distant>
+									<div>
+										<Distant>
+											<span>
+												<span>{purchase.state.request?.by.name}がリクエスト</span>
+												{purchase.state.request?.approved === false && (
+													<span className="text-destructive">→取り消されました。</span>
+												)}
+												{(purchase.state.accountantApproval?.approved === false ||
+													purchase.state.teacherApproval?.approved === false) && (
+													<span className="text-destructive">→承認されませんでした。</span>
+												)}
+											</span>
+											<span className="italic">{formatMoney(purchase.plannedUsage)}</span>
+										</Distant>
+										{purchase.state.usageReport && (
+											<Distant>
+												<span>購入完了</span>
+												<span className="italic">{formatMoney(purchase.state.usageReport.actualUsage)}</span>
+											</Distant>
+										)}
+										{purchase.state.receiptSubmission && (
+											<Distant>
+												<span>レシート提出完了</span>
+												<span>レシート番号：{purchase.state.receiptSubmission.receiptIndex}</span>
+											</Distant>
+										)}
+									</div>
 								</LightBox>
 							</Link>
 						))

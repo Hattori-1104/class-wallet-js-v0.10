@@ -1,5 +1,5 @@
 import { Link } from "react-router"
-import { MainContainer, Section, SectionTitle } from "~/components/common/container"
+import { Section, SectionTitle } from "~/components/common/container"
 import { Title } from "~/components/common/typography"
 import { Button } from "~/components/ui/button"
 import { requireSession, verifyAdmin } from "~/services/session.server"

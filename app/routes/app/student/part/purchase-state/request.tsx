@@ -1,69 +1,116 @@
-import { Section, SectionTitle } from "~/components/common/container"
-import { Title } from "~/components/common/typography"
-import { partPersonInChargeSelectQuery, partWithUserWhereQuery, prisma } from "~/services/repository.server"
-import { createErrorRedirect, requireSession, verifyStudent } from "~/services/session.server"
+import { redirect } from "react-router"
+import { Request, parseRequestAction } from "~/components/page/purchase/request"
+import { prisma, purchaseStateSelectQuery } from "~/services/repository.server"
+import { createErrorRedirect, createSuccessRedirect, requireSession } from "~/services/session.server"
+import { verifyStudent } from "~/services/session.server"
 import type { Route } from "./+types/request"
 
-export const loader = async ({ params: { partId, purchaseId }, request }: Route.LoaderArgs) => {
+// サーバー共通処理
+const serverCommon = async ({ request, params: { partId, purchaseId } }: Route.ActionArgs) => {
 	const session = await requireSession(request)
 	const student = await verifyStudent(session)
-	const errorRedirect = await createErrorRedirect(session, `/app/student/part/${partId}`)
-	const purchase = await prisma.purchase
-		.findUniqueOrThrow({
-			where: {
-				id: purchaseId,
-				part: {
-					...partWithUserWhereQuery(partId, student.id),
-				},
+	const purchase = await prisma.purchase.findUniqueOrThrow({
+		where: { id: purchaseId, part: { id: partId } },
+		include: {
+			state: {
+				select: purchaseStateSelectQuery(),
 			},
-			include: {
-				state: {
-					select: {
-						requests: {
-							orderBy: {
-								at: "asc",
-							},
-							select: {
-								approved: true,
-								at: true,
-								by: {
-									select: {
-										id: true,
-										name: true,
+		},
+	})
+	const isRequester = (() => {
+		if (!purchase.state.request) {
+			return false
+		}
+		return purchase.state.request.by.id === student.id
+	})()
+
+	return { session, student, purchase, isRequester }
+}
+
+export const loader = async (loaderArgs: Route.LoaderArgs) => {
+	const { purchase, isRequester } = await serverCommon(loaderArgs)
+	return { purchase, isRequester }
+}
+
+export default ({ loaderData: { purchase, isRequester } }: Route.ComponentProps) => {
+	return <Request purchase={purchase} isRequester={isRequester} />
+}
+
+export const action = async (actionArgs: Route.ActionArgs) => {
+	const { session, student, purchase, isRequester } = await serverCommon(actionArgs)
+	const {
+		params: { partId, purchaseId },
+	} = actionArgs
+	const errorRedirect = createErrorRedirect(session, `/app/student/part/${partId}/purchase/${purchaseId}/request`)
+	if (!isRequester) {
+		return await errorRedirect("リクエストを操作する権限がありません。").throw()
+	}
+	const { request } = actionArgs
+
+	const formData = await request.formData()
+	const result = parseRequestAction(formData)
+	if (result.status !== "success") return result.reply()
+
+	const { action } = result.value
+
+	const successRedirect = createSuccessRedirect(session, `/app/student/part/${partId}/purchase/${purchaseId}`)
+
+	if (action === "cancel") {
+		await prisma.purchase
+			.update({
+				where: { id: purchaseId },
+				data: {
+					state: {
+						update: {
+							request: {
+								upsert: {
+									create: {
+										approved: false,
+										by: {
+											connect: {
+												id: student.id,
+											},
+										},
+									},
+									update: {
+										approved: false,
 									},
 								},
 							},
 						},
 					},
 				},
-				part: { select: partPersonInChargeSelectQuery() },
-			},
-		})
-		.catch(errorRedirect("購入情報が見つかりません").catch())
-	if (purchase.state.requests.length === 0) {
-		return await errorRedirect("購入情報が見つかりません").throw()
+			})
+			.catch(errorRedirect("購入リクエストの取り消しに失敗しました。").catch())
+		return await successRedirect("購入リクエストを取り消しました。")
 	}
-	const isInCharge = purchase.part.wallet.accountantStudents.some(
-		(accountantStudent: { id: string; name: string }) => accountantStudent.id === student.id,
-	)
-	return { purchase, isInCharge }
-}
-
-export default ({ loaderData: { purchase, isInCharge } }: Route.ComponentProps) => {
-	return (
-		<>
-			<Section>
-				<SectionTitle>
-					<Title>購入申請</Title>
-				</SectionTitle>
-			</Section>
-			{isInCharge && (
-				<Section>
-					<SectionTitle>
-						<Title>購入申請</Title>
-					</SectionTitle>
-				</Section>
-			)}
-		</>
-	)
+	if (action === "request") {
+		await prisma.purchase
+			.update({
+				where: { id: purchaseId },
+				data: {
+					state: {
+						update: {
+							request: {
+								upsert: {
+									create: {
+										approved: true,
+										by: {
+											connect: {
+												id: student.id,
+											},
+										},
+									},
+									update: {
+										approved: true,
+									},
+								},
+							},
+						},
+					},
+				},
+			})
+			.catch(errorRedirect("購入のリクエストに失敗しました。").catch())
+		return await successRedirect("購入をリクエストしました")
+	}
 }

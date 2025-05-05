@@ -38,6 +38,9 @@
 			"suspicious": {
 				"noReactSpecificProps": "off",
 				"noArrayIndexKey": "off"
+			},
+			"complexity": {
+				"noExcessiveCognitiveComplexity": "off"
 			}
 		}
 	},
