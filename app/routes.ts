@@ -4,6 +4,7 @@ export default [
 	layout("routes/app-layout.tsx", [
 		index("routes/home.tsx"),
 		route("/auth/:action?", "routes/auth.tsx"),
+		...prefix("/auth/oauth", [index("routes/oauth/index.tsx"), route("callback", "routes/oauth/callback.tsx")]),
 		...prefix("/app", [
 			index("routes/app/index.tsx"),
 			...prefix("/student", [

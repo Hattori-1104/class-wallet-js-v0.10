@@ -183,7 +183,7 @@ export default ({ loaderData: { name, partId, parts, budget, purchases } }: Rout
 		const url = URL.createObjectURL(blob)
 		const a = document.createElement("a")
 		a.href = url
-		a.download = `${name}_${new Date(Date.now())
+		a.download = `出納簿_${new Date(Date.now())
 			.toLocaleDateString("ja-JP", {
 				year: "numeric",
 				month: "numeric",
@@ -191,7 +191,7 @@ export default ({ loaderData: { name, partId, parts, budget, purchases } }: Rout
 				hour: "numeric",
 				minute: "numeric",
 			})
-			.replaceAll("/", "-")}_出納簿.csv`
+			.replaceAll("/", "-")}_${name}.csv`
 		a.click()
 		URL.revokeObjectURL(url)
 	}

@@ -1,8 +1,11 @@
 import { KeyRound } from "lucide-react"
 import { Form, Link, data, redirect } from "react-router"
 import { LimitedContainer, Section, SectionTitle } from "~/components/common/container"
+import { Title } from "~/components/common/typography"
 import { Button } from "~/components/ui/button"
-import { commitSession, requireSession } from "~/services/session.server"
+import { Separator } from "~/components/ui/separator"
+import { requireSession } from "~/services/session.server"
+import { commitSession } from "~/services/session.server"
 import type { Route } from "./+types/auth"
 
 export const loader = async ({ request, params: { action } }: Route.LoaderArgs) => {
@@ -18,25 +21,41 @@ export default ({}: Route.ComponentProps) => {
 	return (
 		<LimitedContainer>
 			<Section>
-				<SectionTitle>認証</SectionTitle>
-				<Form method={"POST"}>
-					<div className="flex flex-col gap-4">
-						<Button type={"submit"} name={"user-type"} value={"dev-student"} variant={"outline"}>
+				<SectionTitle>
+					<Title>認証</Title>
+				</SectionTitle>
+				<div className="space-y-6">
+					<Button variant={"outline"} className="w-full" asChild>
+						<Link to="/app">ダッシュボードへ</Link>
+					</Button>
+					<Form action="/auth/oauth" className="space-y-4">
+						<Button type="submit" name="user-type" value="student" variant="google" className="w-full">
+							<KeyRound className="size-4 mr-1" />
+							生徒として認証
+						</Button>
+						<Button type="submit" name="user-type" value="teacher" variant="google" className="w-full">
+							<KeyRound className="size-4 mr-1" />
+							教師として認証
+						</Button>
+					</Form>
+					<Separator />
+					<Form method={"POST"} className="space-y-4">
+						<Button type={"submit"} name={"user-type"} value={"dev-student"} variant={"outline"} className="w-full">
 							<KeyRound />
 							テスト用：生徒として認証
 						</Button>
-						<Button type={"submit"} name={"user-type"} value={"dev-teacher"} variant={"outline"}>
+						<Button type={"submit"} name={"user-type"} value={"dev-teacher"} variant={"outline"} className="w-full">
 							<KeyRound />
 							テスト用：教師として認証
 						</Button>
-						<Button name={"user-type"} asChild>
+						<Button name={"user-type"} asChild className="w-full">
 							<Link to={"/app/admin"}>
 								<KeyRound />
-								管理者として認証
+								テスト用：管理者として認証
 							</Link>
 						</Button>
-					</div>
-				</Form>
+					</Form>
+				</div>
 			</Section>
 		</LimitedContainer>
 	)
