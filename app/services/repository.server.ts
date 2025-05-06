@@ -12,6 +12,13 @@ export const partWithUserWhereQuery = (partId: string, userId: string) =>
 			},
 		},
 	}) satisfies Prisma.PartWhereInput
+export const walletWithTeacherWhereQuery = (walletId: string, teacherId: string) =>
+	({
+		id: walletId,
+		teachers: {
+			some: { id: teacherId },
+		},
+	}) satisfies Prisma.WalletWhereInput
 export const partWithPurchaseWhereQuery = (partId: string, purchaseId: string) =>
 	({
 		id: partId,

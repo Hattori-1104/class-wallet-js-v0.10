@@ -120,7 +120,7 @@ export default ({ loaderData: { part, purchases } }: Route.ComponentProps) => {
 			<HorizonContainer>
 				<Section>
 					<SectionTitle>
-						<Title>残り予算</Title>
+						<Title>予算状況</Title>
 					</SectionTitle>
 					<div className="w-full space-y-2">
 						<Distant>
@@ -192,18 +192,18 @@ export default ({ loaderData: { part, purchases } }: Route.ComponentProps) => {
 													<span className="text-destructive">→承認されませんでした。</span>
 												)}
 											</span>
-											<span className="italic">{formatMoney(purchase.plannedUsage)}</span>
+											<span className="shrink-0 italic">{formatMoney(purchase.plannedUsage)}</span>
 										</Distant>
 										{purchase.state.usageReport && (
 											<Distant>
 												<span>購入完了</span>
-												<span className="italic">{formatMoney(purchase.state.usageReport.actualUsage)}</span>
+												<span className="shrink-0 italic">{formatMoney(purchase.state.usageReport.actualUsage)}</span>
 											</Distant>
 										)}
 										{purchase.state.receiptSubmission && (
 											<Distant>
 												<span>レシート提出完了</span>
-												<span>レシート番号：{purchase.state.receiptSubmission.receiptIndex}</span>
+												<span className="shrink-0">レシート番号：{purchase.state.receiptSubmission.receiptIndex}</span>
 											</Distant>
 										)}
 									</div>

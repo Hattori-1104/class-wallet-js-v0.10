@@ -3,8 +3,7 @@ import { Badge } from "~/components/ui/badge"
 export const LeaderBadge = ({ partName }: { partName?: string }) => {
 	return (
 		<>
-			<Badge variant="default">パート責任者</Badge>
-			{partName && <Badge variant="outline">{partName}</Badge>}
+			<Badge variant="default">{partName ? `${partName}責任者` : "パート責任者"}</Badge>
 		</>
 	)
 }
