@@ -1,8 +1,7 @@
-import { Prisma } from "@prisma/client"
 import { redirect } from "react-router"
 import { getGoogleUser, verifyOauthState } from "~/services/oauth.server"
 import { prisma } from "~/services/repository.server"
-import { commitSession, createErrorRedirect, getSession, requireSession } from "~/services/session.server"
+import { commitSession, createErrorRedirect, requireSession } from "~/services/session.server"
 
 import type { Route } from "./+types/callback"
 
@@ -54,6 +53,7 @@ export const loader = async ({ request }: Route.LoaderArgs) => {
 			})
 		}
 	} catch (e) {
+		console.error`${e}`
 		throw await errorRedirect("データベースエラーが発生しました。").throw()
 	}
 	return redirect(`/app/${userType}`, {

@@ -7,7 +7,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "~
 
 import { ArrowDownToLine } from "lucide-react"
 import { useNavigate } from "react-router"
-import { Aside, Distant } from "~/components/common/placement"
+import { Distant } from "~/components/common/placement"
 import { Button } from "~/components/ui/button"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "~/components/ui/select"
 
