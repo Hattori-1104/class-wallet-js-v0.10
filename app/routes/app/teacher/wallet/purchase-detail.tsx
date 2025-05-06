@@ -10,25 +10,32 @@ import { cn } from "~/lib/utils"
 import {
 	type PurchaseProcedure,
 	partPersonInChargeSelectQuery,
-	partWithUserWhereQuery,
 	prisma,
 	purchaseItemSelectQuery,
 	purchaseStateSelectQuery,
 } from "~/services/repository.server"
-import { createErrorRedirect, requireSession, verifyStudent } from "~/services/session.server"
+import { createErrorRedirect, requireSession, verifyTeacher } from "~/services/session.server"
 import { type AdditionalState, type State, purchaseState } from "~/stores/purchase-state"
 import type { Route } from "./+types/purchase-detail"
 
-export const loader = async ({ params: { partId, purchaseId }, request }: Route.LoaderArgs) => {
+export const loader = async ({ params: { walletId, purchaseId }, request }: Route.LoaderArgs) => {
 	const session = await requireSession(request)
-	const student = await verifyStudent(session)
+	const teacher = await verifyTeacher(session)
 
-	const errorRedirect = await createErrorRedirect(session, `/app/student/part/${partId}`)
+	const errorRedirect = await createErrorRedirect(session, `/app/teacher/wallet/${walletId}`)
 	const purchase = await prisma.purchase
 		.findUniqueOrThrow({
 			where: {
 				id: purchaseId,
-				part: partWithUserWhereQuery(partId, student.id),
+				part: {
+					wallet: {
+						teachers: {
+							some: {
+								id: teacher.id,
+							},
+						},
+					},
+				},
 			},
 			include: {
 				state: {

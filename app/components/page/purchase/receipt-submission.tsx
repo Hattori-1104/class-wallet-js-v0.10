@@ -12,11 +12,6 @@ type Purchase = Prisma.PurchaseGetPayload<{
 				receiptSubmission: {
 					select: {
 						receiptIndex: true
-						by: {
-							select: {
-								name: true
-							}
-						}
 						at: true
 					}
 				}

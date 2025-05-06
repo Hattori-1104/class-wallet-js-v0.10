@@ -34,6 +34,7 @@ export default [
 					layout("routes/app/student/wallet/layout.tsx", [index("routes/app/student/wallet/dashboard.tsx")]),
 					layout("routes/app/student/wallet/layout-push.tsx", [
 						route("create", "routes/app/student/wallet/part-create.tsx"),
+						route("create-bazaar", "routes/app/student/wallet/bazaar-create.tsx"),
 					]),
 				]),
 			]),
@@ -44,6 +45,20 @@ export default [
 						index("routes/app/teacher/wallet/dashboard.tsx"),
 						route("member", "routes/app/teacher/wallet/member.tsx"),
 						route("purchase", "routes/app/teacher/wallet/purchase-summary.tsx"),
+					]),
+					layout("routes/app/teacher/wallet/layout-push.tsx", [
+						route("purchase/:purchaseId", "routes/app/teacher/wallet/purchase-detail.tsx"),
+					]),
+					layout("routes/app/teacher/wallet/purchase-state/layout.tsx", [
+						...prefix("purchase/:purchaseId", [
+							route("request", "routes/app/teacher/wallet/purchase-state/request.tsx"),
+							route("accountantApproval", "routes/app/teacher/wallet/purchase-state/accountant-approval.tsx"),
+							route("teacherApproval", "routes/app/teacher/wallet/purchase-state/teacher-approval.tsx"),
+							route("givenMoney", "routes/app/teacher/wallet/purchase-state/given-money.tsx"),
+							route("usageReport", "routes/app/teacher/wallet/purchase-state/usage-report.tsx"),
+							route("changeReturn", "routes/app/teacher/wallet/purchase-state/change-return.tsx"),
+							route("receiptSubmission", "routes/app/teacher/wallet/purchase-state/receipt-submission.tsx"),
+						]),
 					]),
 				]),
 			]),

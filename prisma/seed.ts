@@ -3,6 +3,27 @@ import { PrismaClient } from "@prisma/client"
 const prisma = new PrismaClient()
 
 async function main() {
+	const teacher = await prisma.teacher.create({
+		data: {
+			id: "dev-teacher",
+			name: "テスト教師",
+			email: "test@example.com",
+		},
+		select: {
+			id: true,
+		},
+	})
+	const student = await prisma.student.create({
+		data: {
+			id: "dev-student",
+			name: "テスト学生",
+			email: "test@example.com",
+		},
+		select: {
+			id: true,
+		},
+	})
+	console.log({ eventId: process.env.EVENT_ID })
 	await prisma.event.create({
 		data: {
 			id: process.env.EVENT_ID,
@@ -12,10 +33,8 @@ async function main() {
 					name: "1-1",
 					budget: 80000,
 					teachers: {
-						create: {
-							id: "dev-teacher",
-							name: "テスト教師",
-							email: "test@example.com",
+						connect: {
+							id: teacher.id,
 						},
 					},
 					accountantStudents: {
@@ -31,12 +50,12 @@ async function main() {
 							budget: 80000,
 							students: {
 								connect: {
-									id: "dev-student",
+									id: student.id,
 								},
 							},
 							leaders: {
 								connect: {
-									id: "dev-teacher",
+									id: student.id,
 								},
 							},
 						},

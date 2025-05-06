@@ -1,4 +1,3 @@
-import { redirect } from "react-router"
 import { Request, parseRequestAction } from "~/components/page/purchase/request"
 import { prisma, purchaseStateSelectQuery } from "~/services/repository.server"
 import { createErrorRedirect, createSuccessRedirect, requireSession } from "~/services/session.server"
@@ -37,7 +36,7 @@ export default ({ loaderData: { purchase, isRequester } }: Route.ComponentProps)
 }
 
 export const action = async (actionArgs: Route.ActionArgs) => {
-	const { session, student, purchase, isRequester } = await serverCommon(actionArgs)
+	const { session, student, isRequester } = await serverCommon(actionArgs)
 	const {
 		params: { partId, purchaseId },
 	} = actionArgs

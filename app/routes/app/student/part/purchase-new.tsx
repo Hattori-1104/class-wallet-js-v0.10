@@ -6,9 +6,9 @@ import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, Command
 import { getFormProps, getInputProps, useForm } from "@conform-to/react"
 import { parseWithZod } from "@conform-to/zod"
 import type { Prisma } from "@prisma/client"
-import { Check, Minus, PlaneLanding, Plus } from "lucide-react"
+import { Check, Minus, Plus } from "lucide-react"
 import { useMemo, useState } from "react"
-import { Form, Link, useFetcher, useNavigate, useSubmit } from "react-router"
+import { Form, useNavigate, useSubmit } from "react-router"
 import { create } from "zustand"
 import { LightBox } from "~/components/common/box"
 import { Aside, Distant } from "~/components/common/placement"
@@ -283,12 +283,12 @@ export default ({ loaderData: { sharedProducts } }: Route.ComponentProps) => {
 						<DialogTrigger asChild>
 							<Button variant="outline">
 								<Plus />
-								<span>商品を追加</span>
+								<span>商品を作成</span>
 							</Button>
 						</DialogTrigger>
 						<DialogContent>
 							<DialogHeader>
-								<DialogTitle>商品を選択</DialogTitle>
+								<DialogTitle>商品を作成</DialogTitle>
 								<DialogDescription>新規で商品を作成することができます。</DialogDescription>
 							</DialogHeader>
 							{(() => {

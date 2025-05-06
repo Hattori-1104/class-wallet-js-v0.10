@@ -9,7 +9,8 @@ export const ChangeReturn = ({
 	givenMoney,
 	actualUsage,
 	isRequester,
-}: { givenMoney: number | null; actualUsage: number | null; isRequester: boolean }) => {
+	done,
+}: { givenMoney: number | null; actualUsage: number | null; isRequester: boolean; done: boolean }) => {
 	if (givenMoney === null || actualUsage === null) {
 		return (
 			<>
@@ -33,12 +34,14 @@ export const ChangeReturn = ({
 					<NoData>返却は必要ありません。</NoData>
 				) : compensation > 0 ? (
 					<>
-						<Heading>教師へ返却してください。</Heading>
+						<Heading>{done ? "教師への返却は完了しました。" : "教師へ返却してください。"}</Heading>
 						<p>返却：{formatMoney(compensation)}</p>
 					</>
 				) : (
 					<>
-						<Heading>教師から受け取ってください。</Heading>
+						<Heading>
+							{done ? "教師からの不足額の受け取りは完了しました。" : "教師から不足額を受け取ってください。"}
+						</Heading>
 						<p>補填：{formatMoney(-compensation)}</p>
 					</>
 				)}

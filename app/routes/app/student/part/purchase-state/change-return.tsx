@@ -35,6 +35,7 @@ export default ({ loaderData: { purchase, isRequester } }: Route.ComponentProps)
 			givenMoney={purchase.state.givenMoney?.amount ?? null}
 			actualUsage={purchase.state.usageReport?.actualUsage ?? null}
 			isRequester={isRequester}
+			done={purchase.state.changeReturn !== null}
 		/>
 	)
 }

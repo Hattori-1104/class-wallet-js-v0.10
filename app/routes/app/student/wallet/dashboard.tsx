@@ -60,14 +60,22 @@ export default ({ loaderData: { wallet } }: Route.ComponentProps) => {
 			</Section>
 			<Section>
 				<SectionTitle>
-					<Distant>
+					<Distant className="flex-wrap">
 						<Title>パートの編集</Title>
-						<Button variant="outline" asChild>
-							<Link to="create">
-								<Plus />
-								<span>パートを作成</span>
-							</Link>
-						</Button>
+						<Aside className="flex-wrap">
+							<Button variant="outline" asChild>
+								<Link to="create-bazaar">
+									<Plus />
+									<span>バザー専用パートを作成</span>
+								</Link>
+							</Button>
+							<Button variant="outline" asChild>
+								<Link to="create">
+									<Plus />
+									<span>パートを作成</span>
+								</Link>
+							</Button>
+						</Aside>
 					</Distant>
 				</SectionTitle>
 				<div className="space-y-6">
@@ -90,7 +98,11 @@ export default ({ loaderData: { wallet } }: Route.ComponentProps) => {
 											</Button>
 										</DropdownMenuTrigger>
 										<DropdownMenuContent>
-											<DropdownMenuItem variant="destructive" disabled={part._count.students > 0} onClick={() => handleDeletePart(part.id)}>
+											<DropdownMenuItem
+												variant="destructive"
+												disabled={part._count.students > 0}
+												onClick={() => handleDeletePart(part.id)}
+											>
 												<Trash2 />
 												<span>パートを削除</span>
 											</DropdownMenuItem>
@@ -115,7 +127,9 @@ export const action = async ({ request, params: { walletId } }: Route.ActionArgs
 	if (result.status !== "success") return result.reply()
 	const { partId, action } = result.value
 	if (action === "delete-part") {
-		await prisma.part.delete({ where: { id: partId, students: { none: {} } } }).catch(errorRedirect("パートの削除に失敗しました。").catch())
+		await prisma.part
+			.delete({ where: { id: partId, students: { none: {} } } })
+			.catch(errorRedirect("パートの削除に失敗しました。").catch())
 		return successRedirect("パートを削除しました。")
 	}
 }

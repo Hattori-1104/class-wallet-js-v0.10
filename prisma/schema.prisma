@@ -40,6 +40,8 @@ model Part {
   name   String
   budget Int    @default(0)
 
+  isBazaar Boolean @default(false)
+  
   students Student[] @relation("PartStudents")
   leaders  Student[] @relation("PartLeaders")
   walletId String
