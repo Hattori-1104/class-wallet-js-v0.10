@@ -190,12 +190,14 @@ export default ({ loaderData: { sharedProducts } }: Route.ComponentProps) => {
 		selectedProductSet,
 		addQuantity: addSelectedQuantity,
 		setQuantity: setSelectedQuantity,
+		clear: clearSelectedProduct,
 	} = useSelectedProductStore()
 	const {
 		addProduct,
 		addQuantity: addCreatedQuantity,
 		createdProductSet,
 		setQuantity: setCreatedQuantity,
+		clear: clearCreatedProduct,
 	} = useCreatedProductStore()
 	const [createProductDialogOpen, setCreateProductDialogOpen] = useState(false)
 	const [submitDialogOpen, setSubmitDialogOpen] = useState(false)
@@ -234,6 +236,8 @@ export default ({ loaderData: { sharedProducts } }: Route.ComponentProps) => {
 			selectedProducts: Array.from(selectedProductSet.entries()).map(([id, quantity]) => ({ id, quantity })),
 			createdProducts: Array.from(createdProductSet.entries()).map(([id, product]) => ({ id, ...product })),
 		}
+		clearSelectedProduct()
+		clearCreatedProduct()
 		submit(purchaseRequest, {
 			method: "POST",
 			encType: "application/json",

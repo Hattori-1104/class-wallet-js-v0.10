@@ -53,7 +53,13 @@ export const action = async (actionArgs: Route.ActionArgs) => {
 		const purchases = await prisma.purchase.findMany({
 			where: {
 				part: {
-					id: partId,
+					wallet: {
+						parts: {
+							some: {
+								id: partId,
+							},
+						},
+					},
 				},
 			},
 			select: {

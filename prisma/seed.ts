@@ -26,7 +26,7 @@ async function main() {
 	console.log({ eventId: process.env.EVENT_ID })
 	await prisma.event.create({
 		data: {
-			id: process.env.EVENT_ID,
+			id: process.env.EVENT_ID ?? "nishikosai",
 			name: "2025西高祭",
 			wallets: {
 				create: {
@@ -38,16 +38,14 @@ async function main() {
 						},
 					},
 					accountantStudents: {
-						create: {
-							id: "dev-student",
-							name: "テスト学生",
-							email: "test@example.com",
+						connect: {
+							id: student.id,
 						},
 					},
 					parts: {
 						create: {
 							name: "展示",
-							budget: 80000,
+							budget: 40000,
 							students: {
 								connect: {
 									id: student.id,
