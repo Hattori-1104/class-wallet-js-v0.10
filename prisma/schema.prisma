@@ -9,7 +9,8 @@ generator client {
 }
 
 datasource db {
-  provider = "mysql"
+  provider = "postgresql"
+  // provider = "mysql"
   url      = env("DATABASE_URL")
 }
 
@@ -41,7 +42,7 @@ model Part {
   budget Int    @default(0)
 
   isBazaar Boolean @default(false)
-  
+
   students Student[] @relation("PartStudents")
   leaders  Student[] @relation("PartLeaders")
   walletId String

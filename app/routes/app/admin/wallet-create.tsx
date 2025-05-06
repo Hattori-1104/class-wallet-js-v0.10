@@ -57,13 +57,12 @@ export const action = async ({ request }: Route.ActionArgs) => {
 	const { name, budget } = result.value
 	const session = await requireSession(request)
 	const errorRedirect = createErrorRedirect(session, "/app/admin/wallet/create")
-	const EVENT_ID = process.env.EVENT_ID ?? "test"
 	await prisma.wallet
 		.create({
 			data: {
 				event: {
 					connect: {
-						id: EVENT_ID,
+						id: "nishikosai",
 					},
 				},
 				name,
