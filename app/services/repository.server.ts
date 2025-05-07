@@ -99,12 +99,12 @@ export const purchaseStateSelectQuery = () =>
 					},
 				},
 				at: true,
-			},
-		},
-		givenMoney: {
-			select: {
-				amount: true,
-				at: true,
+				givenMoney: {
+					select: {
+						amount: true,
+						at: true,
+					},
+				},
 			},
 		},
 		usageReport: {

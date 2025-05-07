@@ -9,8 +9,8 @@ generator client {
 }
 
 datasource db {
-  provider = "postgresql"
-  // provider = "mysql"
+  // provider = "postgresql"
+  provider = "mysql"
   url      = env("DATABASE_URL")
 }
 
@@ -107,7 +107,6 @@ model PurchaseState {
   request            PurchaseStateRequest?
   accountantApproval PurchaseStateAccountantApproval?
   teacherApproval    PurchaseStateTeacherApproval?
-  givenMoney         PurchaseStateGivenMoney?
   usageReport        PurchaseStateUsageReport?
   receiptSubmission  PurchaseStateReceiptSubmission?
   changeReturn       PurchaseStateChangeReturn?
@@ -144,13 +143,15 @@ model PurchaseStateTeacherApproval {
   byId     String
   by       Teacher       @relation(name: "ApprovedBy", fields: [byId], references: [id], onDelete: Cascade)
   at       DateTime      @default(now()) @updatedAt
+
+  givenMoney PurchaseStateGivenMoney?
 }
 
 // お金の受け渡し
 model PurchaseStateGivenMoney {
   id      String        @id @default(uuid())
-  stateId String        @unique
-  state   PurchaseState @relation(fields: [stateId], references: [id], onDelete: Cascade)
+  teacherApprovalId String        @unique
+  teacherApproval   PurchaseStateTeacherApproval @relation(fields: [teacherApprovalId], references: [id], onDelete: Cascade)
   amount  Int
   at      DateTime      @default(now()) @updatedAt
 }

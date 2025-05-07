@@ -29,7 +29,8 @@
 				"useBlockStatements": "off",
 				"noImplicitBoolean": "off",
 				"useNamingConvention": "off",
-				"noNonNullAssertion": "off"
+				"noNonNullAssertion": "off",
+				"noParameterProperties": "off"
 			},
 			"correctness": {
 				"noEmptyPattern": "off",
