@@ -90,12 +90,10 @@ export const verifyAdmin = async (session: SessionType) => {
 	const errorRedirect = createErrorRedirect(session, "/auth")
 	if (!user) throw await errorRedirect("ユーザーが見つかりません。").throw()
 	if (user.type === "student") {
-		if (user.id === "dev-student" && process.env.NODE_ENV === "development")
-			return { type: "student", student: await verifyStudent(session) }
+		if (user.id === "dev-student") return { type: "student", student: await verifyStudent(session) }
 	}
 	if (user.type === "teacher") {
-		if (user.id === "dev-teacher" && process.env.NODE_ENV === "development")
-			return { type: "teacher", teacher: await verifyTeacher(session) }
+		if (user.id === "dev-teacher") return { type: "teacher", teacher: await verifyTeacher(session) }
 	}
 	throw await errorRedirect("ユーザーが見つかりません。").throw()
 }
