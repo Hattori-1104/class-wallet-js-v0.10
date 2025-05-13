@@ -176,57 +176,57 @@ interface PurchaseStateCalculatorInterface {
 	isApproved: "approved" | "rejected" | "pending"
 }
 
-// このクラスを完成させよう
-export class PurchaseStateCalculator implements PurchaseStateCalculatorInterface {
-	constructor(private raw: RawPurchaseType) {}
+// // このクラスを完成させよう
+// export class PurchaseStateCalculator implements PurchaseStateCalculatorInterface {
+// 	constructor(private raw: RawPurchaseType) {}
 
-	// 購入リクエスト
-	public get request() {
-		// disabledはデフォルトでfalse
-		let baseState: State = "pending"
-		if (this.raw.state?.request) {
-			baseState = this.raw.state.request.approved ? "fulfilled" : "failed"
-		}
-		return { baseState }
-	}
+// 	// 購入リクエスト
+// 	public get request() {
+// 		// disabledはデフォルトでfalse
+// 		let baseState: State = "pending"
+// 		if (this.raw.state?.request) {
+// 			baseState = this.raw.state.request.approved ? "fulfilled" : "failed"
+// 		}
+// 		return { baseState }
+// 	}
 
-	// 会計承認
-	public get accountantApproval() {
-		let baseState: State = "pending"
-		let disabled = true
-		if (this.raw.state?.request?.approved) {
-			disabled = false
-			if (this.raw.state?.accountantApproval) {
-				baseState = this.raw.state.accountantApproval.approved ? "fulfilled" : "failed"
-			}
-		}
-		return { baseState, disabled }
-	}
+// 	// 会計承認
+// 	public get accountantApproval() {
+// 		let baseState: State = "pending"
+// 		let disabled = true
+// 		if (this.raw.state?.request?.approved) {
+// 			disabled = false
+// 			if (this.raw.state?.accountantApproval) {
+// 				baseState = this.raw.state.accountantApproval.approved ? "fulfilled" : "failed"
+// 			}
+// 		}
+// 		return { baseState, disabled }
+// 	}
 
-	// 教師承認
-	public get teacherApproval() {
-		let baseState: State = "pending"
-		let disabled = true
-		if (this.raw.state?.request?.approved) {
-			disabled = false
-			if (this.raw.state?.teacherApproval) {
-				baseState = this.raw.state.teacherApproval.approved ? "fulfilled" : "failed"
-			}
-		}
-		return { baseState, disabled }
-	}
+// 	// 教師承認
+// 	public get teacherApproval() {
+// 		let baseState: State = "pending"
+// 		let disabled = true
+// 		if (this.raw.state?.request?.approved) {
+// 			disabled = false
+// 			if (this.raw.state?.teacherApproval) {
+// 				baseState = this.raw.state.teacherApproval.approved ? "fulfilled" : "failed"
+// 			}
+// 		}
+// 		return { baseState, disabled }
+// 	}
 
-	public get isApproved() {
-		const t = this.raw.state.accountantApproval?.approved
-		const u = this.raw.state.teacherApproval?.approved
-		return t === true && u === true ? "approved" : t === false || u === false ? "rejected" : "pending"
-	}
+// 	public get isApproved() {
+// 		const t = this.raw.state.accountantApproval?.approved
+// 		const u = this.raw.state.teacherApproval?.approved
+// 		return t === true && u === true ? "approved" : t === false || u === false ? "rejected" : "pending"
+// 	}
 
-	// 現金受け取り
-	public get givenMoney() {
-		let baseState: State = "pending"
-		let disabled = true
+// 	// 現金受け取り
+// 	public get givenMoney() {
+// 		let baseState: State = "pending"
+// 		let disabled = true
 
-		return { baseState, disabled }
-	}
-}
+// 		return { baseState, disabled }
+// 	}
+// }

@@ -25,8 +25,6 @@ async function main() {
 	})
 	await prisma.event.create({
 		data: {
-			id: "nishikosai",
-			name: "2025西高祭",
 			wallets: {
 				create: {
 					name: "1-1",

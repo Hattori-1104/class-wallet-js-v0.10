@@ -23,8 +23,8 @@ model Student {
   leaderParts Part[]   @relation("PartLeaders")
   wallets     Wallet[]
 
-  PurchaseStateRequest            PurchaseStateRequest[]            @relation("RequestedBy")
-  PurchaseStateAccountantApproval PurchaseStateAccountantApproval[] @relation("ApprovedBy")
+  PurchaseRequestedBy          Purchase[]                   @relation("RequestedBy")
+  PurchaseAccountantApprovedBy PurchaseAccountantApproval[] @relation("ApprovedBy")
 }
 
 model Teacher {
@@ -32,8 +32,8 @@ model Teacher {
   email String @unique
   name  String
 
-  wallets                      Wallet[]
-  PurchaseStateTeacherApproval PurchaseStateTeacherApproval[] @relation("ApprovedBy")
+  wallets                 Wallet[]
+  PurchaseTeacherApproval PurchaseTeacherApproval[] @relation("ApprovedBy")
 }
 
 model Part {
@@ -65,140 +65,83 @@ model Wallet {
 }
 
 model Event {
-  id      String   @id @default(uuid())
-  name    String
+  id      String   @id @default("nishikosai2025")
+  name    String   @default("西校祭2025")
   wallets Wallet[]
 }
 
+// 購入
 model Purchase {
-  id           String         @id @default(uuid())
-  label        String
-  items        PurchaseItem[]
-  plannedUsage Int
-  createdAt    DateTime       @default(now())
+  id            String   @id @default(uuid())
+  label         String
+  description   String?
+  plannedUsage  Int
+  
+  updatedAt     DateTime @default(now()) @updatedAt
+  requestedAt   DateTime @default(now())
+  requestedById String
+  requestedBy   Student  @relation(name: "RequestedBy", fields: [requestedById], references: [id], onDelete: Cascade)
+  isCanceled    Boolean  @default(false)
 
   partId String
   part   Part   @relation(fields: [partId], references: [id], onDelete: Cascade)
 
-  stateId String        @unique
-  state   PurchaseState @relation(fields: [stateId], references: [id], onDelete: Cascade)
+  accountantApproval PurchaseAccountantApproval?
+  teacherApproval    PurchaseTeacherApproval?
+  completion         PurchaseCompletion?
+  receiptSubmission  PurchaseReceiptSubmission?
+  balance            Int                         @default(0)
 
   @@index([partId])
 }
 
-// 状態管理
-enum Approval {
-  Approved
-  Rejected
-  Pending
-}
-
-enum State {
-  Fulfilled
-  Pending
-}
-
-model PurchaseState {
-  id       String    @id @default(uuid())
-  purchase Purchase?
-
-  updatedAt DateTime @default(now()) @updatedAt
-
-  request            PurchaseStateRequest?
-  accountantApproval PurchaseStateAccountantApproval?
-  teacherApproval    PurchaseStateTeacherApproval?
-  usageReport        PurchaseStateUsageReport?
-  receiptSubmission  PurchaseStateReceiptSubmission?
-  changeReturn       PurchaseStateChangeReturn?
-}
-
-// リクエスト
-model PurchaseStateRequest {
-  id       String        @id @default(uuid())
-  stateId  String        @unique
-  state    PurchaseState @relation(fields: [stateId], references: [id], onDelete: Cascade)
-  approved Boolean       @default(false)
-  byId     String
-  by       Student       @relation(name: "RequestedBy", fields: [byId], references: [id], onDelete: Cascade)
-  at       DateTime      @default(now()) @updatedAt
-}
-
 // 会計承認
-model PurchaseStateAccountantApproval {
-  id       String        @id @default(uuid())
-  stateId  String        @unique
-  state    PurchaseState @relation(fields: [stateId], references: [id], onDelete: Cascade)
-  approved Boolean       @default(false)
+model PurchaseAccountantApproval {
+  purchaseId String   @id
+  purchase   Purchase @relation(fields: [purchaseId], references: [id], onDelete: Cascade)
+
+  approved Boolean  @default(false)
   byId     String
-  by       Student       @relation(name: "ApprovedBy", fields: [byId], references: [id], onDelete: Cascade)
-  at       DateTime      @default(now()) @updatedAt
+  by       Student  @relation(name: "ApprovedBy", fields: [byId], references: [id], onDelete: Cascade)
+  at       DateTime @default(now()) @updatedAt
 }
 
 // 教師承認
-model PurchaseStateTeacherApproval {
-  id       String        @id @default(uuid())
-  stateId  String        @unique
-  state    PurchaseState @relation(fields: [stateId], references: [id], onDelete: Cascade)
-  approved Boolean       @default(false)
-  byId     String
-  by       Teacher       @relation(name: "ApprovedBy", fields: [byId], references: [id], onDelete: Cascade)
-  at       DateTime      @default(now()) @updatedAt
+model PurchaseTeacherApproval {
+  purchaseId String   @id
+  purchase   Purchase @relation(fields: [purchaseId], references: [id], onDelete: Cascade)
 
-  givenMoney PurchaseStateGivenMoney?
+  approved       Boolean @default(false)
+  receivingMoney Int?
+
+  byId String
+  by   Teacher  @relation(name: "ApprovedBy", fields: [byId], references: [id], onDelete: Cascade)
+  at   DateTime @default(now()) @updatedAt
 }
 
-// お金の受け渡し
-model PurchaseStateGivenMoney {
-  id      String        @id @default(uuid())
-  teacherApprovalId String        @unique
-  teacherApproval   PurchaseStateTeacherApproval @relation(fields: [teacherApprovalId], references: [id], onDelete: Cascade)
-  amount  Int
-  at      DateTime      @default(now()) @updatedAt
-}
+// 買い出し完了・使用額の報告
+model PurchaseCompletion {
+  purchaseId String   @id
+  purchase   Purchase @relation(fields: [purchaseId], references: [id], onDelete: Cascade)
 
-// 使用額の報告
-model PurchaseStateUsageReport {
-  id          String        @id @default(uuid())
-  stateId     String        @unique
-  state       PurchaseState @relation(fields: [stateId], references: [id], onDelete: Cascade)
   actualUsage Int
-  at          DateTime      @default(now()) @updatedAt
+  at          DateTime @default(now()) @updatedAt
 }
 
 // レシート提出
-model PurchaseStateReceiptSubmission {
-  id           String        @id @default(uuid())
-  stateId      String        @unique
-  state        PurchaseState @relation(fields: [stateId], references: [id], onDelete: Cascade)
-  receiptIndex Int
-  at           DateTime      @default(now()) @updatedAt
-}
-
-// おつり返却
-model PurchaseStateChangeReturn {
-  id      String        @id @default(uuid())
-  stateId String        @unique
-  state   PurchaseState @relation(fields: [stateId], references: [id], onDelete: Cascade)
-  at      DateTime      @default(now()) @updatedAt
-}
-
-model PurchaseItem {
-  id       String @id @default(uuid())
-  quantity Int    @default(1)
-
-  purchaseId String
+model PurchaseReceiptSubmission {
+  purchaseId String   @id
   purchase   Purchase @relation(fields: [purchaseId], references: [id], onDelete: Cascade)
 
-  productId String
-  product   Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+  receiptIndex Int
+  at           DateTime @default(now()) @updatedAt
 }
 
+// 商品データ・AIのコンテキストとして使用
 model Product {
   id          String  @id @default(uuid())
   name        String
   price       Int
   description String?
   isShared    Boolean @default(false)
-
-  purchaseItems PurchaseItem[]
 }

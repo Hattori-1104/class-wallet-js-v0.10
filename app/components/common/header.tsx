@@ -1,5 +1,6 @@
 import { ChevronLeft, LogOutIcon } from "lucide-react"
 import type { ReactNode } from "react"
+import type { ComponentProps } from "react"
 import { Link, useNavigation } from "react-router"
 import { useNavigate } from "react-router"
 import { Button } from "~/components/ui/button"
@@ -10,16 +11,33 @@ export const Header = ({ children }: { children: ReactNode }) => {
 	const isNavigating = Boolean(navigation.location)
 
 	return (
-		<header className="h-16 border-b shrink-0 relative">
-			<div className="container mx-auto px-8 h-full flex flex-row items-center justify-between">{children}</div>
-			<div className={cn("absolute w-full h-1 bg-[#3992ff] transition-opacity opacity-0 delay-75", isNavigating && "opacity-50")} />
+		<header className="h-16 border-b shrink-0 sticky top-0">
+			<div className="container mx-auto px-8 h-full flex flex-row items-center justify-between">
+				{children}
+			</div>
+			<div
+				className={cn(
+					"absolute w-full h-[2px] bg-[#3992ff] transition-opacity opacity-0 delay-75",
+					isNavigating && "opacity-50",
+				)}
+			/>
 		</header>
 	)
 }
 
-export const HeaderButton = ({ children, asChild = false, onClick }: { children: ReactNode; asChild?: boolean; onClick?: () => void }) => {
+export const HeaderButton = ({
+	children,
+	className,
+	asChild = false,
+	...props
+}: ComponentProps<"button"> & { asChild?: boolean }) => {
 	return (
-		<Button variant={"ghost"} className="size-12" asChild={asChild} onClick={onClick}>
+		<Button
+			variant={"ghost"}
+			className={cn("size-12", className)}
+			asChild={asChild}
+			{...props}
+		>
 			{children}
 		</Button>
 	)
@@ -51,11 +69,16 @@ export const HeaderBackButton = ({ to }: { to?: string }) => {
 		</HeaderButton>
 	)
 }
-export const HeaderUserInfo = ({ name, email }: { name: string; email: string }) => {
+export const HeaderUserInfo = ({
+	name,
+	email,
+}: { name: string; email: string }) => {
 	return (
 		<div className="flex flex-col text-right gap-1">
 			<span className="text-sm leading-none">{name}</span>
-			<span className="text-xs leading-none text-muted-foreground">{email}</span>
+			<span className="text-xs leading-none text-muted-foreground">
+				{email}
+			</span>
 		</div>
 	)
 }
