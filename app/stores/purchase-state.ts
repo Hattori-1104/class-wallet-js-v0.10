@@ -1,6 +1,6 @@
 import type { Prisma } from "@prisma/client"
 import type { purchaseStateSelectQuery } from "~/services/repository.server"
-import { formatMoney } from "~/utilities/display"
+import { formatCurrency } from "~/utilities/display"
 
 export type PurchaseProcedure =
 	| "request"
@@ -20,7 +20,10 @@ type RawPurchaseType = Prisma.PurchaseGetPayload<{
 }>
 
 export const computePurchaseState = (purchase: RawPurchaseType) => {
-	const currentState: Record<PurchaseProcedure, { baseState: State } & { [key in AdditionalState]?: boolean }> = {
+	const currentState: Record<
+		PurchaseProcedure,
+		{ baseState: State } & { [key in AdditionalState]?: boolean }
+	> = {
 		request: { baseState: "pending", disabled: true },
 		accountantApproval: { baseState: "pending", disabled: true },
 		teacherApproval: { baseState: "pending", disabled: true },
@@ -30,7 +33,10 @@ export const computePurchaseState = (purchase: RawPurchaseType) => {
 		changeReturn: { baseState: "pending", disabled: true },
 	}
 	let recommended: PurchaseProcedure | null = null
-	const instructions: Record<PurchaseProcedure, { default: string; override?: string }> = {
+	const instructions: Record<
+		PurchaseProcedure,
+		{ default: string; override?: string }
+	> = {
 		request: { default: "購入リクエスト" },
 		accountantApproval: { default: "会計承認" },
 		teacherApproval: { default: "教師承認" },
@@ -51,7 +57,9 @@ export const computePurchaseState = (purchase: RawPurchaseType) => {
 	// リクエスト
 	if (requestState) {
 		currentState.request.disabled = false
-		currentState.request.baseState = requestState.approved ? "fulfilled" : "failed"
+		currentState.request.baseState = requestState.approved
+			? "fulfilled"
+			: "failed"
 	} else {
 		currentState.request.disabled = false
 		currentState.request.warning = true
@@ -93,7 +101,7 @@ export const computePurchaseState = (purchase: RawPurchaseType) => {
 			}
 			if (givenMoneyState) {
 				currentState.givenMoney.baseState = "fulfilled"
-				instructions.givenMoney.override = `支給：${formatMoney(givenMoneyState.amount)}`
+				instructions.givenMoney.override = `支給：${formatCurrency(givenMoneyState.amount)}`
 			}
 		}
 		if (!givenMoneyState && usageReportState) {
@@ -105,7 +113,7 @@ export const computePurchaseState = (purchase: RawPurchaseType) => {
 		currentState.usageReport.disabled = false
 		if (usageReportState) {
 			currentState.usageReport.baseState = "fulfilled"
-			instructions.usageReport.override = `購入：${formatMoney(usageReportState.actualUsage)}`
+			instructions.usageReport.override = `購入：${formatCurrency(usageReportState.actualUsage)}`
 		}
 		if (accountantApprovalState?.approved && teacherApprovalState?.approved) {
 			if (givenMoneyState) {
@@ -120,15 +128,16 @@ export const computePurchaseState = (purchase: RawPurchaseType) => {
 		if (teacherApprovalState?.approved && accountantApprovalState?.approved) {
 			if (usageReportState) {
 				currentState.changeReturn.disabled = false
-				const compensation = (givenMoneyState?.amount ?? 0) - usageReportState.actualUsage
+				const compensation =
+					(givenMoneyState?.amount ?? 0) - usageReportState.actualUsage
 				if (compensation === 0) {
 					currentState.changeReturn.skipped = true
 				}
 				if (compensation > 0) {
-					instructions.changeReturn.override = `返却：${formatMoney(compensation)}`
+					instructions.changeReturn.override = `返却：${formatCurrency(compensation)}`
 				}
 				if (compensation < 0) {
-					instructions.changeReturn.override = `補填：${formatMoney(-compensation)}`
+					instructions.changeReturn.override = `補填：${formatCurrency(-compensation)}`
 				}
 				if (changeReturnState) {
 					currentState.changeReturn.baseState = "fulfilled"

@@ -1,9 +1,12 @@
-export const formatMoney = (money: number) =>
-	money.toLocaleString("ja-JP", { style: "currency", currency: "JPY" }).replace("-￥", "¥ -").replace("￥", "¥ ")
+export const formatCurrency = (money: number) =>
+	money
+		.toLocaleString("ja-JP", { style: "currency", currency: "JPY" })
+		.replace("-￥", "¥ -")
+		.replace("￥", "¥ ")
 
-export const formatDiffDate = (date: Date, now: ReturnType<typeof Date.now>) => {
+export const formatDiffDate = (date: Date, now = new Date()) => {
 	// 秒数
-	const diff = ((now - date.getTime()) / 1000) | 0
+	const diff = ((now.getTime() - date.getTime()) / 1000) | 0
 	if (diff < 60) return "たった今"
 	if (diff < 60 * 60) return `${(diff / 60) | 0}分前`
 	if (diff < 60 * 60 * 24) return `${(diff / 60 / 60) | 0}時間前`

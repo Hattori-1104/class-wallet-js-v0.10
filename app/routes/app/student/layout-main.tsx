@@ -26,10 +26,7 @@ import { entryPartRoute } from "~/services/route-module.server"
 import type { Route } from "./+types/layout-main"
 
 export const loader = async ({ request, params }: Route.LoaderArgs) => {
-	const { student, session, partId } = await entryPartRoute(
-		request,
-		params.partId,
-	)
+	const { student, partId } = await entryPartRoute(request, params.partId)
 
 	const belongParts = await prisma.part.findMany({
 		where: { students: { some: { id: student.id } } },

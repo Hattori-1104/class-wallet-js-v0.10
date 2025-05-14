@@ -12,7 +12,7 @@ import {
 	requireSession,
 } from "~/services/session.server"
 import { verifyAdmin } from "~/services/session.server"
-import { formatMoney } from "~/utilities/display"
+import { formatCurrency } from "~/utilities/display"
 import type { Route } from "./+types/wallet"
 
 export const loader = async ({ request }: Route.LoaderArgs) => {
@@ -67,7 +67,7 @@ export default ({ loaderData }: Route.ComponentProps) => {
 							<div className="flex flex-row justify-between">
 								<div>
 									<Title>{wallet.name}</Title>
-									<div>{formatMoney(wallet.budget)}</div>
+									<div>{formatCurrency(wallet.budget)}</div>
 								</div>
 
 								<div className="flex flex-row gap-2">
@@ -95,7 +95,7 @@ export default ({ loaderData }: Route.ComponentProps) => {
 								{wallet.parts.map((part) => (
 									<div className="p-4 border rounded" key={part.id}>
 										<Title>{part.name}</Title>
-										<div>{formatMoney(part.budget)}</div>
+										<div>{formatCurrency(part.budget)}</div>
 									</div>
 								))}
 							</div>

@@ -6,8 +6,12 @@ import { Section, SectionTitle } from "~/components/common/container"
 import { Aside, Distant } from "~/components/common/placement"
 import { NoData, Note, Title } from "~/components/common/typography"
 import { Button } from "~/components/ui/button"
-import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "~/components/ui/collapsible"
-import { formatMoney } from "~/utilities/display"
+import {
+	Collapsible,
+	CollapsibleContent,
+	CollapsibleTrigger,
+} from "~/components/ui/collapsible"
+import { formatCurrency } from "~/utilities/display"
 import { formatDiffDate } from "~/utilities/display"
 
 type Purchase = Prisma.PurchaseGetPayload<{
@@ -30,7 +34,10 @@ type Purchase = Prisma.PurchaseGetPayload<{
 		}
 	}
 }>
-export const Request = ({ purchase, isRequester }: { purchase: Purchase; isRequester: boolean }) => {
+export const Request = ({
+	purchase,
+	isRequester,
+}: { purchase: Purchase; isRequester: boolean }) => {
 	return (
 		<>
 			<Section>
@@ -41,7 +48,7 @@ export const Request = ({ purchase, isRequester }: { purchase: Purchase; isReque
 					<Distant>
 						<div>
 							<p>{purchase.state.request.by.name}がリクエスト</p>
-							<p className="italic">{formatMoney(purchase.plannedUsage)}</p>
+							<p className="italic">{formatCurrency(purchase.plannedUsage)}</p>
 						</div>
 						<Note>{formatDiffDate(purchase.state.request.at, Date.now())}</Note>
 					</Distant>
@@ -62,7 +69,12 @@ export const Request = ({ purchase, isRequester }: { purchase: Purchase; isReque
 						<CollapsibleContent>
 							<Form method="post">
 								<Aside>
-									<Button variant="destructive" name="action" value="cancel" className="grow">
+									<Button
+										variant="destructive"
+										name="action"
+										value="cancel"
+										className="grow"
+									>
 										取り消し
 									</Button>
 									<Button name="action" value="request" className="grow">
@@ -79,4 +91,5 @@ export const Request = ({ purchase, isRequester }: { purchase: Purchase; isReque
 }
 
 const ActionSchema = z.object({ action: z.enum(["cancel", "request"]) })
-export const parseRequestAction = (formData: FormData) => parseWithZod(formData, { schema: ActionSchema })
+export const parseRequestAction = (formData: FormData) =>
+	parseWithZod(formData, { schema: ActionSchema })

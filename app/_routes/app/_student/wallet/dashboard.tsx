@@ -25,7 +25,7 @@ import {
 	_createSuccessRedirect,
 	requireSession,
 } from "~/services/session.server"
-import { formatMoney } from "~/utilities/display"
+import { formatCurrency } from "~/utilities/display"
 import type { Route } from "./+types/dashboard"
 
 const ActionSchema = z.object({
@@ -109,7 +109,7 @@ export default ({ loaderData: { wallet } }: Route.ComponentProps) => {
 							<Distant>
 								<div>
 									<Title>{part.name}</Title>
-									<div>{formatMoney(part.budget)}</div>
+									<div>{formatCurrency(part.budget)}</div>
 								</div>
 								<Aside>
 									<Button

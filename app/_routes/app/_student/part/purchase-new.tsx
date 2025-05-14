@@ -46,7 +46,7 @@ import {
 	requireSession,
 } from "~/services/session.server"
 import { getSwitchProps } from "~/utilities/conform-helper"
-import { formatMoney } from "~/utilities/display"
+import { formatCurrency } from "~/utilities/display"
 import type { Route } from "./+types/purchase-new"
 const selectedProductSchema = z.object({
 	id: z.string(),
@@ -307,7 +307,7 @@ export default ({ loaderData: { sharedProducts } }: Route.ComponentProps) => {
 												<Distant>
 													<div>
 														<Heading>{product.name}</Heading>
-														<Note>{formatMoney(product.price)}</Note>
+														<Note>{formatCurrency(product.price)}</Note>
 													</div>
 													<Check
 														className={cn(
@@ -481,7 +481,7 @@ export default ({ loaderData: { sharedProducts } }: Route.ComponentProps) => {
 							}}
 							type="number"
 							className="no-spin text-right"
-							placeholder={formatMoney(defaultPlannedUsage)}
+							placeholder={formatCurrency(defaultPlannedUsage)}
 						/>
 					</FormField>
 				</FormBody>
@@ -521,7 +521,7 @@ export default ({ loaderData: { sharedProducts } }: Route.ComponentProps) => {
 										{label || defaultLabel}
 									</Title>
 									<Note className="block shrink-0 text-right">
-										{formatMoney(plannedUsage ?? defaultPlannedUsage)}
+										{formatCurrency(plannedUsage ?? defaultPlannedUsage)}
 									</Note>
 								</Distant>
 							</LightBox>
@@ -569,7 +569,7 @@ function PurchaseItem({
 			<Distant>
 				<div>
 					<p>{product.name}</p>
-					<Note>{formatMoney(product.price)}</Note>
+					<Note>{formatCurrency(product.price)}</Note>
 				</div>
 				<Aside gap="xs">
 					<Button

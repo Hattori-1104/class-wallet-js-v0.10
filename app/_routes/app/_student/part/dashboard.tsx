@@ -18,7 +18,7 @@ import {
 } from "~/services/repository.server"
 import { verifyStudent } from "~/services/route-module.server"
 import { requireSession } from "~/services/session.server"
-import { formatDiffDate, formatMoney } from "~/utilities/display"
+import { formatCurrency, formatDiffDate } from "~/utilities/display"
 import type { Route } from "./+types/dashboard"
 
 export const loader = async ({
@@ -134,7 +134,7 @@ export default ({ loaderData: { part, purchases } }: Route.ComponentProps) => {
 					<div className="w-full space-y-2">
 						<Distant>
 							<span>残り予算</span>
-							<span>{formatMoney(part.budget - actualUsage)}</span>
+							<span>{formatCurrency(part.budget - actualUsage)}</span>
 						</Distant>
 						<BudgetGauge
 							budget={part.budget}
@@ -143,7 +143,7 @@ export default ({ loaderData: { part, purchases } }: Route.ComponentProps) => {
 						/>
 						<Distant>
 							<span>使用予定</span>
-							<span>{formatMoney(plannedUsage)}</span>
+							<span>{formatCurrency(plannedUsage)}</span>
 						</Distant>
 					</div>
 				</Section>
@@ -218,14 +218,16 @@ export default ({ loaderData: { part, purchases } }: Route.ComponentProps) => {
 												)}
 											</span>
 											<span className="shrink-0 italic">
-												{formatMoney(purchase.plannedUsage)}
+												{formatCurrency(purchase.plannedUsage)}
 											</span>
 										</Distant>
 										{purchase.state.usageReport && (
 											<Distant>
 												<span>購入完了</span>
 												<span className="shrink-0 italic">
-													{formatMoney(purchase.state.usageReport.actualUsage)}
+													{formatCurrency(
+														purchase.state.usageReport.actualUsage,
+													)}
 												</span>
 											</Distant>
 										)}

@@ -98,7 +98,18 @@ export default [
 					route("settings", "routes/app/student/settings.tsx"),
 				]),
 				layout("routes/app/student/layout-push.tsx", [
-					route("purchase/new", "routes/app/student/new-request.tsx"),
+					route("purchase/new", "routes/app/student/purchase/new.tsx"),
+				]),
+				...prefix("purchase/:purchaseId", [
+					layout("routes/app/student/purchase/layout.tsx", [
+						index("routes/app/student/purchase/router.tsx"),
+						route("approval", "routes/app/student/purchase/approval.tsx"),
+						route("completion", "routes/app/student/purchase/completion.tsx"),
+						route(
+							"receipt-submission",
+							"routes/app/student/purchase/receipt-submission.tsx",
+						),
+					]),
 				]),
 			]),
 			// 振り分け

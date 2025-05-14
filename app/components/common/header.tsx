@@ -11,7 +11,7 @@ export const Header = ({ children }: { children: ReactNode }) => {
 	const isNavigating = Boolean(navigation.location)
 
 	return (
-		<header className="h-16 border-b shrink-0 sticky top-0">
+		<header className="h-16 border-b shrink-0 sticky top-0 bg-gray-50">
 			<div className="container mx-auto px-8 h-full flex flex-row items-center justify-between">
 				{children}
 			</div>

@@ -31,7 +31,7 @@ export const MainContainer = ({
 	return (
 		<div
 			className={cn(
-				"container mx-auto px-8 overflow-y-scroll scrollbar-hidden grow",
+				"container mx-auto px-8 overflow-y-scroll scrollbar-hidden grow shrink-0",
 				className,
 			)}
 		>
@@ -60,7 +60,7 @@ export const SectionTitle = ({
 	children,
 	className,
 }: { children: ReactNode; className?: string }) => {
-	return <div className={cn("my-6", className)}>{children}</div>
+	return <div className={cn("mt-6 mb-4", className)}>{children}</div>
 }
 export const SectionContent = ({
 	children,

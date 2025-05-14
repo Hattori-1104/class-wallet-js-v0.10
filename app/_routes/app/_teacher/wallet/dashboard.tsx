@@ -1,10 +1,18 @@
 import { Link } from "react-router"
 import { LightBox } from "~/components/common/box"
-import { HorizonContainer, Section, SectionTitle } from "~/components/common/container"
+import {
+	HorizonContainer,
+	Section,
+	SectionTitle,
+} from "~/components/common/container"
 import { Distant } from "~/components/common/placement"
 import { Heading, NoData, Note, Title } from "~/components/common/typography"
 import { BudgetGauge } from "~/components/utility/gauge"
-import { AccountantBadge, LeaderBadge, TeacherBadge } from "~/components/utility/manager-badge"
+import {
+	AccountantBadge,
+	LeaderBadge,
+	TeacherBadge,
+} from "~/components/utility/manager-badge"
 import { NotificationDot } from "~/components/utility/notification-dot"
 import { UserItem } from "~/components/utility/user"
 import {
@@ -14,10 +22,13 @@ import {
 	walletWithTeacherWhereQuery,
 } from "~/services/repository.server"
 import { requireSession, verifyTeacher } from "~/services/session.server"
-import { formatDiffDate, formatMoney } from "~/utilities/display"
+import { formatCurrency, formatDiffDate } from "~/utilities/display"
 import type { Route } from "./+types/dashboard"
 
-export const loader = async ({ request, params: { walletId } }: Route.LoaderArgs) => {
+export const loader = async ({
+	request,
+	params: { walletId },
+}: Route.LoaderArgs) => {
 	const session = await requireSession(request)
 	const teacher = await verifyTeacher(session)
 
@@ -100,7 +111,10 @@ export default ({ loaderData: { wallet } }: Route.ComponentProps) => {
 							const plannedUsage = part.purchases.reduce((acc, purchase) => {
 								if (
 									purchase.state.request?.approved &&
-									!(purchase.state.changeReturn && purchase.state.receiptSubmission)
+									!(
+										purchase.state.changeReturn &&
+										purchase.state.receiptSubmission
+									)
 								) {
 									return acc + purchase.plannedUsage
 								}
@@ -110,9 +124,13 @@ export default ({ loaderData: { wallet } }: Route.ComponentProps) => {
 								<div key={part.id} className="w-full space-y-1">
 									<Distant>
 										<span>{part.name}</span>
-										<span>{formatMoney(part.budget - actualUsage)}</span>
+										<span>{formatCurrency(part.budget - actualUsage)}</span>
 									</Distant>
-									<BudgetGauge budget={part.budget} actualUsage={actualUsage} plannedUsage={plannedUsage} />
+									<BudgetGauge
+										budget={part.budget}
+										actualUsage={actualUsage}
+										plannedUsage={plannedUsage}
+									/>
 								</div>
 							)
 						})}
@@ -160,33 +178,54 @@ export default ({ loaderData: { wallet } }: Route.ComponentProps) => {
 							>
 								<LightBox className="space-y-2">
 									<Distant>
-										<Heading className="shrink text-wrap">{purchase.label}</Heading>
-										<Note className="shrink-0">{formatDiffDate(purchase.state.updatedAt, Date.now())}</Note>
+										<Heading className="shrink text-wrap">
+											{purchase.label}
+										</Heading>
+										<Note className="shrink-0">
+											{formatDiffDate(purchase.state.updatedAt, Date.now())}
+										</Note>
 									</Distant>
 									<div>
 										<Distant>
 											<span>
-												<span>{purchase.state.request?.by.name}がリクエスト</span>
+												<span>
+													{purchase.state.request?.by.name}がリクエスト
+												</span>
 												{purchase.state.request?.approved === false && (
-													<span className="text-destructive">→取り消されました。</span>
+													<span className="text-destructive">
+														→取り消されました。
+													</span>
 												)}
-												{(purchase.state.accountantApproval?.approved === false ||
-													purchase.state.teacherApproval?.approved === false) && (
-													<span className="text-destructive">→承認されませんでした。</span>
+												{(purchase.state.accountantApproval?.approved ===
+													false ||
+													purchase.state.teacherApproval?.approved ===
+														false) && (
+													<span className="text-destructive">
+														→承認されませんでした。
+													</span>
 												)}
 											</span>
-											<span className="shrink-0 italic">{formatMoney(purchase.plannedUsage)}</span>
+											<span className="shrink-0 italic">
+												{formatCurrency(purchase.plannedUsage)}
+											</span>
 										</Distant>
 										{purchase.state.usageReport && (
 											<Distant>
 												<span>購入完了</span>
-												<span className="shrink-0 italic">{formatMoney(purchase.state.usageReport.actualUsage)}</span>
+												<span className="shrink-0 italic">
+													{formatCurrency(
+														purchase.state.usageReport.actualUsage,
+													)}
+												</span>
 											</Distant>
 										)}
 										{purchase.state.receiptSubmission && (
 											<Distant>
 												<span>レシート提出完了</span>
-												<span className="shrink-0">レシート番号：{purchase.state.receiptSubmission.receiptIndex}</span>
+												<span className="shrink-0">
+													レシート番号：
+													{purchase.state.receiptSubmission.receiptIndex}
+												</span>
 											</Distant>
 										)}
 									</div>

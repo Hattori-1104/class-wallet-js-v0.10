@@ -8,7 +8,13 @@ export const FormField = ({
 	error,
 	className,
 	name,
-}: { label?: string; children: ReactNode; error?: string[]; className?: string; name: string }) => {
+}: {
+	label?: string
+	children: ReactNode
+	error?: string[]
+	className?: string
+	name: string
+}) => {
 	return (
 		<div className={cn("space-y-1", className)}>
 			<div className="space-y-2">
@@ -26,10 +32,16 @@ export const FormField = ({
 	)
 }
 
-export const FormBody = ({ children }: { children: ReactNode }) => {
-	return <div className="space-y-4">{children}</div>
+export const FormBody = ({
+	children,
+	className,
+}: { children: ReactNode; className?: string }) => {
+	return <div className={cn("space-y-4", className)}>{children}</div>
 }
 
-export const FormFooter = ({ children }: { children: ReactNode }) => {
-	return <div className="mt-8">{children}</div>
+export const FormFooter = ({
+	children,
+	className,
+}: { children: ReactNode; className?: string }) => {
+	return <div className={cn("mt-8", className)}>{children}</div>
 }

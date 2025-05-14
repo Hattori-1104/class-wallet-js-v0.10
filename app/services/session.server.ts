@@ -95,17 +95,17 @@ export const _userNotFoundRedirect = async (session: Session) => {
 }
 
 export function errorBuilder(redirectUrl: string, session: SessionStorage) {
-	return async (errorMessage: string) => {
+	return async (errorMessage: string, redirectUrlOverride?: string) => {
 		session.flash("error", { message: errorMessage })
-		return redirect(redirectUrl, {
+		throw redirect(redirectUrlOverride ?? redirectUrl, {
 			headers: { "Set-Cookie": await commitSession(session) },
 		})
 	}
 }
 
 export function successBuilder(redirectUrl: string, session: SessionStorage) {
-	return async (message: string) => {
-		session.flash("success", { message })
+	return async (successMessage: string) => {
+		session.flash("success", { message: successMessage })
 		return redirect(redirectUrl, {
 			headers: { "Set-Cookie": await commitSession(session) },
 		})
