@@ -2,7 +2,11 @@ import { parseWithZod } from "@conform-to/zod"
 import { redirect, redirectDocument } from "react-router"
 import { z } from "zod"
 import { getGoogleAuthUrl, setOauthState } from "~/services/oauth.server"
-import { commitSession } from "~/services/session.server"
+import {
+	commitSession,
+	errorBuilder,
+	requireSession,
+} from "~/services/session.server"
 import type { Route } from "./+types/oauth.entry"
 
 const FormSchema = z.object({
@@ -12,12 +16,15 @@ const FormSchema = z.object({
 export const loader = () => redirect("/app/auth")
 
 export const action = async ({ request }: Route.ActionArgs) => {
+	const session = await requireSession(request)
+	const errorRedirect = errorBuilder("/app/auth", session)
 	const formData = await request.formData()
 	const submission = parseWithZod(formData, { schema: FormSchema })
 
-	if (submission.status !== "success") return submission.reply()
+	if (submission.status !== "success")
+		return await errorRedirect("OAuth認証：ユーザータイプが不明です。")
 
-	const { state, session } = await setOauthState(request)
+	const state = setOauthState(session)
 	session.set("tempUserType", submission.value.userType)
 	const authUrl = getGoogleAuthUrl(state)
 	return redirectDocument(authUrl, {

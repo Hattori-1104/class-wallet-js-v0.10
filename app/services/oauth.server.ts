@@ -1,6 +1,6 @@
 import { google } from "googleapis"
 import { z } from "zod"
-import { getSession } from "./session.server"
+import { type SessionStorage, getSession } from "./session.server"
 
 const GOOGLE_CLIENT_ID = process.env.GOOGLE_CLIENT_ID
 const GOOGLE_CLIENT_SECRET = process.env.GOOGLE_CLIENT_SECRET
@@ -40,14 +40,10 @@ export const getGoogleAuthUrl = (state: string) =>
 		state,
 	})
 
-export async function setOauthState(request: Request) {
-	const session = await getSession(request.headers.get("Cookie"))
+export function setOauthState(session: SessionStorage) {
 	const state = crypto.randomUUID()
 	session.set("oauthState", state)
-	return {
-		state,
-		session,
-	}
+	return state
 }
 
 export async function verifyOauthState(request: Request, state: string) {

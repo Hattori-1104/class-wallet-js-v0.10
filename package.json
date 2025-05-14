@@ -7,7 +7,11 @@
     "dev": "react-router dev",
     "lint": "biome lint",
     "start": "react-router-serve ./build/server/index.js",
-    "typecheck": "react-router typegen && tsc"
+    "typecheck": "react-router typegen && tsc",
+    "prisma:migrate": "cp .env.local .env && bunx prisma migrate dev",
+    "prisma:studio": "cp .env.local .env && bunx prisma studio",
+    "prisma:generate": "cp .env.local .env && bunx prisma generate",
+    "prisma:reset": "cp .env.local .env && bunx prisma migrate reset"
   },
   "dependencies": {
     "@conform-to/react": "^1.3.0",

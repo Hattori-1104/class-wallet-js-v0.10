@@ -1,39 +1,33 @@
 import { useEffect } from "react"
-import { Outlet, useSearchParams } from "react-router"
+import { Outlet, data } from "react-router"
 import { toast } from "sonner"
 import { Toaster } from "~/components/ui/sonner"
+import { commitSession, requireSession } from "~/services/session.server"
 import type { Route } from "./+types/layout-root"
 
 // エラー・サクセスメッセージの受け取り
-export const loader = ({ request }: Route.LoaderArgs) => {
-	const url = new URL(request.url)
-	const searchParams = url.searchParams
-	const errorMessage = decodeURIComponent(searchParams.get("error") ?? "")
-	const successMessage = decodeURIComponent(searchParams.get("success") ?? "")
-
-	return { errorMessage, successMessage }
+// Session flashで実装
+export const loader = async ({ request }: Route.LoaderArgs) => {
+	const session = await requireSession(request)
+	const errorObject = session.get("error")
+	const successObject = session.get("success")
+	return data(
+		{ errorObject, successObject },
+		{ headers: { "Set-Cookie": await commitSession(session) } },
+	)
 }
 
 export default ({
-	loaderData: { errorMessage, successMessage },
+	loaderData: { errorObject, successObject },
 }: Route.ComponentProps) => {
-	const [, setSearchParams] = useSearchParams()
 	useEffect(() => {
-		if (errorMessage) {
-			toast.error(errorMessage)
-			setSearchParams((prev) => {
-				prev.delete("error")
-				return prev
-			})
+		if (errorObject) {
+			toast.error(errorObject.message)
 		}
-		if (successMessage) {
-			toast.success(successMessage)
-			setSearchParams((prev) => {
-				prev.delete("success")
-				return prev
-			})
+		if (successObject) {
+			toast.success(successObject.message)
 		}
-	}, [errorMessage, successMessage, setSearchParams])
+	}, [errorObject, successObject])
 	return (
 		<>
 			<Toaster />

@@ -1,7 +1,6 @@
 import { getGoogleUser, verifyOauthState } from "~/services/oauth.server"
 import { prisma } from "~/services/repository.server"
 import {
-	commitSession,
 	errorBuilder,
 	requireSession,
 	successBuilder,
@@ -14,21 +13,24 @@ export const loader = async ({ request }: Route.LoaderArgs) => {
 	const code = url.searchParams.get("code")
 	const state = url.searchParams.get("state")
 	const session = await requireSession(request)
-	const errorRedirect = errorBuilder("/app/auth")
+	const errorRedirect = errorBuilder("/app/auth", session)
 
-	if (!code) throw await errorRedirect("OAuth認証：codeがありません。")
-	if (!state) throw await errorRedirect("OAuth認証：stateがありません。")
+	if (!code) return await errorRedirect("OAuth認証：codeがありません。")
+	if (!state) return await errorRedirect("OAuth認証：stateがありません。")
 
 	const isVerified = await verifyOauthState(request, state)
-	if (!isVerified) throw await errorRedirect("OAuth認証：stateが一致しません。")
+	if (!isVerified)
+		return await errorRedirect("OAuth認証：stateが一致しません。")
 
 	const googleUser = await getGoogleUser(code)
 	if (!googleUser.verified_email)
-		throw await errorRedirect("OAuth認証：メールアドレスが確認されていません。")
+		return await errorRedirect(
+			"OAuth認証：メールアドレスが確認されていません。",
+		)
 
 	const userType = session.get("tempUserType")
 	if (!userType)
-		throw await errorRedirect("OAuth認証：ユーザーの種類がありません。")
+		return await errorRedirect("OAuth認証：ユーザーの種類がありません。")
 	try {
 		if (userType === "student") {
 			const student = await prisma.student.upsert({
@@ -64,8 +66,6 @@ export const loader = async ({ request }: Route.LoaderArgs) => {
 		throw await errorRedirect("OAuth認証：データベースエラーが発生しました。")
 	}
 	session.unset("tempUserType")
-	const successRedirect = successBuilder(`/app/${userType}`)
-	return successRedirect("認証されました。", {
-		headers: { "Set-Cookie": await commitSession(session) },
-	})
+	const successRedirect = successBuilder(`/app/${userType}`, session)
+	return await successRedirect("認証されました。")
 }

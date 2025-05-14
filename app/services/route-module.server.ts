@@ -1,7 +1,6 @@
 import { prisma } from "./repository.server"
 import {
-	type SessionType,
-	commitSession,
+	type SessionStorage,
 	errorBuilder,
 	requireSession,
 } from "./session.server"
@@ -41,7 +40,7 @@ export async function requirePartId(
  *
  * @param {Request} request
  * @param {string | undefined} paramPartId
- * @returns {Promise<{student: Student, session: SessionType, partId: string | null}>}
+ * @returns {Promise<{student: Student, session: SessionStorage, partId: string | null}>}
  *
  * @db 無し
  * @session 無し
@@ -59,26 +58,24 @@ export async function entryPartRoute(
 
 /**
  * 生徒を検証する
- * @param {SessionType} session
+ * @param {SessionStorage} session
  * @returns {Promise<Student>}
  *
  * @query 1
  */
-export async function verifyStudent(session: SessionType) {
+export async function verifyStudent(session: SessionStorage) {
 	const user = session.get("user")
-	const errorRedirect = errorBuilder("/app/auth")
+	const errorRedirect = errorBuilder("/app/auth", session)
 
 	// セッションの検証
-	if (!user) throw errorRedirect("ログインしていません。")
-	if (user.type !== "student") throw errorRedirect("生徒ではありません。")
+	if (!user) throw await errorRedirect("ログインしていません。")
+	if (user.type !== "student") throw await errorRedirect("生徒ではありません。")
 
 	// データベースの検証
 	const student = await prisma.student.findUnique({ where: { id: user.id } })
 	if (!student) {
 		session.unset("user")
-		throw errorRedirect("生徒が見つかりません。", {
-			headers: { "Set-Cookie": await commitSession(session) },
-		})
+		throw await errorRedirect("生徒が見つかりません。")
 	}
 	return student
 }

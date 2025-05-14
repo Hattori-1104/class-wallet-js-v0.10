@@ -47,7 +47,7 @@ const sessionStorage = createCookieSessionStorage<
 
 export const { getSession, commitSession, destroySession } = sessionStorage
 
-export type SessionType = Session<SessionDataType, SessionFlashDataType>
+export type SessionStorage = Session<SessionDataType, SessionFlashDataType>
 
 export const requireSession = async (request: Request) =>
 	getSession(request.headers.get("Cookie"))
@@ -94,32 +94,20 @@ export const _userNotFoundRedirect = async (session: Session) => {
 	return await errorRedirect("ユーザーが見つかりません。").throw()
 }
 
-const stripOrigin = (url: URL) => url.pathname + url.search + url.hash
-
-export function errorBuilder(redirectUrl: string) {
-	return (
-		errorMessage: string,
-		options?: { redirectUrlOverride?: string } & Parameters<typeof redirect>[1],
-	) => {
-		const url = new URL(
-			options?.redirectUrlOverride ?? redirectUrl,
-			"http://localhost",
-		)
-		url.searchParams.set("error", encodeURIComponent(errorMessage))
-		throw redirect(stripOrigin(url), options)
+export function errorBuilder(redirectUrl: string, session: SessionStorage) {
+	return async (errorMessage: string) => {
+		session.flash("error", { message: errorMessage })
+		return redirect(redirectUrl, {
+			headers: { "Set-Cookie": await commitSession(session) },
+		})
 	}
 }
 
-export function successBuilder(redirectUrl: string) {
-	return (
-		message: string,
-		options?: { redirectUrlOverride?: string } & Parameters<typeof redirect>[1],
-	) => {
-		const url = new URL(
-			options?.redirectUrlOverride ?? redirectUrl,
-			"http://localhost",
-		)
-		url.searchParams.set("success", encodeURIComponent(message))
-		return redirect(stripOrigin(url), options)
+export function successBuilder(redirectUrl: string, session: SessionStorage) {
+	return async (message: string) => {
+		session.flash("success", { message })
+		return redirect(redirectUrl, {
+			headers: { "Set-Cookie": await commitSession(session) },
+		})
 	}
 }
