@@ -1,9 +1,10 @@
+import { data } from "react-router"
+import { llmTest } from "~/services/llm.server"
 import type { Route } from "./+types/test"
 
-import { data } from "react-router"
-
-export const loader = () => {
-	return data("moji")
+export const loader = async () => {
+	const response = await llmTest()
+	return data(response)
 }
 
 export default ({ loaderData }: Route.ComponentProps) => {

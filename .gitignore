@@ -5,5 +5,5 @@
 /build/
 vapid
 token
-.env
+.env.local
 .env
