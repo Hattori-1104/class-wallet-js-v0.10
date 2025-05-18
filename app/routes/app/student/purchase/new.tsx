@@ -8,14 +8,14 @@ import { parseWithZod } from "@conform-to/zod"
 import { Loader2, Send } from "lucide-react"
 import { Form, data, useNavigation, useRevalidator } from "react-router"
 import { z } from "zod"
-import { LightBox } from "~/components/common/box"
 import {
 	Section,
 	SectionContent,
 	SectionTitle,
 } from "~/components/common/container"
-import { Aside, AsideEven } from "~/components/common/placement"
+import { AsideEven, Distant } from "~/components/common/placement"
 import { Title } from "~/components/common/typography"
+import { Alert, AlertTitle } from "~/components/ui/alert"
 import {
 	AlertDialog,
 	AlertDialogAction,
@@ -32,12 +32,7 @@ import { Textarea } from "~/components/ui/textarea"
 import { FormBody, FormField, FormFooter } from "~/components/utility/form"
 import { prisma } from "~/services/repository.server"
 import { entryPartRoute } from "~/services/route-module.server"
-import {
-	commitSession,
-	errorBuilder,
-	getSession,
-	successBuilder,
-} from "~/services/session.server"
+import { commitSession, successBuilder } from "~/services/session.server"
 import { formatCurrency } from "~/utilities/display"
 import type { Route } from "./+types/new"
 
@@ -51,9 +46,7 @@ const formSchema = z.object({
 })
 
 export const loader = async ({ request, params }: Route.LoaderArgs) => {
-	const { partId, session } = await entryPartRoute(request, params.partId)
-	const errorRedirect = errorBuilder(`/app/student/part/${partId}`, session)
-	if (!partId) return await errorRedirect("パートに所属していません。")
+	await entryPartRoute(request, params.partId)
 	return null
 }
 
@@ -144,18 +137,21 @@ export default ({ actionData }: Route.ComponentProps) => {
 						<AlertDialogContent>
 							<AlertDialogHeader>
 								<AlertDialogTitle>リクエストの確認</AlertDialogTitle>
-								<AlertDialogDescription>
-									以下の内容でリクエストを送信します。よろしいですか？
+								<AlertDialogDescription className="[&>span]:inline-block">
+									<span>以下の内容でリクエストを送信します。</span>
+									<span>よろしいですか？</span>
 								</AlertDialogDescription>
 							</AlertDialogHeader>
-							<LightBox>
-								<Aside gap="none" className="flex-wrap">
-									<Title className="text-wrap">{fields.label.value}</Title>
-									<span className="grow text-right">
-										{formatCurrency(Number(fields.plannedUsage.value))}
-									</span>
-								</Aside>
-							</LightBox>
+							<Alert>
+								<AlertTitle>
+									<Distant>
+										<span>{fields.label.value}</span>
+										<span>
+											{formatCurrency(Number(fields.plannedUsage.value))}
+										</span>
+									</Distant>
+								</AlertTitle>
+							</Alert>
 							<AlertDialogFooter>
 								<AsideEven className="w-full">
 									<AlertDialogCancel className="grow">
@@ -193,15 +189,10 @@ export default ({ actionData }: Route.ComponentProps) => {
 
 export const action = async ({ request, params }: Route.ActionArgs) => {
 	// 認証
-	const session = await getSession(request.headers.get("Cookie"))
-	const { partId, student } = await entryPartRoute(request, params.partId)
-	const errorRedirect = errorBuilder(
-		`/app/student/part/${partId}/purchase/new`,
-		session,
+	const { partId, student, session } = await entryPartRoute(
+		request,
+		params.partId,
 	)
-	if (!partId)
-		return await errorRedirect("パートに所属していません。", "/app/student")
-
 	// フォームデータの取得
 	const formData = await request.formData()
 	const submission = parseWithZod(formData, { schema: formSchema })
@@ -221,9 +212,9 @@ export const action = async ({ request, params }: Route.ActionArgs) => {
 	if (value.intent === "confirm")
 		return { result: submission.reply(), shouldConfirm: true }
 
-	// 購入の作成
-	const purchase = await prisma.purchase
-		.create({
+	// 情報の更新
+	try {
+		const purchase = await prisma.purchase.create({
 			data: {
 				label: value.label,
 				description: value.description,
@@ -245,21 +236,21 @@ export const action = async ({ request, params }: Route.ActionArgs) => {
 				plannedUsage: true,
 			},
 		})
-		.catch((error) => ({ isError: true as const, error }))
+		const successRedirect = successBuilder(
+			`/app/student/part/${partId}`,
+			session,
+		)
 
-	// 型ガードを使用して型安全にする
-	if ("isError" in purchase) {
+		return await successRedirect(
+			`買い出しをリクエストしました：${purchase.label}`,
+		)
+	} catch (error) {
 		// biome-ignore lint/suspicious/noConsole: エラーをログに出力
-		console.error(purchase.error)
+		console.error(error)
 		session.flash("error", { message: "購入の作成に失敗しました。" })
 		return data(
 			{ result: submission.reply(), shouldConfirm: false },
 			{ headers: { "Set-Cookie": await commitSession(session) } },
 		)
 	}
-	const successRedirect = successBuilder(`/app/student/part/${partId}`, session)
-
-	return await successRedirect(
-		`買い出しをリクエストしました：${purchase.label}`,
-	)
 }

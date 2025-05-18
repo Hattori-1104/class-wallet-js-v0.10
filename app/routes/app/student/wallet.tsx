@@ -6,7 +6,11 @@ import type { Route } from "./+types/wallet"
 
 export const loader = async ({ request, params }: Route.LoaderArgs) => {
 	// セッション情報の取得 & 検証
-	const { student, partId } = await entryPartRoute(request, params.partId)
+	const { student, partId } = await entryPartRoute(
+		request,
+		params.partId,
+		false,
+	)
 
 	// パートに所属していない場合
 	if (!partId) return null

@@ -1,19 +1,26 @@
-import {} from "ollama"
 import { OpenAI } from "openai"
 
 const API_KEY = process.env.LLM_API_KEY || "ollama"
-const MODEL = process.env.LLM_MODEL || "ollama/gemma3:1b"
+const MODEL = process.env.LLM_MODEL || "ollama/gemma3:1b-it-qat"
 
 const openai = new OpenAI({
-	apiKey: API_KEY,
 	baseURL: "http://localhost:11434/v1",
+	apiKey: API_KEY,
 })
 
-export const llmTest = async () => {
-	const response = await openai.chat.completions.create({
+export const llmTest = () => {
+	const response = openai.chat.completions.create({
 		model: MODEL,
-		messages: [{ role: "user", content: "Hello, how are you?" }],
+		messages: [{ role: "user", content: "こんにちは" }],
 	})
 
-	return response.choices[0].message.content
+	return response
 }
+
+// export const llmTest = () => {
+// 	const response = ollama.chat({
+// 		model: "gemma3",
+// 		messages: [{ role: "user", content: "こんにちは" }],
+// 	})
+// 	return response
+// }

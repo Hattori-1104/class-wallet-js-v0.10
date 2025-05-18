@@ -106,7 +106,7 @@ export default [
 						route("approval", "routes/app/student/purchase/approval.tsx"),
 						route("completion", "routes/app/student/purchase/completion.tsx"),
 						route(
-							"receipt-submission",
+							"receiptSubmission",
 							"routes/app/student/purchase/receipt-submission.tsx",
 						),
 					]),
@@ -118,6 +118,7 @@ export default [
 		// 認証
 		...prefix("auth", [
 			index("routes/app/auth/index.tsx"),
+			route("dev", "routes/app/auth/dev-login.tsx"),
 			route("oauth", "routes/app/auth/oauth.entry.tsx"),
 			route("oauth/callback", "routes/app/auth/oauth.callback.tsx"),
 		]),
@@ -125,4 +126,6 @@ export default [
 		route("*", "routes/app/router.tsx", { index: true }),
 	]),
 	route("test", "routes/test.tsx", { index: true }),
+	// 振り分け
+	route("*?", "routes/router.tsx", { index: true }),
 ] satisfies RouteConfig

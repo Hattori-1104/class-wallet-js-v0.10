@@ -24,6 +24,7 @@ model Student {
 
   PurchaseRequestedBy          Purchase[]                   @relation("RequestedBy")
   PurchaseAccountantApprovedBy PurchaseAccountantApproval[] @relation("ApprovedBy")
+  PurchaseReceiptSubmittedTo   PurchaseReceiptSubmission[]  @relation("SubmittedTo")
 }
 
 model Teacher {
@@ -80,7 +81,7 @@ model Purchase {
   requestedAt   DateTime @default(now())
   requestedById String
   requestedBy   Student  @relation(name: "RequestedBy", fields: [requestedById], references: [id], onDelete: Cascade)
-  isCanceled    Boolean  @default(false)
+  canceled    Boolean  @default(false)
 
   partId String
   part   Part   @relation(fields: [partId], references: [id], onDelete: Cascade)
@@ -133,6 +134,8 @@ model PurchaseReceiptSubmission {
   purchase   Purchase @relation(fields: [purchaseId], references: [id], onDelete: Cascade)
 
   receiptIndex Int
+  submittedToId String
+  submittedTo  Student? @relation(name: "SubmittedTo", fields: [submittedToId], references: [id], onDelete: Cascade)
   at           DateTime @default(now()) @updatedAt
 }
 

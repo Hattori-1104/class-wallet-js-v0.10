@@ -5,7 +5,7 @@ import type { Icon } from "~/utilities/type"
 
 export const NavBar = ({ children }: { children: ReactNode }) => {
 	return (
-		<nav className="h-16 border-t shrink-0 sticky bottom-0">
+		<nav className="h-16 border-t shrink-0 sticky bottom-0 bg-white">
 			<div className="container mx-auto px-8 h-full flex flex-row items-center justify-between">
 				{children}
 			</div>
@@ -26,7 +26,7 @@ export const NavBarItem = ({
 			className={cn(
 				"flex flex-col justify-center items-center gap-1 max-w-20 h-full w-full transition-all duration-200",
 				"text-muted-foreground",
-				isActive && "bg-muted text-primary",
+				isActive && "text-foreground font-bold",
 			)}
 			{...props}
 		>

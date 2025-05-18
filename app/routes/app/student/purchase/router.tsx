@@ -2,6 +2,7 @@ import { redirect } from "react-router"
 import { prisma } from "~/services/repository.server"
 import { entryPartRoute } from "~/services/route-module.server"
 import { errorBuilder } from "~/services/session.server"
+import { PurchaseState } from "~/utilities/purchase-state"
 import type { Route } from "./+types/router"
 
 export const loader = async ({ request, params }: Route.LoaderArgs) => {
@@ -11,8 +12,6 @@ export const loader = async ({ request, params }: Route.LoaderArgs) => {
 		params.partId,
 	)
 	const errorRedirect = errorBuilder(`/app/student/part/${partId}`, session)
-
-	if (!partId) return await errorRedirect("パートに所属していません。")
 
 	// データ取得
 	// 状態の検証
@@ -27,12 +26,7 @@ export const loader = async ({ request, params }: Route.LoaderArgs) => {
 			},
 			select: {
 				id: true,
-				label: true,
-				description: true,
-				plannedUsage: true,
-				updatedAt: true,
-
-				isCanceled: true,
+				canceled: true,
 				accountantApproval: {
 					select: {
 						approved: true,
@@ -57,22 +51,9 @@ export const loader = async ({ request, params }: Route.LoaderArgs) => {
 		})
 		.catch(() => errorRedirect("購入データが見つかりません。"))
 
-	const approvalPageUrl = `/app/student/part/${partId}/purchase/${purchase.id}/approval`
-	const completionPageUrl = `/app/student/part/${partId}/purchase/${purchase.id}/completion`
-	const receiptSubmissionPageUrl = `/app/student/part/${partId}/purchase/${purchase.id}/receipt-submission`
-
-	if (purchase.isCanceled) {
-		return redirect(approvalPageUrl)
-	}
-	if (
-		purchase.accountantApproval?.approved !== true ||
-		purchase.teacherApproval?.approved !== true
-	) {
-		return redirect(approvalPageUrl)
-	}
-	if (!purchase.completion) {
-		return redirect(completionPageUrl)
-	}
-
-	return redirect(receiptSubmissionPageUrl)
+	const purchaseState = new PurchaseState(purchase)
+	const pageRoute = purchaseState.recommendedAction
+	return redirect(
+		`/app/student/part/${partId}/purchase/${purchase.id}/${pageRoute}`,
+	)
 }

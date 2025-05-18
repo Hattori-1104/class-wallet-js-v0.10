@@ -45,14 +45,34 @@ export async function requirePartId(
  * @db 無し
  * @session 無し
  */
+type User = {
+	id: string
+	name: string
+	email: string
+}
 export async function entryPartRoute(
 	request: Request,
 	paramPartId: string | undefined,
-) {
+	redirect: false,
+): Promise<{ student: User; session: SessionStorage; partId: string | null }>
+export async function entryPartRoute(
+	request: Request,
+	paramPartId: string | undefined,
+	redirect?: true,
+): Promise<{ student: User; session: SessionStorage; partId: string }>
+export async function entryPartRoute(
+	request: Request,
+	paramPartId: string | undefined,
+	redirect = true,
+): Promise<{ student: User; session: SessionStorage; partId: string | null }> {
 	// セッション情報の取得 & 検証
 	const session = await requireSession(request)
 	const student = await verifyStudent(session)
 	const partId = await requirePartId(paramPartId, student.id)
+	if (!partId && redirect) {
+		const errorRedirect = errorBuilder(`/app/student/part/${partId}`, session)
+		throw await errorRedirect("パートに所属していません。")
+	}
 	return { student, session, partId }
 }
 

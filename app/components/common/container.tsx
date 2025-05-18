@@ -7,7 +7,7 @@ export const LayoutRelative = ({
 	className,
 }: { children: ReactNode; className?: string }) => {
 	return (
-		<main className={cn("relative grow bg-zinc-50 flex flex-col", className)}>
+		<main className={cn("relative grow flex flex-col", className)}>
 			{children}
 		</main>
 	)
@@ -60,7 +60,7 @@ export const SectionTitle = ({
 	children,
 	className,
 }: { children: ReactNode; className?: string }) => {
-	return <div className={cn("mt-6 mb-4", className)}>{children}</div>
+	return <div className={cn("my-6", className)}>{children}</div>
 }
 export const SectionContent = ({
 	children,
