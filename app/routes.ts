@@ -122,7 +122,19 @@ export default [
 					index("routes/app/teacher/wallet.tsx"),
 					route("settings", "routes/app/teacher/settings.tsx"),
 				]),
+				...prefix("purchase/:purchaseId", [
+					layout("routes/app/teacher/purchase/layout.tsx", [
+						index("routes/app/teacher/purchase/router.tsx"),
+						route("approval", "routes/app/teacher/purchase/approval.tsx"),
+						route("completion", "routes/app/teacher/purchase/completion.tsx"),
+						route(
+							"receiptSubmission",
+							"routes/app/teacher/purchase/receipt-submission.tsx",
+						),
+					]),
+				]),
 			]),
+
 			route("*", "routes/app/teacher/router.tsx", { index: true }),
 		]),
 		// 認証

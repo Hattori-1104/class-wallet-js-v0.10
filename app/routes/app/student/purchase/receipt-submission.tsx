@@ -1,36 +1,9 @@
 import { prisma } from "~/services/repository.server"
 import { entryStudentRoute } from "~/services/route-module.server"
 import { errorBuilder } from "~/services/session.server"
+import { queryIsInCharge } from "~/super-modules/purchase/common"
 import type { Route } from "./+types/receipt-submission"
 
-const queryIsInChargeQuery = async (partId: string, studentId: string) => {
-	const student = await prisma.student.findUnique({
-		where: {
-			id: studentId,
-			OR: [
-				{
-					parts: {
-						some: {
-							id: partId,
-							leaders: { some: { id: studentId } },
-						},
-					},
-				},
-				{
-					parts: {
-						some: {
-							id: partId,
-							wallet: {
-								accountantStudents: { some: { id: studentId } },
-							},
-						},
-					},
-				},
-			],
-		},
-	})
-	return Boolean(student)
-}
 const queryIsRequester = async (purchaseId: string, studentId: string) => {
 	const purchase = await prisma.purchase.findUnique({
 		where: {
@@ -47,7 +20,11 @@ export const loader = async ({ request, params }: Route.LoaderArgs) => {
 		request,
 		params.partId,
 	)
-	const isInCharge = await queryIsInChargeQuery(partId, student.id)
+	const isInCharge = await queryIsInCharge({
+		type: "student",
+		partId,
+		studentId: student.id,
+	})
 	const isRequester = await queryIsRequester(params.purchaseId, student.id)
 	const errorRedirect = errorBuilder(`/app/student/part/${partId}`, session)
 	const purchase = await prisma.purchase.findUniqueOrThrow({
