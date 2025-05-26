@@ -9,13 +9,13 @@ import { Header, HeaderBackButton } from "~/components/common/header"
 import { Distant } from "~/components/common/placement"
 import { Title } from "~/components/common/typography"
 import { prisma } from "~/services/repository.server"
-import { entryPartRoute } from "~/services/route-module.server"
+import { entryStudentRoute } from "~/services/route-module.server"
 import { errorBuilder } from "~/services/session.server"
 import { formatCurrency } from "~/utilities/display"
 import type { Route } from "./+types/layout"
 
 export const loader = async ({ request, params }: Route.LoaderArgs) => {
-	const { partId, session, student } = await entryPartRoute(
+	const { partId, session, student } = await entryStudentRoute(
 		request,
 		params.partId,
 	)

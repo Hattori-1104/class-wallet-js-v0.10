@@ -22,7 +22,7 @@ import { Button } from "~/components/ui/button"
 import { Input } from "~/components/ui/input"
 import { FormField } from "~/components/utility/form"
 import { prisma } from "~/services/repository.server"
-import { entryPartRoute } from "~/services/route-module.server"
+import { entryStudentRoute } from "~/services/route-module.server"
 import { commitSession, successBuilder } from "~/services/session.server"
 import { formatCurrency, formatDiffDate } from "~/utilities/display"
 import type { Route } from "./+types/completion"
@@ -39,7 +39,7 @@ const queryIsRequester = async (purchaseId: string, studentId: string) => {
 }
 
 export const loader = async ({ request, params }: Route.LoaderArgs) => {
-	const { partId, student } = await entryPartRoute(request, params.partId)
+	const { partId, student } = await entryStudentRoute(request, params.partId)
 
 	// TODO: エラーハンドリング
 	const purchase = await prisma.purchase.findUniqueOrThrow({
@@ -243,7 +243,7 @@ export default (props: Route.ComponentProps) => {
 }
 
 export const action = async ({ request, params }: Route.ActionArgs) => {
-	const { partId, student, session } = await entryPartRoute(
+	const { partId, student, session } = await entryStudentRoute(
 		request,
 		params.partId,
 	)

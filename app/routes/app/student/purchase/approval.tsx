@@ -21,7 +21,7 @@ import {
 } from "~/components/ui/alert-dialog"
 import { Button } from "~/components/ui/button"
 import { prisma } from "~/services/repository.server"
-import { entryPartRoute } from "~/services/route-module.server"
+import { entryStudentRoute } from "~/services/route-module.server"
 import { errorBuilder, successBuilder } from "~/services/session.server"
 import { formatDiffDate } from "~/utilities/display"
 import type { Route } from "./+types/approval"
@@ -57,7 +57,7 @@ const queryIsInChargeQuery = async (partId: string, studentId: string) => {
 
 export const loader = async ({ request, params }: Route.LoaderArgs) => {
 	// セッション情報の取得 & 検証
-	const { partId, session, student } = await entryPartRoute(
+	const { partId, session, student } = await entryStudentRoute(
 		request,
 		params.partId,
 	)
@@ -242,7 +242,7 @@ export default ({
 }
 
 export const action = async ({ request, params }: Route.ActionArgs) => {
-	const { partId, session, student } = await entryPartRoute(
+	const { partId, session, student } = await entryStudentRoute(
 		request,
 		params.partId,
 	)

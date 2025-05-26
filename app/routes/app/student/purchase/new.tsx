@@ -31,7 +31,7 @@ import { Input } from "~/components/ui/input"
 import { Textarea } from "~/components/ui/textarea"
 import { FormBody, FormField, FormFooter } from "~/components/utility/form"
 import { prisma } from "~/services/repository.server"
-import { entryPartRoute } from "~/services/route-module.server"
+import { entryStudentRoute } from "~/services/route-module.server"
 import { commitSession, successBuilder } from "~/services/session.server"
 import { formatCurrency } from "~/utilities/display"
 import type { Route } from "./+types/new"
@@ -46,7 +46,7 @@ const formSchema = z.object({
 })
 
 export const loader = async ({ request, params }: Route.LoaderArgs) => {
-	await entryPartRoute(request, params.partId)
+	await entryStudentRoute(request, params.partId)
 	return null
 }
 
@@ -189,7 +189,7 @@ export default ({ actionData }: Route.ComponentProps) => {
 
 export const action = async ({ request, params }: Route.ActionArgs) => {
 	// 認証
-	const { partId, student, session } = await entryPartRoute(
+	const { partId, student, session } = await entryStudentRoute(
 		request,
 		params.partId,
 	)

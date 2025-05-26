@@ -115,6 +115,16 @@ export default [
 			// 振り分け
 			route("*", "routes/app/student/router.tsx", { index: true }),
 		]),
+		// 教師
+		...prefix("teacher", [
+			...prefix("wallet/:walletId?", [
+				layout("routes/app/teacher/layout-main.tsx", [
+					index("routes/app/teacher/wallet.tsx"),
+					route("settings", "routes/app/teacher/settings.tsx"),
+				]),
+			]),
+			route("*", "routes/app/teacher/router.tsx", { index: true }),
+		]),
 		// 認証
 		...prefix("auth", [
 			index("routes/app/auth/index.tsx"),

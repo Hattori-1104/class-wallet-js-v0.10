@@ -1,12 +1,12 @@
 import { Section } from "~/components/common/container"
 import { NoData } from "~/components/common/typography"
 import { prisma } from "~/services/repository.server"
-import { entryPartRoute } from "~/services/route-module.server"
+import { entryStudentRoute } from "~/services/route-module.server"
 import type { Route } from "./+types/wallet"
 
 export const loader = async ({ request, params }: Route.LoaderArgs) => {
 	// セッション情報の取得 & 検証
-	const { student, partId } = await entryPartRoute(
+	const { student, partId } = await entryStudentRoute(
 		request,
 		params.partId,
 		false,

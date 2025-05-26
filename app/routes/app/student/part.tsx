@@ -10,13 +10,13 @@ import { Distant } from "~/components/common/placement"
 import { NoData, Title } from "~/components/common/typography"
 import { Alert, AlertDescription, AlertTitle } from "~/components/ui/alert"
 import { prisma } from "~/services/repository.server"
-import { entryPartRoute } from "~/services/route-module.server"
+import { entryStudentRoute } from "~/services/route-module.server"
 import { formatCurrency, formatDiffDate } from "~/utilities/display"
 import type { Route } from "./+types/part"
 
 export const loader = async ({ request, params }: Route.LoaderArgs) => {
 	// セッション情報の取得 & 検証
-	const { student, partId } = await entryPartRoute(
+	const { student, partId } = await entryStudentRoute(
 		request,
 		params.partId,
 		false,

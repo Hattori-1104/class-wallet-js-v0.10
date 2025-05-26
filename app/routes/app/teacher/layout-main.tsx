@@ -1,12 +1,17 @@
-import { Home, Menu, Settings, Wallet } from "lucide-react"
-import { Link, type LinkProps, Outlet, useMatches } from "react-router"
-import { LayoutRelative, MainContainer } from "~/components/common/container"
+import { Home } from "lucide-react"
+import { Menu, Settings } from "lucide-react"
+import { Outlet, useMatches } from "react-router"
+import type { LinkProps } from "react-router"
+import { Link } from "react-router"
+import { MainContainer } from "~/components/common/container"
+import { LayoutRelative } from "~/components/common/container"
 import {
 	Header,
 	HeaderButton,
 	HeaderUserInfo,
 } from "~/components/common/header"
-import { NavBar, NavBarItem } from "~/components/common/navbar"
+import { NavBarItem } from "~/components/common/navbar"
+import { NavBar } from "~/components/common/navbar"
 import { NoData } from "~/components/common/typography"
 import {
 	Sidebar,
@@ -18,29 +23,29 @@ import {
 	SidebarMenuButton,
 	SidebarMenuItem,
 	SidebarProvider,
-	useSidebar,
 } from "~/components/ui/sidebar"
+import { useSidebar } from "~/components/ui/sidebar"
 import { cn } from "~/lib/utils"
 import { prisma } from "~/services/repository.server"
-import { entryStudentRoute } from "~/services/route-module.server"
+import { entryTeacherRoute } from "~/services/route-module.server"
 import type { Route } from "./+types/layout-main"
 
 export const loader = async ({ request, params }: Route.LoaderArgs) => {
-	const { student, partId } = await entryStudentRoute(
+	const { teacher, walletId } = await entryTeacherRoute(
 		request,
-		params.partId,
+		params.walletId,
 		false,
 	)
 
-	const belongParts = await prisma.part.findMany({
-		where: { students: { some: { id: student.id } } },
+	const belongWallets = await prisma.wallet.findMany({
+		where: { teachers: { some: { id: teacher.id } } },
 	})
 
-	return { student, belongParts, partId }
+	return { teacher, belongWallets, walletId }
 }
 
 export default ({
-	loaderData: { student, belongParts, partId },
+	loaderData: { teacher, belongWallets, walletId },
 }: Route.ComponentProps) => {
 	const matches = useMatches()
 	return (
@@ -49,24 +54,26 @@ export default ({
 				<Sidebar>
 					<SidebarContent>
 						<SidebarGroup>
-							<SidebarGroupLabel>所属パート</SidebarGroupLabel>
+							<SidebarGroupLabel>所属ウォレット</SidebarGroupLabel>
 							<SidebarGroupContent>
 								<SidebarMenu>
-									{belongParts.length > 0 ? (
-										belongParts.map((part) => (
-											<SidebarMenuItem key={part.id}>
+									{belongWallets.length > 0 ? (
+										belongWallets.map((wallet) => (
+											<SidebarMenuItem key={wallet.id}>
 												<SidebarMenuButton asChild>
 													<CloseSidebarLink
-														to={`/app/student/part/${part.id}`}
-														className={cn(partId === part.id && "font-bold")}
+														to={`/app/teacher/wallet/${wallet.id}`}
+														className={cn(
+															walletId === wallet.id && "font-bold",
+														)}
 													>
-														{part.name}
+														{wallet.name}
 													</CloseSidebarLink>
 												</SidebarMenuButton>
 											</SidebarMenuItem>
 										))
 									) : (
-										<NoData className="py-2">所属パートがありません</NoData>
+										<NoData className="py-2">所属ウォレットがありません</NoData>
 									)}
 								</SidebarMenu>
 							</SidebarGroupContent>
@@ -76,7 +83,7 @@ export default ({
 				<LayoutRelative>
 					<Header>
 						<SidebarTrigger />
-						<HeaderUserInfo {...student} />
+						<HeaderUserInfo {...teacher} />
 					</Header>
 					<MainContainer>
 						<Outlet />
@@ -85,26 +92,18 @@ export default ({
 						<NavBarItem
 							Icon={Settings}
 							label="設定"
-							to={`/app/student/part/${partId}/settings`}
+							to={`/app/teacher/wallet/${walletId}/settings`}
 							isActive={matches.some(
-								(match) => match.id === "routes/app/student/settings",
+								(match) => match.id === "routes/app/teacher/settings",
 							)}
 						/>
 
 						<NavBarItem
 							Icon={Home}
 							label="ホーム"
-							to={`/app/student/part/${partId}`}
+							to={`/app/teacher/wallet/${walletId}`}
 							isActive={matches.some(
-								(match) => match.id === "routes/app/student/part",
-							)}
-						/>
-						<NavBarItem
-							Icon={Wallet}
-							label="ウォレット"
-							to={`/app/student/part/${partId}/wallet`}
-							isActive={matches.some(
-								(match) => match.id === "routes/app/student/wallet",
+								(match) => match.id === "routes/app/teacher/wallet",
 							)}
 						/>
 					</NavBar>

@@ -1,5 +1,5 @@
 import { prisma } from "~/services/repository.server"
-import { entryPartRoute } from "~/services/route-module.server"
+import { entryStudentRoute } from "~/services/route-module.server"
 import { errorBuilder } from "~/services/session.server"
 import type { Route } from "./+types/receipt-submission"
 
@@ -43,7 +43,7 @@ const queryIsRequester = async (purchaseId: string, studentId: string) => {
 }
 
 export const loader = async ({ request, params }: Route.LoaderArgs) => {
-	const { partId, student, session } = await entryPartRoute(
+	const { partId, student, session } = await entryStudentRoute(
 		request,
 		params.partId,
 	)

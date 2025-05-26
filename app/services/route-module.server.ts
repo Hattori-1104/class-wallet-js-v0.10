@@ -50,17 +50,17 @@ type User = {
 	name: string
 	email: string
 }
-export async function entryPartRoute(
+export async function entryStudentRoute(
 	request: Request,
 	paramPartId: string | undefined,
 	redirect: false,
 ): Promise<{ student: User; session: SessionStorage; partId: string | null }>
-export async function entryPartRoute(
+export async function entryStudentRoute(
 	request: Request,
 	paramPartId: string | undefined,
 	redirect?: true,
 ): Promise<{ student: User; session: SessionStorage; partId: string }>
-export async function entryPartRoute(
+export async function entryStudentRoute(
 	request: Request,
 	paramPartId: string | undefined,
 	redirect = true,
@@ -98,4 +98,71 @@ export async function verifyStudent(session: SessionStorage) {
 		throw await errorRedirect("生徒が見つかりません。")
 	}
 	return student
+}
+
+export async function requireWalletId(
+	walletId: string | undefined,
+	teacherId: string,
+) {
+	if (walletId) {
+		const wallet = await prisma.wallet.findUnique({
+			where: { id: walletId, teachers: { some: { id: teacherId } } },
+		})
+		if (wallet) return wallet.id
+	}
+	const wallet = await prisma.wallet.findFirst({
+		where: { teachers: { some: { id: teacherId } } },
+	})
+	if (wallet) return wallet.id
+	return null
+}
+
+/**
+ * 教師を検証する
+ * @param {SessionStorage} session
+ * @returns {Promise<Teacher>}
+ *
+ * @query 1
+ */
+export async function verifyTeacher(session: SessionStorage) {
+	const user = session.get("user")
+	const errorRedirect = errorBuilder("/app/auth", session)
+
+	if (!user) throw await errorRedirect("ログインしていません。")
+	if (user.type !== "teacher") throw await errorRedirect("教師ではありません。")
+
+	const teacher = await prisma.teacher.findUnique({ where: { id: user.id } })
+	if (!teacher) {
+		session.unset("user")
+		throw await errorRedirect("教師が見つかりません。")
+	}
+	return teacher
+}
+
+export async function entryTeacherRoute(
+	request: Request,
+	paramWalletId: string | undefined,
+	redirect: false,
+): Promise<{ teacher: User; session: SessionStorage; walletId: string | null }>
+export async function entryTeacherRoute(
+	request: Request,
+	paramWalletId: string | undefined,
+	redirect?: true,
+): Promise<{ teacher: User; session: SessionStorage; walletId: string }>
+export async function entryTeacherRoute(
+	request: Request,
+	paramWalletId: string | undefined,
+	redirect = true,
+) {
+	const session = await requireSession(request)
+	const teacher = await verifyTeacher(session)
+	const walletId = await requireWalletId(paramWalletId, teacher.id)
+	if (!walletId && redirect) {
+		const errorRedirect = errorBuilder(
+			`/app/teacher/wallet/${walletId}`,
+			session,
+		)
+		throw await errorRedirect("ウォレットが見つかりません。")
+	}
+	return { teacher, session, walletId }
 }

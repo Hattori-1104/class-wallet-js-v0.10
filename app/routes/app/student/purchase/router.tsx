@@ -1,13 +1,13 @@
 import { redirect } from "react-router"
 import { prisma } from "~/services/repository.server"
-import { entryPartRoute } from "~/services/route-module.server"
+import { entryStudentRoute } from "~/services/route-module.server"
 import { errorBuilder } from "~/services/session.server"
 import { PurchaseState } from "~/utilities/purchase-state"
 import type { Route } from "./+types/router"
 
 export const loader = async ({ request, params }: Route.LoaderArgs) => {
 	// セッション情報の取得 & 検証
-	const { partId, session, student } = await entryPartRoute(
+	const { partId, session, student } = await entryStudentRoute(
 		request,
 		params.partId,
 	)

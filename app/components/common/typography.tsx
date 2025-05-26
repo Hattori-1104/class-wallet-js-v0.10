@@ -18,7 +18,7 @@ export const NoData = ({
 	return (
 		<span
 			className={cn(
-				"text-muted-foreground font-normal text-md italic",
+				"text-muted-foreground font-normal text-md italic text-center",
 				className,
 			)}
 		>
