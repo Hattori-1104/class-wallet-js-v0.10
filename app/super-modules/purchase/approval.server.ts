@@ -1,4 +1,10 @@
 import type { Prisma } from "@prisma/client"
+import { prisma } from "~/services/repository.server"
+import {
+	type SessionStorage,
+	errorBuilder,
+	successBuilder,
+} from "~/services/session.server"
 
 export const PurchaseApprovalSelectQuery = {
 	id: true,
@@ -28,3 +34,143 @@ export const PurchaseApprovalSelectQuery = {
 	},
 } satisfies Prisma.PurchaseSelect
 export type PurchaseApprovalSelectQuery = typeof PurchaseApprovalSelectQuery
+
+// Discriminated union types for purchase approval
+export type StudentApprovalAction = {
+	type: "student"
+	purchaseId: string
+	studentId: string
+	partId: string
+	action: "approve" | "reject"
+	session: SessionStorage
+}
+
+export type TeacherApprovalAction = {
+	type: "teacher"
+	purchaseId: string
+	teacherId: string
+	walletId: string
+	action: "approve" | "reject"
+	session: SessionStorage
+}
+
+export type ApprovalAction = StudentApprovalAction | TeacherApprovalAction
+
+// Overloaded function signatures for purchase approval
+export async function processPurchaseApproval(
+	action: StudentApprovalAction,
+): Promise<Response>
+export async function processPurchaseApproval(
+	action: TeacherApprovalAction,
+): Promise<Response>
+export async function processPurchaseApproval(
+	actionData: ApprovalAction,
+): Promise<Response> {
+	if (actionData.type === "student") {
+		const errorRedirect = errorBuilder(
+			`/app/student/part/${actionData.partId}`,
+			actionData.session,
+		)
+		const successRedirect = successBuilder(
+			`/app/student/part/${actionData.partId}/purchase/${actionData.purchaseId}`,
+			actionData.session,
+		)
+
+		if (actionData.action === "approve") {
+			await prisma.purchase
+				.update({
+					where: { id: actionData.purchaseId },
+					data: {
+						accountantApproval: {
+							upsert: {
+								update: {
+									by: { connect: { id: actionData.studentId } },
+									approved: true,
+								},
+								create: {
+									by: { connect: { id: actionData.studentId } },
+									approved: true,
+								},
+							},
+						},
+					},
+				})
+				.catch(() => errorRedirect("購入の承認に失敗しました。"))
+			return successRedirect("購入を承認しました。")
+		}
+
+		if (actionData.action === "reject") {
+			await prisma.purchase
+				.update({
+					where: { id: actionData.purchaseId },
+					data: {
+						accountantApproval: {
+							update: {
+								by: { connect: { id: actionData.studentId } },
+								approved: false,
+							},
+						},
+					},
+				})
+				.catch(() => errorRedirect("購入の拒否に失敗しました。"))
+			return successRedirect("購入を拒否しました。")
+		}
+
+		// Exhaustive check
+		const _exhaustiveCheck: never = actionData.action
+		throw new Error(`Unhandled action: ${_exhaustiveCheck}`)
+	}
+
+	const errorRedirect = errorBuilder(
+		`/app/teacher/wallet/${actionData.walletId}`,
+		actionData.session,
+	)
+	const successRedirect = successBuilder(
+		`/app/teacher/wallet/${actionData.walletId}/purchase/${actionData.purchaseId}`,
+		actionData.session,
+	)
+
+	if (actionData.action === "approve") {
+		await prisma.purchase
+			.update({
+				where: { id: actionData.purchaseId },
+				data: {
+					teacherApproval: {
+						upsert: {
+							update: {
+								by: { connect: { id: actionData.teacherId } },
+								approved: true,
+							},
+							create: {
+								by: { connect: { id: actionData.teacherId } },
+								approved: true,
+							},
+						},
+					},
+				},
+			})
+			.catch(() => errorRedirect("購入の承認に失敗しました。"))
+		return successRedirect("購入を承認しました。")
+	}
+
+	if (actionData.action === "reject") {
+		await prisma.purchase
+			.update({
+				where: { id: actionData.purchaseId },
+				data: {
+					teacherApproval: {
+						update: {
+							by: { connect: { id: actionData.teacherId } },
+							approved: false,
+						},
+					},
+				},
+			})
+			.catch(() => errorRedirect("購入の拒否に失敗しました。"))
+		return successRedirect("購入を拒否しました。")
+	}
+
+	// Exhaustive check
+	const _exhaustiveCheck: never = actionData.action
+	throw new Error(`Unhandled action: ${_exhaustiveCheck}`)
+}

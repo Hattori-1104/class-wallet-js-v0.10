@@ -1,9 +1,13 @@
 import { Section, SectionTitle } from "~/components/common/container"
+import { Title } from "~/components/common/typography"
 import { prisma } from "~/services/repository.server"
 import { entryStudentRoute } from "~/services/route-module.server"
-import { errorBuilder, successBuilder } from "~/services/session.server"
+import { errorBuilder } from "~/services/session.server"
 import { PurchaseApprovalSectionContent } from "~/super-modules/purchase/approval"
-import { PurchaseApprovalSelectQuery } from "~/super-modules/purchase/approval.server"
+import {
+	PurchaseApprovalSelectQuery,
+	processPurchaseApproval,
+} from "~/super-modules/purchase/approval.server"
 import { queryIsInCharge } from "~/super-modules/purchase/common"
 import type { Route } from "./+types/approval"
 
@@ -39,7 +43,9 @@ export const loader = async ({ request, params }: Route.LoaderArgs) => {
 export default ({ loaderData }: Route.ComponentProps) => {
 	return (
 		<Section>
-			<SectionTitle>購入承認</SectionTitle>
+			<SectionTitle>
+				<Title>購入承認</Title>
+			</SectionTitle>
 			<PurchaseApprovalSectionContent
 				purchase={loaderData.purchase}
 				isInCharge={loaderData.isInCharge}
@@ -65,47 +71,17 @@ export const action = async ({ request, params }: Route.ActionArgs) => {
 
 	const formData = await request.formData()
 	const action = formData.get("action")
-	const successRedirect = successBuilder(
-		`/app/student/part/${partId}/purchase/${params.purchaseId}`,
+
+	if (action !== "approve" && action !== "reject") {
+		return null
+	}
+
+	return await processPurchaseApproval({
+		type: "student",
+		purchaseId: params.purchaseId,
+		studentId: student.id,
+		partId,
+		action,
 		session,
-	)
-	if (action === "reject") {
-		await prisma.purchase
-			.update({
-				where: { id: params.purchaseId },
-				data: {
-					accountantApproval: {
-						update: {
-							by: { connect: { id: student.id } },
-							approved: false,
-						},
-					},
-				},
-			})
-			.catch(() => errorRedirect("購入の拒否に失敗しました。"))
-		return successRedirect("購入を拒否しました。")
-	}
-	if (action === "approve") {
-		await prisma.purchase
-			.update({
-				where: { id: params.purchaseId },
-				data: {
-					accountantApproval: {
-						upsert: {
-							update: {
-								by: { connect: { id: student.id } },
-								approved: true,
-							},
-							create: {
-								by: { connect: { id: student.id } },
-								approved: true,
-							},
-						},
-					},
-				},
-			})
-			.catch(() => errorRedirect("購入の承認に失敗しました。"))
-		return successRedirect("購入を承認しました。")
-	}
-	return null
+	})
 }
