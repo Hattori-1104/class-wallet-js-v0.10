@@ -4,7 +4,7 @@ export const formatCurrency = (money: number) =>
 		.replace("-￥", "¥ -")
 		.replace("￥", "¥ ")
 
-export const formatDiffDate = (date: Date, now = new Date()) => {
+export function formatDiffDate(date: Date, now = new Date()) {
 	// 秒数
 	const diff = ((now.getTime() - date.getTime()) / 1000) | 0
 	if (diff < 60) return "たった今"
@@ -16,8 +16,8 @@ export const formatDiffDate = (date: Date, now = new Date()) => {
 	return `${date.getMonth() + 1}/${date.getDate()}`
 }
 
-export const displayPercent = (numerator: number, denominator: number) => {
-	if (denominator === 0) return "0%"
-	if (denominator === numerator) return "100%"
-	return `${Math.floor((numerator / denominator) * 100)}%`
+export function displayPercentage(ratio: number) {
+	if (ratio >= 1) return "100%"
+	if (0 < ratio && ratio <= 0.01) return "1%"
+	return `${(ratio * 100) | 0}%`
 }

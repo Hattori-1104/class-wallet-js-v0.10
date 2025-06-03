@@ -9,9 +9,14 @@ import { LinkButton } from "~/components/common/link-button"
 import { Distant } from "~/components/common/placement"
 import { NoData, Title } from "~/components/common/typography"
 import { Alert, AlertDescription, AlertTitle } from "~/components/ui/alert"
+import { BudgetDescription, BudgetGauge } from "~/components/utility/budget"
+import { entryStudentRoute } from "~/route-modules/common.server"
 import { prisma } from "~/services/repository.server"
-import { entryStudentRoute } from "~/services/route-module.server"
 import { formatCurrency, formatDiffDate } from "~/utilities/display"
+import {
+	type PurchaseAction,
+	recommendedAction,
+} from "~/utilities/purchase-state"
 import type { Route } from "./+types/part"
 
 export const loader = async ({ request, params }: Route.LoaderArgs) => {
@@ -40,6 +45,27 @@ export const loader = async ({ request, params }: Route.LoaderArgs) => {
 					description: true,
 					plannedUsage: true,
 					updatedAt: true,
+					canceled: true,
+					accountantApproval: {
+						select: {
+							approved: true,
+						},
+					},
+					teacherApproval: {
+						select: {
+							approved: true,
+						},
+					},
+					completion: {
+						select: {
+							actualUsage: true,
+						},
+					},
+					receiptSubmission: {
+						select: {
+							receiptIndex: true,
+						},
+					},
 				},
 				orderBy: {
 					updatedAt: "desc",
@@ -47,8 +73,40 @@ export const loader = async ({ request, params }: Route.LoaderArgs) => {
 			},
 		},
 	})
+	const purchaseInProgress = await prisma.purchase.findMany({
+		where: {
+			partId: partId,
+			receiptSubmission: null,
+			canceled: false,
+		},
+		select: {
+			plannedUsage: true,
+		},
+	})
+	const wholePlannedUsage = purchaseInProgress.reduce(
+		(acc, purchase) => acc + purchase.plannedUsage,
+		0,
+	)
+	const purchaseCompleted = await prisma.purchase.findMany({
+		where: {
+			partId: partId,
+			receiptSubmission: { isNot: null },
+			canceled: false,
+		},
+		select: {
+			completion: {
+				select: {
+					actualUsage: true,
+				},
+			},
+		},
+	})
+	const wholeActualUsage = purchaseCompleted.reduce(
+		(acc, purchase) => acc + (purchase.completion?.actualUsage ?? 0),
+		0,
+	)
 
-	return { partId, part }
+	return { partId, part, wholePlannedUsage, wholeActualUsage }
 }
 
 export default ({ loaderData }: Route.ComponentProps) => {
@@ -60,7 +118,13 @@ export default ({ loaderData }: Route.ComponentProps) => {
 				</Section>
 			</>
 		)
-	const { partId, part } = loaderData
+	const { partId, part, wholePlannedUsage, wholeActualUsage } = loaderData
+	const purchaseActionLabel: Record<PurchaseAction, string> = {
+		approval: "承認待ち",
+		completion: "買い出し中",
+		receiptSubmission: "レシート提出待ち",
+		completed: "完了",
+	}
 	return (
 		<>
 			<Section>
@@ -74,13 +138,17 @@ export default ({ loaderData }: Route.ComponentProps) => {
 						/>
 					</Distant>
 				</SectionTitle>
-				{/* <SectionContent>
+				<SectionContent className="space-y-2">
+					<BudgetDescription
+						budget={part.budget}
+						actualUsage={wholeActualUsage}
+					/>
 					<BudgetGauge
 						budget={part.budget}
-						plannedUsage={1000}
-						actualUsage={2000}
+						plannedUsage={wholePlannedUsage}
+						actualUsage={wholeActualUsage}
 					/>
-				</SectionContent> */}
+				</SectionContent>
 			</Section>
 			<Section>
 				<SectionTitle>
@@ -92,18 +160,31 @@ export default ({ loaderData }: Route.ComponentProps) => {
 							key={purchase.id}
 							to={`/app/student/part/${partId}/purchase/${purchase.id}`}
 						>
-							<Alert className="shadow-xs">
+							<Alert>
 								<AlertTitle>
 									<Distant>
 										<span className="font-bold">{purchase.label}</span>
 										<span className="font-normal">
-											{formatCurrency(purchase.plannedUsage)}
+											{purchase.completion
+												? `${formatCurrency(purchase.completion.actualUsage)}`
+												: `（予定額）${formatCurrency(purchase.plannedUsage)}`}
 										</span>
 									</Distant>
 								</AlertTitle>
 								<AlertDescription>
-									<span>{purchase.description}</span>
-									<span>{formatDiffDate(purchase.updatedAt)}</span>
+									<Distant>
+										{purchase.canceled ? (
+											<span className="text-destructive">
+												キャンセルされました。
+											</span>
+										) : (
+											<span>
+												{purchaseActionLabel[recommendedAction(purchase)]}
+											</span>
+										)}
+
+										<span>{formatDiffDate(purchase.updatedAt)}</span>
+									</Distant>
 								</AlertDescription>
 							</Alert>
 						</Link>

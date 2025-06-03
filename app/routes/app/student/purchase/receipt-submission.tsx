@@ -1,7 +1,11 @@
+import { Section, SectionTitle } from "~/components/common/container"
+import { Title } from "~/components/common/typography"
+import { entryStudentRoute } from "~/route-modules/common.server"
+import { queryIsInCharge } from "~/route-modules/purchase/common.server"
+import { PurchaseReceiptSubmissionSectionContent } from "~/route-modules/purchase/receipt-submission"
+import { PurchaseReceiptSubmissionSelectQuery } from "~/route-modules/purchase/receipt-submission.server"
 import { prisma } from "~/services/repository.server"
-import { entryStudentRoute } from "~/services/route-module.server"
-import { errorBuilder } from "~/services/session.server"
-import { queryIsInCharge } from "~/super-modules/purchase/common"
+import { errorBuilder, successBuilder } from "~/services/session.server"
 import type { Route } from "./+types/receipt-submission"
 
 const queryIsRequester = async (purchaseId: string, studentId: string) => {
@@ -20,29 +24,132 @@ export const loader = async ({ request, params }: Route.LoaderArgs) => {
 		request,
 		params.partId,
 	)
-	const isInCharge = await queryIsInCharge({
-		type: "student",
-		partId,
+	const isAccountant = await queryIsInCharge({
+		type: "accountant",
+		id: { use: "part", part: partId },
 		studentId: student.id,
 	})
 	const isRequester = await queryIsRequester(params.purchaseId, student.id)
-	const errorRedirect = errorBuilder(`/app/student/part/${partId}`, session)
-	const purchase = await prisma.purchase.findUniqueOrThrow({
+	const errorRedirect = errorBuilder(
+		`/app/student/part/${partId}/purchase/${params.purchaseId}`,
+		session,
+	)
+	const purchase = await prisma.purchase
+		.findUniqueOrThrow({
+			where: {
+				id: params.purchaseId,
+				part: { id: partId, students: { some: { id: student.id } } },
+			},
+			select: PurchaseReceiptSubmissionSelectQuery,
+		})
+		.catch(() => errorRedirect("購入が見つかりません"))
+	return { purchase, isAccountant, isRequester }
+}
+
+export default ({ loaderData }: Route.ComponentProps) => {
+	const { purchase, isAccountant, isRequester } = loaderData
+	return (
+		<Section>
+			<SectionTitle>
+				<Title>レシート提出</Title>
+			</SectionTitle>
+			<PurchaseReceiptSubmissionSectionContent
+				purchase={purchase}
+				isAccountant={isAccountant}
+				isRequester={isRequester}
+			/>
+		</Section>
+	)
+}
+
+export const action = async ({ request, params }: Route.ActionArgs) => {
+	const { partId, student, session } = await entryStudentRoute(
+		request,
+		params.partId,
+	)
+	const errorRedirect = errorBuilder(
+		`/app/student/part/${partId}/purchase/${params.purchaseId}`,
+		session,
+	)
+	const formData = await request.formData()
+	const accepted = formData.get("receiptSubmission") === "accepted"
+	if (!accepted) {
+		return errorRedirect("レシートが見つかりません")
+	}
+
+	const isAccountant = await queryIsInCharge({
+		type: "accountant",
+		id: { use: "part", part: partId },
+		studentId: student.id,
+	})
+	if (!isAccountant) {
+		return errorRedirect("権限がありません")
+	}
+
+	const registeredPurchases = await prisma.purchase.findMany({
 		where: {
-			id: params.purchaseId,
-			part: { id: partId, students: { some: { id: student.id } } },
+			part: { id: partId },
+			AND: [
+				{ receiptSubmission: { isNot: null } },
+				{ id: { not: params.purchaseId } },
+			],
 		},
 		select: {
-			label: true,
-			canceled: true,
-			plannedUsage: true,
-			completion: {
+			receiptSubmission: {
 				select: {
-					actualUsage: true,
+					receiptIndex: true,
 				},
 			},
 		},
 	})
-}
 
-export default () => {}
+	const receiptIndex = registeredPurchases
+		.filter((purchase) => purchase.receiptSubmission)
+		.reduce(
+			(min, purchase) =>
+				purchase.receiptSubmission?.receiptIndex === min ? min + 1 : min,
+			1,
+		)
+
+	const purchase = await prisma.purchase
+		.update({
+			where: { id: params.purchaseId },
+			data: {
+				receiptSubmission: {
+					upsert: {
+						create: {
+							receiptIndex,
+							submittedTo: {
+								connect: {
+									id: student.id,
+								},
+							},
+						},
+						update: {
+							receiptIndex,
+							submittedTo: {
+								connect: {
+									id: student.id,
+								},
+							},
+						},
+					},
+				},
+			},
+			select: {
+				receiptSubmission: {
+					select: {
+						receiptIndex: true,
+					},
+				},
+			},
+		})
+		.catch(() => errorRedirect("レシート提出に失敗しました。"))
+	const successRedirect = successBuilder(
+		`/app/student/part/${partId}/purchase/${params.purchaseId}`,
+		session,
+	)
+	return successRedirect(
+		`レシートを提出しました。番号：${purchase.receiptSubmission?.receiptIndex}`,
+	)
+}

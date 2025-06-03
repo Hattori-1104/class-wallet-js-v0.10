@@ -18,7 +18,11 @@ type PurchaseWithState = Prisma.PurchaseGetPayload<{
 	}
 }>
 
-export type PurchaseAction = "approval" | "completion" | "receiptSubmission"
+export type PurchaseAction =
+	| "approval"
+	| "completion"
+	| "receiptSubmission"
+	| "completed"
 
 export class PurchaseState {
 	constructor(private purchase: PurchaseWithState) {}
@@ -77,4 +81,29 @@ export class PurchaseState {
 		const { receiptSubmission } = this.purchase
 		return receiptSubmission ? "fulfilled" : "pending"
 	}
+}
+
+export function recommendedAction({
+	canceled,
+	accountantApproval,
+	teacherApproval,
+	completion,
+	receiptSubmission,
+}: PurchaseWithState): PurchaseAction {
+	if (canceled) {
+		return "approval" as const
+	}
+	if (
+		accountantApproval?.approved !== true ||
+		teacherApproval?.approved !== true
+	) {
+		return "approval" as const
+	}
+	if (!completion) {
+		return "completion" as const
+	}
+	if (!receiptSubmission) {
+		return "receiptSubmission" as const
+	}
+	return "completed" as const
 }

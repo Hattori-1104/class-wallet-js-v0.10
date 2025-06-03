@@ -1,9 +1,9 @@
-import { prisma } from "./repository.server"
+import { prisma } from "../services/repository.server"
 import {
 	type SessionStorage,
 	errorBuilder,
 	requireSession,
-} from "./session.server"
+} from "../services/session.server"
 
 /**
  * 指定されたpartIdが存在し、かつ学生が参加している場合はpartIdを返す

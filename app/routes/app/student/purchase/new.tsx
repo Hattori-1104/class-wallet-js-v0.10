@@ -30,8 +30,8 @@ import { Button } from "~/components/ui/button"
 import { Input } from "~/components/ui/input"
 import { Textarea } from "~/components/ui/textarea"
 import { FormBody, FormField, FormFooter } from "~/components/utility/form"
+import { entryStudentRoute } from "~/route-modules/common.server"
 import { prisma } from "~/services/repository.server"
-import { entryStudentRoute } from "~/services/route-module.server"
 import { commitSession, successBuilder } from "~/services/session.server"
 import { formatCurrency } from "~/utilities/display"
 import type { Route } from "./+types/new"
@@ -207,18 +207,18 @@ export const action = async ({ request, params }: Route.ActionArgs) => {
 			},
 		)
 	}
-	const { value } = submission
 	// 確認ダイアログを表示
-	if (value.intent === "confirm")
+	if (submission.value.intent === "confirm")
 		return { result: submission.reply(), shouldConfirm: true }
 
 	// 情報の更新
 	try {
+		const { label, description, plannedUsage } = submission.value
 		const purchase = await prisma.purchase.create({
 			data: {
-				label: value.label,
-				description: value.description,
-				plannedUsage: value.plannedUsage,
+				label,
+				description,
+				plannedUsage,
 				part: {
 					connect: {
 						id: partId,

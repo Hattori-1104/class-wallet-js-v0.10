@@ -1,12 +1,19 @@
-import { Section } from "~/components/common/container"
-import { NoData } from "~/components/common/typography"
+import {
+	Section,
+	SectionContent,
+	SectionTitle,
+} from "~/components/common/container"
+import { Distant } from "~/components/common/placement"
+import { NoData, Title } from "~/components/common/typography"
+import { BudgetDescription, BudgetGauge } from "~/components/utility/budget"
+import { entryStudentRoute } from "~/route-modules/common.server"
 import { prisma } from "~/services/repository.server"
-import { entryStudentRoute } from "~/services/route-module.server"
+import { errorBuilder } from "~/services/session.server"
 import type { Route } from "./+types/wallet"
 
 export const loader = async ({ request, params }: Route.LoaderArgs) => {
 	// セッション情報の取得 & 検証
-	const { student, partId } = await entryStudentRoute(
+	const { student, session, partId } = await entryStudentRoute(
 		request,
 		params.partId,
 		false,
@@ -15,15 +22,102 @@ export const loader = async ({ request, params }: Route.LoaderArgs) => {
 	// パートに所属していない場合
 	if (!partId) return null
 
-	// データを取得
-	// FIXME: エラーハンドリングが未実装
-	const wallet = await prisma.wallet.findFirstOrThrow({
-		where: {
-			parts: { some: { id: partId, students: { some: { id: student.id } } } },
-		},
-	})
+	const errorRedirect = errorBuilder("/app/student", session)
 
-	return { wallet }
+	try {
+		// ウォレット情報を取得
+		const wallet = await prisma.wallet.findFirst({
+			where: {
+				parts: { some: { id: partId, students: { some: { id: student.id } } } },
+			},
+			select: {
+				id: true,
+				name: true,
+				budget: true,
+				parts: {
+					select: {
+						id: true,
+						name: true,
+						budget: true,
+						isBazaar: true,
+					},
+				},
+			},
+		})
+
+		if (!wallet) {
+			throw await errorRedirect("ウォレットが見つかりません。")
+		}
+
+		// 各パートの進行中の購入（予定額）を取得
+		const purchasesInProgress = await prisma.purchase.findMany({
+			where: {
+				partId: { in: wallet.parts.map((part) => part.id) },
+				receiptSubmission: null,
+				canceled: false,
+			},
+			select: {
+				partId: true,
+				plannedUsage: true,
+			},
+		})
+
+		// 各パートの完了した購入（実際の使用額）を取得
+		const purchasesCompleted = await prisma.purchase.findMany({
+			where: {
+				partId: { in: wallet.parts.map((part) => part.id) },
+				receiptSubmission: { isNot: null },
+				canceled: false,
+			},
+			select: {
+				partId: true,
+				completion: {
+					select: {
+						actualUsage: true,
+					},
+				},
+			},
+		})
+
+		// 各パートの予算使用状況を計算
+		const partsWithBudgetInfo = wallet.parts.map((part) => {
+			const plannedUsage = purchasesInProgress
+				.filter((p) => p.partId === part.id)
+				.reduce((sum, p) => sum + p.plannedUsage, 0)
+
+			const actualUsage = purchasesCompleted
+				.filter((p) => p.partId === part.id)
+				.reduce((sum, p) => sum + (p.completion?.actualUsage || 0), 0)
+
+			return {
+				...part,
+				plannedUsage,
+				actualUsage,
+			}
+		})
+
+		// ウォレット全体の予算使用状況を計算
+		const totalPlannedUsage = partsWithBudgetInfo.reduce(
+			(sum, part) => sum + part.plannedUsage,
+			0,
+		)
+		const totalActualUsage = partsWithBudgetInfo.reduce(
+			(sum, part) => sum + part.actualUsage,
+			0,
+		)
+
+		return {
+			wallet: {
+				...wallet,
+				parts: partsWithBudgetInfo,
+			},
+			totalPlannedUsage,
+			totalActualUsage,
+		}
+	} catch (error) {
+		console.error("ウォレット情報の取得に失敗しました:", error)
+		throw await errorRedirect("ウォレット情報の取得に失敗しました。")
+	}
 }
 
 export default ({ loaderData }: Route.ComponentProps) => {
@@ -33,5 +127,53 @@ export default ({ loaderData }: Route.ComponentProps) => {
 				<NoData>ウォレットに所属していません。</NoData>
 			</Section>
 		)
-	return <div>wallet {loaderData.wallet.name}</div>
+
+	const { wallet, totalPlannedUsage, totalActualUsage } = loaderData
+
+	return (
+		<>
+			{/* ウォレット全体の予算状況 */}
+			<Section>
+				<SectionTitle>
+					<Title>{wallet.name} 全体</Title>
+				</SectionTitle>
+				<SectionContent className="space-y-2">
+					<BudgetDescription
+						budget={wallet.budget}
+						actualUsage={totalActualUsage}
+					/>
+					<BudgetGauge
+						budget={wallet.budget}
+						plannedUsage={totalPlannedUsage}
+						actualUsage={totalActualUsage}
+					/>
+				</SectionContent>
+			</Section>
+
+			{/* 各パートの予算状況 */}
+			{wallet.parts.map((part) => (
+				<Section key={part.id}>
+					<SectionTitle>
+						<Distant>
+							<Title>{part.name}</Title>
+							{part.isBazaar && (
+								<span className="text-sm text-muted-foreground">バザー</span>
+							)}
+						</Distant>
+					</SectionTitle>
+					<SectionContent className="space-y-2">
+						<BudgetDescription
+							budget={part.budget}
+							actualUsage={part.actualUsage}
+						/>
+						<BudgetGauge
+							budget={part.budget}
+							plannedUsage={part.plannedUsage}
+							actualUsage={part.actualUsage}
+						/>
+					</SectionContent>
+				</Section>
+			))}
+		</>
+	)
 }

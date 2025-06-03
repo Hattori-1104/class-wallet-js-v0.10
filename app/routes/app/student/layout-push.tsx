@@ -1,7 +1,7 @@
 import { Outlet } from "react-router"
 import { LayoutAbsolute, MainContainer } from "~/components/common/container"
 import { Header, HeaderBackButton } from "~/components/common/header"
-import { entryStudentRoute } from "~/services/route-module.server"
+import { entryStudentRoute } from "~/route-modules/common.server"
 import type { Route } from "./+types/layout-main"
 
 export const loader = async ({ request, params }: Route.LoaderArgs) => {

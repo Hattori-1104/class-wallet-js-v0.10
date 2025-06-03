@@ -1,5 +1,11 @@
-import { Home, Menu, Settings, Wallet } from "lucide-react"
-import { Link, type LinkProps, Outlet, useMatches } from "react-router"
+import { Home, LogOut, Menu, ScrollText, Wallet } from "lucide-react"
+import {
+	Link,
+	type LinkProps,
+	Outlet,
+	useMatches,
+	useSubmit,
+} from "react-router"
 import { LayoutRelative, MainContainer } from "~/components/common/container"
 import {
 	Header,
@@ -11,6 +17,7 @@ import { NoData } from "~/components/common/typography"
 import {
 	Sidebar,
 	SidebarContent,
+	SidebarFooter,
 	SidebarGroup,
 	SidebarGroupContent,
 	SidebarGroupLabel,
@@ -21,8 +28,8 @@ import {
 	useSidebar,
 } from "~/components/ui/sidebar"
 import { cn } from "~/lib/utils"
+import { entryStudentRoute } from "~/route-modules/common.server"
 import { prisma } from "~/services/repository.server"
-import { entryStudentRoute } from "~/services/route-module.server"
 import type { Route } from "./+types/layout-main"
 
 export const loader = async ({ request, params }: Route.LoaderArgs) => {
@@ -43,6 +50,7 @@ export default ({
 	loaderData: { student, belongParts, partId },
 }: Route.ComponentProps) => {
 	const matches = useMatches()
+	const submit = useSubmit()
 	return (
 		<>
 			<SidebarProvider>
@@ -72,6 +80,21 @@ export default ({
 							</SidebarGroupContent>
 						</SidebarGroup>
 					</SidebarContent>
+					<SidebarFooter>
+						<SidebarMenu>
+							<SidebarMenuItem>
+								<SidebarMenuButton
+									variant="destructive"
+									onClick={() =>
+										submit(null, { method: "post", action: "/app/auth/logout" })
+									}
+								>
+									<LogOut />
+									ログアウト
+								</SidebarMenuButton>
+							</SidebarMenuItem>
+						</SidebarMenu>
+					</SidebarFooter>
 				</Sidebar>
 				<LayoutRelative>
 					<Header>
@@ -83,11 +106,11 @@ export default ({
 					</MainContainer>
 					<NavBar>
 						<NavBarItem
-							Icon={Settings}
-							label="設定"
-							to={`/app/student/part/${partId}/settings`}
+							Icon={ScrollText}
+							label="出納簿"
+							to={`/app/student/part/${partId}/cash-book`}
 							isActive={matches.some(
-								(match) => match.id === "routes/app/student/settings",
+								(match) => match.id === "routes/app/student/cash-book",
 							)}
 						/>
 

@@ -95,7 +95,7 @@ export default [
 				layout("routes/app/student/layout-main.tsx", [
 					index("routes/app/student/part.tsx"),
 					route("wallet", "routes/app/student/wallet.tsx"),
-					route("settings", "routes/app/student/settings.tsx"),
+					route("cash-book", "routes/app/student/cash-book.tsx"),
 				]),
 				layout("routes/app/student/layout-push.tsx", [
 					route("purchase/new", "routes/app/student/purchase/new.tsx"),
@@ -120,7 +120,7 @@ export default [
 			...prefix("wallet/:walletId?", [
 				layout("routes/app/teacher/layout-main.tsx", [
 					index("routes/app/teacher/wallet.tsx"),
-					route("settings", "routes/app/teacher/settings.tsx"),
+					route("cash-book", "routes/app/teacher/cash-book.tsx"),
 				]),
 				...prefix("purchase/:purchaseId", [
 					layout("routes/app/teacher/purchase/layout.tsx", [
@@ -141,6 +141,7 @@ export default [
 		...prefix("auth", [
 			index("routes/app/auth/index.tsx"),
 			route("dev", "routes/app/auth/dev-login.tsx"),
+			route("logout", "routes/app/auth/logout.tsx"),
 			route("oauth", "routes/app/auth/oauth.entry.tsx"),
 			route("oauth/callback", "routes/app/auth/oauth.callback.tsx"),
 		]),

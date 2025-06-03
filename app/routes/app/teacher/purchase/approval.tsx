@@ -1,14 +1,14 @@
 import { Section, SectionTitle } from "~/components/common/container"
 import { Title } from "~/components/common/typography"
-import { prisma } from "~/services/repository.server"
-import { entryTeacherRoute } from "~/services/route-module.server"
-import { errorBuilder } from "~/services/session.server"
-import { PurchaseApprovalSectionContent } from "~/super-modules/purchase/approval"
+import { entryTeacherRoute } from "~/route-modules/common.server"
+import { PurchaseApprovalSectionContent } from "~/route-modules/purchase/approval"
 import {
 	PurchaseApprovalSelectQuery,
 	processPurchaseApproval,
-} from "~/super-modules/purchase/approval.server"
-import { queryIsInCharge } from "~/super-modules/purchase/common"
+} from "~/route-modules/purchase/approval.server"
+import { queryIsInCharge } from "~/route-modules/purchase/common.server"
+import { prisma } from "~/services/repository.server"
+import { errorBuilder } from "~/services/session.server"
 import type { Route } from "./+types/approval"
 
 export const loader = async ({ request, params }: Route.LoaderArgs) => {

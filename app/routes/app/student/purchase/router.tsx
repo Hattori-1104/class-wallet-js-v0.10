@@ -1,8 +1,8 @@
 import { redirect } from "react-router"
+import { entryStudentRoute } from "~/route-modules/common.server"
 import { prisma } from "~/services/repository.server"
-import { entryStudentRoute } from "~/services/route-module.server"
 import { errorBuilder } from "~/services/session.server"
-import { PurchaseState } from "~/utilities/purchase-state"
+import { recommendedAction } from "~/utilities/purchase-state"
 import type { Route } from "./+types/router"
 
 export const loader = async ({ request, params }: Route.LoaderArgs) => {
@@ -51,8 +51,10 @@ export const loader = async ({ request, params }: Route.LoaderArgs) => {
 		})
 		.catch(() => errorRedirect("購入データが見つかりません。"))
 
-	const purchaseState = new PurchaseState(purchase)
-	const pageRoute = purchaseState.recommendedAction
+	const pageRoute = recommendedAction(purchase).replace(
+		"completed",
+		"receiptSubmission",
+	)
 	return redirect(
 		`/app/student/part/${partId}/purchase/${purchase.id}/${pageRoute}`,
 	)

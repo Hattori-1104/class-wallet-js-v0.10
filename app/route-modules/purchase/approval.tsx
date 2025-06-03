@@ -28,9 +28,9 @@ type PurchaseApprovalSectionContentProps = {
 	userType: "student" | "teacher"
 	isInCharge: boolean
 }
-export const PurchaseApprovalSectionContent = (
+export function PurchaseApprovalSectionContent(
 	props: PurchaseApprovalSectionContentProps,
-) => {
+) {
 	return (
 		<SectionContent className="flex flex-col gap-4">
 			<AccountantApproval {...props} />
@@ -48,7 +48,7 @@ function AccountantApproval({
 		<Slot>
 			{purchase.accountantApproval ? (
 				purchase.accountantApproval.approved ? (
-					<Alert className="border-positive/50  text-positive">
+					<Alert variant="positive">
 						<Check />
 						<AlertTitle>
 							<span>
@@ -60,7 +60,7 @@ function AccountantApproval({
 						</AlertDescription>
 					</Alert>
 				) : (
-					<Alert className="border-destructive/50 text-destructive">
+					<Alert variant="destructive">
 						<X />
 						<AlertTitle>
 							<span>
@@ -153,7 +153,7 @@ function TeacherApproval({
 		<Slot>
 			{purchase.teacherApproval ? (
 				purchase.teacherApproval.approved ? (
-					<Alert className="border-positive/50  text-positive">
+					<Alert variant="positive">
 						<Check />
 						<AlertTitle>
 							<span>
@@ -165,7 +165,7 @@ function TeacherApproval({
 						</AlertDescription>
 					</Alert>
 				) : (
-					<Alert className="border-destructive/50 text-destructive">
+					<Alert variant="destructive">
 						<X />
 						<AlertTitle>
 							<span>

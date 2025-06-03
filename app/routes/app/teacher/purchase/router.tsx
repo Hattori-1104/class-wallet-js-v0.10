@@ -1,6 +1,6 @@
 import { redirect } from "react-router"
+import { entryTeacherRoute } from "~/route-modules/common.server"
 import { prisma } from "~/services/repository.server"
-import { entryTeacherRoute } from "~/services/route-module.server"
 import { errorBuilder } from "~/services/session.server"
 import { PurchaseState } from "~/utilities/purchase-state"
 import type { Route } from "./+types/router"

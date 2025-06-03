@@ -1,6 +1,6 @@
-import { Home } from "lucide-react"
+import { Home, LogOut } from "lucide-react"
 import { Menu, Settings } from "lucide-react"
-import { Outlet, useMatches } from "react-router"
+import { Outlet, useMatches, useSubmit } from "react-router"
 import type { LinkProps } from "react-router"
 import { Link } from "react-router"
 import { MainContainer } from "~/components/common/container"
@@ -16,6 +16,7 @@ import { NoData } from "~/components/common/typography"
 import {
 	Sidebar,
 	SidebarContent,
+	SidebarFooter,
 	SidebarGroup,
 	SidebarGroupContent,
 	SidebarGroupLabel,
@@ -26,8 +27,8 @@ import {
 } from "~/components/ui/sidebar"
 import { useSidebar } from "~/components/ui/sidebar"
 import { cn } from "~/lib/utils"
+import { entryTeacherRoute } from "~/route-modules/common.server"
 import { prisma } from "~/services/repository.server"
-import { entryTeacherRoute } from "~/services/route-module.server"
 import type { Route } from "./+types/layout-main"
 
 export const loader = async ({ request, params }: Route.LoaderArgs) => {
@@ -48,6 +49,7 @@ export default ({
 	loaderData: { teacher, belongWallets, walletId },
 }: Route.ComponentProps) => {
 	const matches = useMatches()
+	const submit = useSubmit()
 	return (
 		<>
 			<SidebarProvider>
@@ -79,6 +81,21 @@ export default ({
 							</SidebarGroupContent>
 						</SidebarGroup>
 					</SidebarContent>
+					<SidebarFooter>
+						<SidebarMenu>
+							<SidebarMenuItem>
+								<SidebarMenuButton
+									variant="destructive"
+									onClick={() =>
+										submit(null, { method: "post", action: "/app/auth/logout" })
+									}
+								>
+									<LogOut />
+									ログアウト
+								</SidebarMenuButton>
+							</SidebarMenuItem>
+						</SidebarMenu>
+					</SidebarFooter>
 				</Sidebar>
 				<LayoutRelative>
 					<Header>
@@ -91,10 +108,10 @@ export default ({
 					<NavBar>
 						<NavBarItem
 							Icon={Settings}
-							label="設定"
-							to={`/app/teacher/wallet/${walletId}/settings`}
+							label="出納簿"
+							to={`/app/teacher/wallet/${walletId}/cash-book`}
 							isActive={matches.some(
-								(match) => match.id === "routes/app/teacher/settings",
+								(match) => match.id === "routes/app/teacher/cash-book",
 							)}
 						/>
 
