@@ -17,6 +17,7 @@ model Student {
   id    String @id @default(uuid())
   email String @unique
   name  String
+  admin Boolean @default(false)
 
   parts       Part[]   @relation("PartStudents")
   leaderParts Part[]   @relation("PartLeaders")

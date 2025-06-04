@@ -52,48 +52,6 @@ export type SessionStorage = Session<SessionDataType, SessionFlashDataType>
 export const requireSession = async (request: Request) =>
 	getSession(request.headers.get("Cookie"))
 
-/**
- * @deprecated errorBuilderで置き換え
- */
-export const _createErrorRedirect =
-	(session: Session, redirectUrl = "./") =>
-	(message: string, redirectUrlOverride?: string) => ({
-		catch() {
-			return async (error: unknown) => {
-				session.flash("error", { message })
-				console.error(error)
-				throw redirect(redirectUrlOverride ?? redirectUrl, {
-					headers: { "Set-Cookie": await commitSession(session) },
-				})
-			}
-		},
-		async throw() {
-			session.flash("error", { message })
-			return redirect(redirectUrlOverride ?? redirectUrl, {
-				headers: { "Set-Cookie": await commitSession(session) },
-			})
-		},
-	})
-
-/**
- * @deprecated errorBuilderで置き換え
- */
-export const _createSuccessRedirect =
-	(session: Session, redirectUrl = "./") =>
-	async (message: string, redirectUrlOverride?: string) => {
-		session.flash("success", { message })
-		throw redirect(redirectUrlOverride ?? redirectUrl, {
-			headers: { "Set-Cookie": await commitSession(session) },
-		})
-	}
-/**
- * @deprecated
- */
-export const _userNotFoundRedirect = async (session: Session) => {
-	const errorRedirect = _createErrorRedirect(session, "/app/auth")
-	return await errorRedirect("ユーザーが見つかりません。").throw()
-}
-
 export function errorBuilder(redirectUrl: string, session: SessionStorage) {
 	return async (errorMessage: string, redirectUrlOverride?: string) => {
 		session.flash("error", { message: errorMessage })

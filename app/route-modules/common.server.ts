@@ -166,3 +166,24 @@ export async function entryTeacherRoute(
 	}
 	return { teacher, session, walletId }
 }
+
+export async function entryAdminRoute(request: Request) {
+	const session = await requireSession(request)
+	const errorRedirect = errorBuilder("/app/auth", session)
+	const user = session.get("user")
+	if (!user) throw await errorRedirect("ログインしていません。")
+	if (user.type !== "student") throw await errorRedirect("生徒ではありません。")
+	const admin = await prisma.student.findUnique({
+		where: {
+			id: user.id,
+			admin: true,
+		},
+		select: {
+			id: true,
+			name: true,
+			email: true,
+		},
+	})
+	if (!admin) throw await errorRedirect("管理者ではありません。")
+	return { admin, session }
+}

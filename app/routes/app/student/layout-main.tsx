@@ -38,16 +38,33 @@ export const loader = async ({ request, params }: Route.LoaderArgs) => {
 		params.partId,
 		false,
 	)
+	const isAdmin =
+		(await prisma.student.findUnique({
+			where: {
+				id: student.id,
+				admin: true,
+			},
+		})) !== null
 
 	const belongParts = await prisma.part.findMany({
 		where: { students: { some: { id: student.id } } },
 	})
 
-	return { student, belongParts, partId }
+	const accountantWallets = await prisma.wallet.findMany({
+		where: {
+			accountantStudents: { some: { id: student.id } },
+		},
+		select: {
+			id: true,
+			name: true,
+		},
+	})
+
+	return { student, belongParts, partId, isAdmin, accountantWallets }
 }
 
 export default ({
-	loaderData: { student, belongParts, partId },
+	loaderData: { student, belongParts, partId, isAdmin, accountantWallets },
 }: Route.ComponentProps) => {
 	const matches = useMatches()
 	const submit = useSubmit()
@@ -79,6 +96,39 @@ export default ({
 								</SidebarMenu>
 							</SidebarGroupContent>
 						</SidebarGroup>
+
+						{accountantWallets.length > 0 && (
+							<SidebarGroup>
+								<SidebarGroupLabel>HR会計担当ウォレット</SidebarGroupLabel>
+								<SidebarGroupContent>
+									<SidebarMenu>
+										{accountantWallets.map((wallet) => (
+											<SidebarMenuItem key={wallet.id}>
+												<SidebarMenuButton asChild>
+													<Link to={`/app/student/accountant/${wallet.id}`}>
+														{wallet.name}
+													</Link>
+												</SidebarMenuButton>
+											</SidebarMenuItem>
+										))}
+									</SidebarMenu>
+								</SidebarGroupContent>
+							</SidebarGroup>
+						)}
+						{isAdmin && (
+							<SidebarGroup>
+								<SidebarGroupLabel>管理者</SidebarGroupLabel>
+								<SidebarGroupContent>
+									<SidebarMenu>
+										<SidebarMenuItem>
+											<SidebarMenuButton asChild>
+												<Link to="/app/admin">管理者ページ</Link>
+											</SidebarMenuButton>
+										</SidebarMenuItem>
+									</SidebarMenu>
+								</SidebarGroupContent>
+							</SidebarGroup>
+						)}
 					</SidebarContent>
 					<SidebarFooter>
 						<SidebarMenu>

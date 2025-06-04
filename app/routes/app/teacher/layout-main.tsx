@@ -1,5 +1,5 @@
-import { Home, LogOut } from "lucide-react"
-import { Menu, Settings } from "lucide-react"
+import { Home, LogOut, ScrollText } from "lucide-react"
+import { Menu } from "lucide-react"
 import { Outlet, useMatches, useSubmit } from "react-router"
 import type { LinkProps } from "react-router"
 import { Link } from "react-router"
@@ -107,7 +107,7 @@ export default ({
 					</MainContainer>
 					<NavBar>
 						<NavBarItem
-							Icon={Settings}
+							Icon={ScrollText}
 							label="出納簿"
 							to={`/app/teacher/wallet/${walletId}/cash-book`}
 							isActive={matches.some(

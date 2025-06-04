@@ -13,6 +13,10 @@ import { entryTeacherRoute } from "~/route-modules/common.server"
 import { prisma } from "~/services/repository.server"
 import { errorBuilder } from "~/services/session.server"
 import { formatCurrency, formatDiffDate } from "~/utilities/display"
+import {
+	type PurchaseAction,
+	recommendedAction,
+} from "~/utilities/purchase-state"
 import type { Route } from "./+types/wallet"
 
 export const loader = async ({ request, params }: Route.LoaderArgs) => {
@@ -47,6 +51,26 @@ export const loader = async ({ request, params }: Route.LoaderArgs) => {
 								plannedUsage: true,
 								updatedAt: true,
 								canceled: true,
+								accountantApproval: {
+									select: {
+										approved: true,
+									},
+								},
+								teacherApproval: {
+									select: {
+										approved: true,
+									},
+								},
+								completion: {
+									select: {
+										actualUsage: true,
+									},
+								},
+								receiptSubmission: {
+									select: {
+										receiptIndex: true,
+									},
+								},
 							},
 							orderBy: {
 								updatedAt: "desc",
@@ -142,7 +166,15 @@ export default ({ loaderData }: Route.ComponentProps) => {
 				</Section>
 			</>
 		)
+
 	const { wallet, walletId, totalPlannedUsage, totalActualUsage } = loaderData
+	const purchaseActionLabel: Record<PurchaseAction, string> = {
+		approval: "承認待ち",
+		completion: "買い出し中",
+		receiptSubmission: "レシート提出待ち",
+		completed: "完了",
+	}
+
 	return (
 		<>
 			{/* ウォレット全体の予算状況 */}
@@ -207,13 +239,20 @@ export default ({ loaderData }: Route.ComponentProps) => {
 											<Distant>
 												<span className="font-bold">{purchase.label}</span>
 												<span className="font-normal">
-													{formatCurrency(purchase.plannedUsage)}
+													{purchase.completion
+														? formatCurrency(purchase.completion.actualUsage)
+														: `（予定額）${formatCurrency(purchase.plannedUsage)}`}
 												</span>
 											</Distant>
 										</AlertTitle>
 										<AlertDescription>
 											<Distant>
-												<span>{purchase.description}</span>
+												<div className="flex flex-col gap-1">
+													<span>{purchase.description}</span>
+													<span>
+														{purchaseActionLabel[recommendedAction(purchase)]}
+													</span>
+												</div>
 												<span>{formatDiffDate(purchase.updatedAt)}</span>
 											</Distant>
 										</AlertDescription>
