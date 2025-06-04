@@ -24,7 +24,7 @@ import type { Route } from "./+types/invite"
 
 export const loader = async ({ request, params }: Route.LoaderArgs) => {
 	const session = await requireSession(request)
-	const student = await verifyStudent(session)
+	await verifyStudent(session)
 
 	const part = await prisma.part.findUniqueOrThrow({
 		where: {
