@@ -1,4 +1,5 @@
 import { Home, LogOut, Menu, ScrollText, Wallet } from "lucide-react"
+import { useEffect } from "react"
 import {
 	Link,
 	type LinkProps,
@@ -27,6 +28,7 @@ import {
 	SidebarProvider,
 	useSidebar,
 } from "~/components/ui/sidebar"
+import { usePushNotification } from "~/hooks/use-push-notification"
 import { cn } from "~/lib/utils"
 import { entryStudentRoute } from "~/route-modules/common.server"
 import { prisma } from "~/services/repository.server"
@@ -60,14 +62,40 @@ export const loader = async ({ request, params }: Route.LoaderArgs) => {
 		},
 	})
 
-	return { student, belongParts, partId, isAdmin, accountantWallets }
+	const vapidPublicKey = process.env.VAPID_PUBLIC_KEY
+
+	return {
+		student,
+		belongParts,
+		partId,
+		isAdmin,
+		accountantWallets,
+		vapidPublicKey,
+	}
 }
 
 export default ({
-	loaderData: { student, belongParts, partId, isAdmin, accountantWallets },
+	loaderData: {
+		student,
+		belongParts,
+		partId,
+		isAdmin,
+		accountantWallets,
+		vapidPublicKey,
+	},
 }: Route.ComponentProps) => {
 	const matches = useMatches()
 	const submit = useSubmit()
+	const { isSupported, permission, requestPermissionAndSubscribe } =
+		usePushNotification(vapidPublicKey)
+
+	// コンポーネントマウント時に通知許可を求める
+	useEffect(() => {
+		if (isSupported && permission === "default") {
+			requestPermissionAndSubscribe()
+		}
+	}, [isSupported, permission, requestPermissionAndSubscribe])
+
 	return (
 		<>
 			<SidebarProvider>

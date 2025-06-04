@@ -32,11 +32,14 @@ export default [
 				]),
 				route("invite", "routes/app/student/invite.tsx"),
 			]),
+			route("push-subscription", "routes/app/student/push-subscription.tsx"),
 			route("accountant/:walletId", "routes/app/student/accountant.tsx"),
 			route(
 				"accountant/:walletId/invite",
 				"routes/app/student/accountantInvite.tsx",
 			),
+
+			route("push-test", "routes/app/student/push-test.tsx"),
 			// 振り分け
 			route("*", "routes/app/student/router.tsx", { index: true }),
 		]),

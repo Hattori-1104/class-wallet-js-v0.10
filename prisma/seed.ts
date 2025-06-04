@@ -3,8 +3,15 @@ import { PrismaClient } from "@prisma/client"
 const prisma = new PrismaClient()
 
 async function main() {
-	const teacher = await prisma.teacher.create({
-		data: {
+	const teacher = await prisma.teacher.upsert({
+		where: {
+			id: "dev-teacher",
+		},
+		update: {
+			name: "テスト教師",
+			email: "test@example.com",
+		},
+		create: {
 			id: "dev-teacher",
 			name: "テスト教師",
 			email: "test@example.com",
@@ -13,50 +20,35 @@ async function main() {
 			id: true,
 		},
 	})
-	const student = await prisma.student.create({
-		data: {
+	const student = await prisma.student.upsert({
+		where: {
+			id: "dev-student",
+		},
+		update: {
+			name: "テスト学生",
+			email: "test@example.com",
+			admin: true,
+		},
+		create: {
 			id: "dev-student",
 			name: "テスト学生",
 			email: "test@example.com",
+			admin: true,
 		},
 		select: {
 			id: true,
 		},
 	})
-	await prisma.event.create({
-		data: {
-			wallets: {
-				create: {
-					name: "1-1",
-					budget: 80000,
-					teachers: {
-						connect: {
-							id: teacher.id,
-						},
-					},
-					accountantStudents: {
-						connect: {
-							id: student.id,
-						},
-					},
-					parts: {
-						create: {
-							name: "展示",
-							budget: 40000,
-							students: {
-								connect: {
-									id: student.id,
-								},
-							},
-							leaders: {
-								connect: {
-									id: student.id,
-								},
-							},
-						},
-					},
-				},
-			},
+	await prisma.event.upsert({
+		where: {
+			id: "nishikosai2025",
+		},
+		update: {
+			name: "西校祭2025",
+		},
+		create: {
+			id: "nishikosai2025",
+			name: "西校祭2025",
 		},
 	})
 }

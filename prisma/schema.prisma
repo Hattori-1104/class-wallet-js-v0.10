@@ -26,6 +26,7 @@ model Student {
   PurchaseRequestedBy          Purchase[]                   @relation("RequestedBy")
   PurchaseAccountantApprovedBy PurchaseAccountantApproval[] @relation("ApprovedBy")
   PurchaseReceiptSubmittedTo   PurchaseReceiptSubmission[]  @relation("SubmittedTo")
+  subscriptions                Subscription[]
 }
 
 model Teacher {
@@ -35,6 +36,7 @@ model Teacher {
 
   wallets                 Wallet[]
   PurchaseTeacherApproval PurchaseTeacherApproval[] @relation("ApprovedBy")
+  subscriptions           Subscription[]
 }
 
 model Part {
@@ -147,4 +149,25 @@ model Product {
   price       Int
   description String?
   isShared    Boolean @default(false)
+}
+
+// プッシュ通知のsubscription
+model Subscription {
+  id           String @id @default(uuid())
+  endpoint     String @db.VarChar(512) @unique
+  p256dh       String
+  auth         String
+  
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+  
+  // Student または Teacher のいずれかに関連付け
+  studentId String?
+  student   Student? @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  
+  teacherId String?
+  teacher   Teacher? @relation(fields: [teacherId], references: [id], onDelete: Cascade)
+
+  @@index([studentId])
+  @@index([teacherId])
 }

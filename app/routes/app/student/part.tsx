@@ -125,6 +125,7 @@ export default ({ loaderData }: Route.ComponentProps) => {
 		receiptSubmission: "レシート提出待ち",
 		completed: "完了",
 	}
+
 	return (
 		<>
 			<Section>

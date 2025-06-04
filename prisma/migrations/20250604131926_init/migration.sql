@@ -3,6 +3,7 @@ CREATE TABLE `Student` (
     `id` VARCHAR(191) NOT NULL,
     `email` VARCHAR(191) NOT NULL,
     `name` VARCHAR(191) NOT NULL,
+    `admin` BOOLEAN NOT NULL DEFAULT false,
 
     UNIQUE INDEX `Student_email_key`(`email`),
     PRIMARY KEY (`id`)
@@ -51,11 +52,12 @@ CREATE TABLE `Event` (
 CREATE TABLE `Purchase` (
     `id` VARCHAR(191) NOT NULL,
     `label` VARCHAR(191) NOT NULL,
+    `description` VARCHAR(191) NULL,
     `plannedUsage` INTEGER NOT NULL,
     `updatedAt` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
     `requestedAt` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
     `requestedById` VARCHAR(191) NOT NULL,
-    `isCanceled` BOOLEAN NOT NULL DEFAULT false,
+    `canceled` BOOLEAN NOT NULL DEFAULT false,
     `partId` VARCHAR(191) NOT NULL,
     `balance` INTEGER NOT NULL DEFAULT 0,
 
@@ -97,6 +99,7 @@ CREATE TABLE `PurchaseCompletion` (
 CREATE TABLE `PurchaseReceiptSubmission` (
     `purchaseId` VARCHAR(191) NOT NULL,
     `receiptIndex` INTEGER NOT NULL,
+    `submittedToId` VARCHAR(191) NOT NULL,
     `at` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
 
     PRIMARY KEY (`purchaseId`)
@@ -110,6 +113,23 @@ CREATE TABLE `Product` (
     `description` VARCHAR(191) NULL,
     `isShared` BOOLEAN NOT NULL DEFAULT false,
 
+    PRIMARY KEY (`id`)
+) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+
+-- CreateTable
+CREATE TABLE `Subscription` (
+    `id` VARCHAR(191) NOT NULL,
+    `endpoint` VARCHAR(512) NOT NULL,
+    `p256dh` VARCHAR(191) NOT NULL,
+    `auth` VARCHAR(191) NOT NULL,
+    `createdAt` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
+    `updatedAt` DATETIME(3) NOT NULL,
+    `studentId` VARCHAR(191) NULL,
+    `teacherId` VARCHAR(191) NULL,
+
+    UNIQUE INDEX `Subscription_endpoint_key`(`endpoint`),
+    INDEX `Subscription_studentId_idx`(`studentId`),
+    INDEX `Subscription_teacherId_idx`(`teacherId`),
     PRIMARY KEY (`id`)
 ) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
@@ -178,6 +198,15 @@ ALTER TABLE `PurchaseCompletion` ADD CONSTRAINT `PurchaseCompletion_purchaseId_f
 
 -- AddForeignKey
 ALTER TABLE `PurchaseReceiptSubmission` ADD CONSTRAINT `PurchaseReceiptSubmission_purchaseId_fkey` FOREIGN KEY (`purchaseId`) REFERENCES `Purchase`(`id`) ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE `PurchaseReceiptSubmission` ADD CONSTRAINT `PurchaseReceiptSubmission_submittedToId_fkey` FOREIGN KEY (`submittedToId`) REFERENCES `Student`(`id`) ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE `Subscription` ADD CONSTRAINT `Subscription_studentId_fkey` FOREIGN KEY (`studentId`) REFERENCES `Student`(`id`) ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE `Subscription` ADD CONSTRAINT `Subscription_teacherId_fkey` FOREIGN KEY (`teacherId`) REFERENCES `Teacher`(`id`) ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE `_StudentToWallet` ADD CONSTRAINT `_StudentToWallet_A_fkey` FOREIGN KEY (`A`) REFERENCES `Student`(`id`) ON DELETE CASCADE ON UPDATE CASCADE;

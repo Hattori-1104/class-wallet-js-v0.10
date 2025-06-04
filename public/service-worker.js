@@ -13,7 +13,31 @@ self.addEventListener("activate", (e) => {
 
 self.addEventListener("push", (e) => {
 	console.log("[SW] push", e)
-	self.registration.showNotification("test", {
-		body: e.data.text().message,
-	})
+	
+	let title = "通知";
+	let body = "新しい通知があります";
+	
+	if (e.data) {
+		try {
+			const data = e.data.json();
+			title = data.title || title;
+			body = data.body || body;
+		} catch (error) {
+			// JSON形式でない場合はテキストとして処理
+			body = e.data.text() || body;
+		}
+	}
+	
+	const options = {
+		body: body,
+		icon: "/icon-192px.png",
+		badge: "/icon-128px.png",
+		tag: "default",
+		requireInteraction: false,
+		actions: []
+	};
+	
+	e.waitUntil(
+		self.registration.showNotification(title, options)
+	);
 })

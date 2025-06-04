@@ -107,7 +107,6 @@ export default ({
 		(acc, part) => acc + (part.isBazaar ? 0 : part.budget),
 		0,
 	)
-	const submit = useSubmit()
 	return (
 		<>
 			<LayoutRelative>
@@ -183,11 +182,13 @@ export default ({
 								/>
 							))
 						) : (
-							<NoData>パートがありません。</NoData>
+							<NoData className="text-center block">
+								パートがありません。
+							</NoData>
 						)}
 						{wallet.budget > wholePartBudgetWithoutBazaar && (
 							<Alert>
-								<AlertTitle>予備費（自動）</AlertTitle>
+								<AlertTitle>予備費（余り予算）</AlertTitle>
 								<AlertDescription>
 									{formatCurrency(wallet.budget - wholePartBudgetWithoutBazaar)}
 								</AlertDescription>
