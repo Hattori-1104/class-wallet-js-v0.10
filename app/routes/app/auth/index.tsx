@@ -1,5 +1,5 @@
 import { KeyRound } from "lucide-react"
-import { Form, Link } from "react-router"
+import { Form } from "react-router"
 import {
 	LimitedContainer,
 	Section,
@@ -19,7 +19,7 @@ export default () => {
 						<Title>認証</Title>
 					</SectionTitle>
 					<SectionContent className="space-y-4 [&>*]:space-y-4">
-						<Button
+						{/* <Button
 							type="submit"
 							name="userType"
 							value="dev"
@@ -31,7 +31,7 @@ export default () => {
 								<KeyRound />
 								開発者用：生徒として認証
 							</Link>
-						</Button>
+						</Button> */}
 						<Form method="post" action="/app/auth/oauth">
 							<Button
 								type="submit"

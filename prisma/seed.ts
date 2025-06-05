@@ -3,40 +3,26 @@ import { PrismaClient } from "@prisma/client"
 const prisma = new PrismaClient()
 
 async function main() {
-	const teacher = await prisma.teacher.upsert({
+	const adminId = process.env.ADMIN_GOOGLE_ID
+	const adminName = process.env.ADMIN_NAME
+	const adminEmail = process.env.ADMIN_EMAIL
+	if (!adminId) throw new Error("ADMIN_ID is not set")
+	if (!adminName) throw new Error("ADMIN_NAME is not set")
+	if (!adminEmail) throw new Error("ADMIN_EMAIL is not set")
+	const admin = await prisma.student.upsert({
 		where: {
-			id: "dev-teacher",
+			id: adminId,
 		},
 		update: {
-			name: "テスト教師",
-			email: "test@example.com",
-		},
-		create: {
-			id: "dev-teacher",
-			name: "テスト教師",
-			email: "test@example.com",
-		},
-		select: {
-			id: true,
-		},
-	})
-	const student = await prisma.student.upsert({
-		where: {
-			id: "dev-student",
-		},
-		update: {
-			name: "テスト学生",
-			email: "test@example.com",
+			name: adminName,
+			email: adminEmail,
 			admin: true,
 		},
 		create: {
-			id: "dev-student",
-			name: "テスト学生",
-			email: "test@example.com",
+			id: adminId,
+			name: adminName,
+			email: adminEmail,
 			admin: true,
-		},
-		select: {
-			id: true,
 		},
 	})
 	await prisma.event.upsert({
