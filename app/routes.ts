@@ -34,10 +34,6 @@ export default [
 			]),
 			route("push-subscription", "routes/app/student/push-subscription.tsx"),
 			route("accountant/:walletId", "routes/app/student/accountant.tsx"),
-			route(
-				"accountant/:walletId/invite",
-				"routes/app/student/accountantInvite.tsx",
-			),
 
 			route("push-test", "routes/app/student/push-test.tsx"),
 			// 振り分け
@@ -79,6 +75,7 @@ export default [
 			route("oauth", "routes/app/auth/oauth.entry.tsx"),
 			route("oauth/callback", "routes/app/auth/oauth.callback.tsx"),
 		]),
+		route("invite/:walletId/:partId?", "routes/app/invite.tsx"),
 		// 振り分け
 		route("*", "routes/app/router.tsx", { index: true }),
 	]),

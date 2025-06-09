@@ -222,7 +222,7 @@ function PartItem(props: PartItemProps) {
 	const copyInviteLink = async () => {
 		try {
 			const origin = window.location.origin
-			const inviteUrl = `${origin}/app/student/part/${props.id}/invite`
+			const inviteUrl = `${origin}/app/invite/null/${props.id}`
 			await navigator.clipboard.writeText(inviteUrl)
 			toast.success(`${props.name}の招待リンクをコピーしました`)
 		} catch (_) {

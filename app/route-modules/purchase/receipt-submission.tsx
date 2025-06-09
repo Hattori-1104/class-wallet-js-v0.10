@@ -49,11 +49,6 @@ export function PurchaseReceiptSubmissionSectionContent(
 								</AlertDescription>
 							</Alert>
 						</>
-					) : props.isRequester ? (
-						<Alert>
-							<Flag />
-							<AlertTitle>HR会計にレシートを提出してください。</AlertTitle>
-						</Alert>
 					) : props.isAccountant ? (
 						<Alert>
 							<AlertTitle>
@@ -71,6 +66,11 @@ export function PurchaseReceiptSubmissionSectionContent(
 									{props.purchase.requestedBy.name} さんからの受け取り
 								</span>
 							</AlertDescription>
+						</Alert>
+					) : props.isRequester ? (
+						<Alert>
+							<Flag />
+							<AlertTitle>HR会計にレシートを提出してください。</AlertTitle>
 						</Alert>
 					) : (
 						<Alert>

@@ -62,7 +62,7 @@ export default ({
 	const copyInviteLink = async (walletId: string, walletName: string) => {
 		try {
 			const origin = window.location.origin
-			const inviteUrl = `${origin}/app/student/accountant/${walletId}/invite`
+			const inviteUrl = `${origin}/app/invite/${walletId}`
 			await navigator.clipboard.writeText(inviteUrl)
 			toast.success(`${walletName}の招待リンクをコピーしました`)
 		} catch (_) {
