@@ -106,7 +106,10 @@ const NotBelongsTo: FC = () => {
 		<>
 			<Section>
 				<NoData className="block">パートに所属していません。</NoData>
-				<Button className="block mt-8 mx-auto" disabled={Boolean(inviteUrl)}>
+				<Button
+					className="block mt-8 mx-auto"
+					disabled={Boolean(inviteUrl) === false}
+				>
 					<Link to={inviteUrl ?? "."}>クリップボードのURLから参加</Link>
 				</Button>
 			</Section>

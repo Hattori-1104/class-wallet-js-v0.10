@@ -1,3 +1,7 @@
+import { type FC, useEffect, useState } from "react"
+import { Link } from "react-router"
+import { toast } from "sonner"
+import z from "zod"
 import {
 	Section,
 	SectionContent,
@@ -5,6 +9,7 @@ import {
 } from "~/components/common/container"
 import { Distant } from "~/components/common/placement"
 import { NoData, Title } from "~/components/common/typography"
+import { Button } from "~/components/ui/button"
 import { BudgetSectionContent } from "~/components/utility/budget"
 import { PurchaseItem } from "~/components/utility/purchase-item"
 import { RevalidateButton } from "~/components/utility/revalidate-button"
@@ -170,15 +175,40 @@ export const loader = async ({ request, params }: Route.LoaderArgs) => {
 	}
 }
 
+const NotBelongsTo: FC = () => {
+	const [inviteUrl, setInviteUrl] = useState<string | null>()
+	const inviteUrlSchema = z.string().url()
+	useEffect(() => {
+		const process = async () => {
+			try {
+				const clipboardData = await navigator.clipboard.readText()
+				inviteUrlSchema.parse(clipboardData)
+				setInviteUrl(clipboardData)
+			} catch (_) {
+				toast.error("招待リンクがコピーされていません。")
+				setInviteUrl(null)
+			}
+		}
+		process()
+	}, [inviteUrlSchema.parse])
+
+	return (
+		<>
+			<Section>
+				<NoData className="block">パートに所属していません。</NoData>
+				<Button
+					className="block mt-8 mx-auto"
+					disabled={Boolean(inviteUrl) === false}
+				>
+					<Link to={inviteUrl ?? "."}>クリップボードのURLから参加</Link>
+				</Button>
+			</Section>
+		</>
+	)
+}
+
 export default ({ loaderData }: Route.ComponentProps) => {
-	if (!loaderData)
-		return (
-			<>
-				<Section>
-					<NoData>ウォレットに所属していません。</NoData>
-				</Section>
-			</>
-		)
+	if (!loaderData) return <NotBelongsTo />
 
 	const { wallet, walletId, totalPlannedUsage, totalActualUsage, purchases } =
 		loaderData
