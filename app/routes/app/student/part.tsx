@@ -1,5 +1,8 @@
 import { Plus } from "lucide-react"
+import { useEffect, useState } from "react"
 import { Link } from "react-router"
+import { toast } from "sonner"
+import z from "zod"
 import {
 	Section,
 	SectionContent,
@@ -9,6 +12,7 @@ import { LinkButton } from "~/components/common/link-button"
 import { Distant } from "~/components/common/placement"
 import { NoData, Title } from "~/components/common/typography"
 import { Alert, AlertDescription, AlertTitle } from "~/components/ui/alert"
+import { Button } from "~/components/ui/button"
 import { BudgetDescription, BudgetGauge } from "~/components/utility/budget"
 import { entryStudentRoute } from "~/route-modules/common.server"
 import { prisma } from "~/services/repository.server"
@@ -110,14 +114,30 @@ export const loader = async ({ request, params }: Route.LoaderArgs) => {
 }
 
 export default ({ loaderData }: Route.ComponentProps) => {
-	if (!loaderData)
+	const [inviteUrl, setInviteUrl] = useState("")
+	const inviteUrlSchema = z.string().url()
+	useEffect(() => {
+		try {
+			navigator.clipboard.readText().then((url) => {
+				inviteUrlSchema.parse(url)
+				setInviteUrl(url)
+			})
+		} catch (_) {
+			toast.error("リンクのコピーに失敗しました")
+		}
+	}, [inviteUrlSchema.parse])
+	if (!loaderData) {
 		return (
 			<>
 				<Section>
-					<NoData>パートに所属していません。</NoData>
+					<NoData className="block">パートに所属していません。</NoData>
+					<Button className="block mt-8 mx-auto">
+						<Link to={inviteUrl}>クリップボードのURLから参加</Link>
+					</Button>
 				</Section>
 			</>
 		)
+	}
 	const { partId, part, wholePlannedUsage, wholeActualUsage } = loaderData
 	const purchaseActionLabel: Record<PurchaseAction, string> = {
 		approval: "承認待ち",
