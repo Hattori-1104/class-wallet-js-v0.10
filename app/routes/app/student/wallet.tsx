@@ -1,11 +1,6 @@
-import {
-	Section,
-	SectionContent,
-	SectionTitle,
-} from "~/components/common/container"
-import { Distant } from "~/components/common/placement"
+import { Section } from "~/components/common/container"
 import { NoData, Title } from "~/components/common/typography"
-import { BudgetDescription, BudgetGauge } from "~/components/utility/budget"
+import { BudgetSectionContent } from "~/components/utility/budget"
 import { entryStudentRoute } from "~/route-modules/common.server"
 import { prisma } from "~/services/repository.server"
 import { errorBuilder } from "~/services/session.server"
@@ -132,48 +127,30 @@ export default ({ loaderData }: Route.ComponentProps) => {
 
 	return (
 		<>
-			{/* ウォレット全体の予算状況 */}
 			<Section>
-				<SectionTitle>
-					<Title>{wallet.name} 全体</Title>
-				</SectionTitle>
-				<SectionContent className="space-y-2">
-					<BudgetDescription
-						budget={wallet.budget}
-						actualUsage={totalActualUsage}
-					/>
-					<BudgetGauge
-						budget={wallet.budget}
-						plannedUsage={totalPlannedUsage}
-						actualUsage={totalActualUsage}
-					/>
-				</SectionContent>
+				<BudgetSectionContent
+					budget={wallet.budget}
+					plannedUsage={totalPlannedUsage}
+					actualUsage={totalActualUsage}
+					className="space-y-2"
+				>
+					<Title>{wallet.name}</Title>
+				</BudgetSectionContent>
 			</Section>
 
-			{/* 各パートの予算状況 */}
-			{wallet.parts.map((part) => (
-				<Section key={part.id}>
-					<SectionTitle>
-						<Distant>
-							<Title>{part.name}</Title>
-							{part.isBazaar && (
-								<span className="text-sm text-muted-foreground">バザー</span>
-							)}
-						</Distant>
-					</SectionTitle>
-					<SectionContent className="space-y-2">
-						<BudgetDescription
-							budget={part.budget}
-							actualUsage={part.actualUsage}
-						/>
-						<BudgetGauge
-							budget={part.budget}
-							plannedUsage={part.plannedUsage}
-							actualUsage={part.actualUsage}
-						/>
-					</SectionContent>
-				</Section>
-			))}
+			<Section>
+				{wallet.parts.map((part) => (
+					<BudgetSectionContent
+						key={part.id}
+						budget={part.budget}
+						plannedUsage={part.plannedUsage}
+						actualUsage={part.actualUsage}
+						className="space-y-2 my-4"
+					>
+						<Title>{part.name}</Title>
+					</BudgetSectionContent>
+				))}
+			</Section>
 		</>
 	)
 }

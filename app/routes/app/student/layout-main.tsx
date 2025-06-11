@@ -49,6 +49,20 @@ export const loader = async ({ request, params }: Route.LoaderArgs) => {
 
 	const belongParts = await prisma.part.findMany({
 		where: { students: { some: { id: student.id } } },
+		select: {
+			id: true,
+			name: true,
+			wallet: {
+				select: {
+					name: true,
+				},
+			},
+		},
+		orderBy: {
+			wallet: {
+				id: "asc",
+			},
+		},
 	})
 
 	const accountantWallets = await prisma.wallet.findMany({
@@ -58,6 +72,9 @@ export const loader = async ({ request, params }: Route.LoaderArgs) => {
 		select: {
 			id: true,
 			name: true,
+		},
+		orderBy: {
+			id: "asc",
 		},
 	})
 
@@ -101,7 +118,9 @@ export default ({
 				<Sidebar>
 					<SidebarContent>
 						<SidebarGroup>
-							<SidebarGroupLabel>所属パート</SidebarGroupLabel>
+							<SidebarGroupLabel>
+								<span>所属パート</span>
+							</SidebarGroupLabel>
 							<SidebarGroupContent>
 								<SidebarMenu>
 									{belongParts.length > 0 ? (
@@ -112,7 +131,10 @@ export default ({
 														to={`/app/student/part/${part.id}`}
 														className={cn(partId === part.id && "font-bold")}
 													>
-														{part.name}
+														<span className="text-muted-foreground">
+															（{part.wallet.name}）
+														</span>
+														<span>{part.name}</span>
 													</CloseSidebarLink>
 												</SidebarMenuButton>
 											</SidebarMenuItem>

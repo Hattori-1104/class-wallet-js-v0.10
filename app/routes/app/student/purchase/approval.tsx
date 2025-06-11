@@ -1,12 +1,12 @@
 import { Section, SectionTitle } from "~/components/common/container"
 import { Title } from "~/components/common/typography"
 import { entryStudentRoute } from "~/route-modules/common.server"
-import { PurchaseApprovalSectionContent } from "~/route-modules/purchase/approval"
+import { PurchaseApprovalSectionContent } from "~/route-modules/purchase-state/approval"
 import {
 	PurchaseApprovalSelectQuery,
 	processPurchaseApproval,
-} from "~/route-modules/purchase/approval.server"
-import { queryIsInCharge } from "~/route-modules/purchase/common.server"
+} from "~/route-modules/purchase-state/approval.server"
+import { queryIsInCharge } from "~/route-modules/purchase-state/common.server"
 import { prisma } from "~/services/repository.server"
 import { errorBuilder } from "~/services/session.server"
 import type { Route } from "./+types/approval"

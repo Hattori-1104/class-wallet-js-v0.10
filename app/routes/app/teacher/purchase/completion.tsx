@@ -4,8 +4,8 @@ import {
 	SectionTitle,
 } from "~/components/common/container"
 import { entryTeacherRoute } from "~/route-modules/common.server"
-import { PurchaseCompletionSectionContent } from "~/route-modules/purchase/completion"
-import { PurchaseCompletionSelectQuery } from "~/route-modules/purchase/completion.server"
+import { PurchaseCompletionSectionContent } from "~/route-modules/purchase-state/completion"
+import { PurchaseCompletionSelectQuery } from "~/route-modules/purchase-state/completion.server"
 import { prisma } from "~/services/repository.server"
 import type { Route } from "./+types/completion"
 

@@ -1,5 +1,5 @@
 import { Slot } from "@radix-ui/react-slot"
-import type { ReactNode } from "react"
+import type { ComponentProps, ReactNode } from "react"
 import { cn } from "~/lib/utils"
 
 export const LayoutRelative = ({
@@ -54,7 +54,7 @@ export const Section = ({
 	children,
 	className,
 }: { children: ReactNode; className?: string }) => {
-	return <section className={cn("my-6 w-full", className)}>{children}</section>
+	return <section className={cn("my-8 w-full", className)}>{children}</section>
 }
 export const SectionTitle = ({
 	children,
@@ -71,7 +71,7 @@ export const SectionContent = ({
 	children: ReactNode
 	className?: string
 	asChild?: boolean
-} & React.ComponentProps<typeof Slot>) => {
+} & ComponentProps<typeof Slot>) => {
 	if (asChild) {
 		return (
 			<Slot className={cn("my-2", className)} {...props}>

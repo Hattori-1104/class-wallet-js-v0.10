@@ -1,5 +1,5 @@
 import { Plus } from "lucide-react"
-import { useEffect, useState } from "react"
+import { type FC, useEffect, useState } from "react"
 import { Link } from "react-router"
 import { toast } from "sonner"
 import z from "zod"
@@ -13,7 +13,9 @@ import { Distant } from "~/components/common/placement"
 import { NoData, Title } from "~/components/common/typography"
 import { Alert, AlertDescription, AlertTitle } from "~/components/ui/alert"
 import { Button } from "~/components/ui/button"
-import { BudgetDescription, BudgetGauge } from "~/components/utility/budget"
+import { BudgetSectionContent } from "~/components/utility/budget"
+import { RevalidateButton } from "~/components/utility/revalidate-button"
+import { queryPartBudgetInfo } from "~/route-modules/budget.server"
 import { entryStudentRoute } from "~/route-modules/common.server"
 import { prisma } from "~/services/repository.server"
 import { formatCurrency, formatDiffDate } from "~/utilities/display"
@@ -77,68 +79,44 @@ export const loader = async ({ request, params }: Route.LoaderArgs) => {
 			},
 		},
 	})
-	const purchaseInProgress = await prisma.purchase.findMany({
-		where: {
-			partId: partId,
-			receiptSubmission: null,
-			canceled: false,
-		},
-		select: {
-			plannedUsage: true,
-		},
-	})
-	const wholePlannedUsage = purchaseInProgress.reduce(
-		(acc, purchase) => acc + purchase.plannedUsage,
-		0,
-	)
-	const purchaseCompleted = await prisma.purchase.findMany({
-		where: {
-			partId: partId,
-			receiptSubmission: { isNot: null },
-			canceled: false,
-		},
-		select: {
-			completion: {
-				select: {
-					actualUsage: true,
-				},
-			},
-		},
-	})
-	const wholeActualUsage = purchaseCompleted.reduce(
-		(acc, purchase) => acc + (purchase.completion?.actualUsage ?? 0),
-		0,
-	)
+	const budgetInfo = await queryPartBudgetInfo(partId)
 
-	return { partId, part, wholePlannedUsage, wholeActualUsage }
+	return { partId, part, ...budgetInfo }
+}
+
+const NotBelongsTo: FC = () => {
+	const [inviteUrl, setInviteUrl] = useState<string | null>()
+	const inviteUrlSchema = z.string().url()
+	useEffect(() => {
+		const process = async () => {
+			try {
+				const clipboardData = await navigator.clipboard.readText()
+				inviteUrlSchema.parse(clipboardData)
+				setInviteUrl(clipboardData)
+			} catch (_) {
+				toast.error("招待リンクがコピーされていません。")
+				setInviteUrl(null)
+			}
+		}
+		process()
+	}, [inviteUrlSchema.parse])
+
+	return (
+		<>
+			<Section>
+				<NoData className="block">パートに所属していません。</NoData>
+				<Button className="block mt-8 mx-auto" disabled={Boolean(inviteUrl)}>
+					<Link to={inviteUrl ?? "."}>クリップボードのURLから参加</Link>
+				</Button>
+			</Section>
+		</>
+	)
 }
 
 export default ({ loaderData }: Route.ComponentProps) => {
-	const [inviteUrl, setInviteUrl] = useState("")
-	const inviteUrlSchema = z.string().url()
-	useEffect(() => {
-		try {
-			navigator.clipboard.readText().then((url) => {
-				inviteUrlSchema.parse(url)
-				setInviteUrl(url)
-			})
-		} catch (_) {
-			toast.error("リンクのコピーに失敗しました")
-		}
-	}, [inviteUrlSchema.parse])
-	if (!loaderData) {
-		return (
-			<>
-				<Section>
-					<NoData className="block">パートに所属していません。</NoData>
-					<Button className="block mt-8 mx-auto">
-						<Link to={inviteUrl}>クリップボードのURLから参加</Link>
-					</Button>
-				</Section>
-			</>
-		)
-	}
-	const { partId, part, wholePlannedUsage, wholeActualUsage } = loaderData
+	if (!loaderData) return <NotBelongsTo />
+
+	const { partId, part, plannedUsage, actualUsage } = loaderData
 	const purchaseActionLabel: Record<PurchaseAction, string> = {
 		approval: "承認待ち",
 		completion: "買い出し中",
@@ -159,21 +137,18 @@ export default ({ loaderData }: Route.ComponentProps) => {
 						/>
 					</Distant>
 				</SectionTitle>
-				<SectionContent className="space-y-2">
-					<BudgetDescription
-						budget={part.budget}
-						actualUsage={wholeActualUsage}
-					/>
-					<BudgetGauge
-						budget={part.budget}
-						plannedUsage={wholePlannedUsage}
-						actualUsage={wholeActualUsage}
-					/>
-				</SectionContent>
+				<BudgetSectionContent
+					budget={part.budget}
+					actualUsage={actualUsage}
+					plannedUsage={plannedUsage}
+				/>
 			</Section>
 			<Section>
 				<SectionTitle>
-					<Title>買い出し</Title>
+					<Distant>
+						<Title>買い出し</Title>
+						<RevalidateButton />
+					</Distant>
 				</SectionTitle>
 				<SectionContent className="flex flex-col gap-2">
 					{part.purchases.map((purchase) => (

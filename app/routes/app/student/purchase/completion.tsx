@@ -3,12 +3,12 @@ import { data } from "react-router"
 import { SectionContent, SectionTitle } from "~/components/common/container"
 import { Section } from "~/components/common/container"
 import { entryStudentRoute } from "~/route-modules/common.server"
-import { queryIsRequester } from "~/route-modules/purchase/common.server"
+import { queryIsRequester } from "~/route-modules/purchase-state/common.server"
 import {
 	PurchaseCompletionSectionContent,
 	formSchema,
-} from "~/route-modules/purchase/completion"
-import { PurchaseCompletionSelectQuery } from "~/route-modules/purchase/completion.server"
+} from "~/route-modules/purchase-state/completion"
+import { PurchaseCompletionSelectQuery } from "~/route-modules/purchase-state/completion.server"
 import { prisma } from "~/services/repository.server"
 import { commitSession, successBuilder } from "~/services/session.server"
 import type { Route } from "./+types/completion"

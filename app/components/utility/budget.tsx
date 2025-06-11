@@ -1,11 +1,19 @@
+import type { FC, ReactNode } from "react"
 import { displayPercentage, formatCurrency } from "~/utilities/display"
+import { SectionContent } from "../common/container"
 import { Distant } from "../common/placement"
 
-export const BudgetGauge = ({
-	budget,
+type BudgetGaugeProps = {
+	budget: number
+	actualUsage: number
+	plannedUsage: number
+}
+
+export const BudgetGauge: FC<BudgetGaugeProps> = ({
 	actualUsage,
 	plannedUsage,
-}: { budget: number; actualUsage: number; plannedUsage: number }) => {
+	budget,
+}) => {
 	return (
 		<div className="bg-primary/20 rounded-full h-2 relative overflow-hidden">
 			<div
@@ -22,20 +30,41 @@ export const BudgetGauge = ({
 	)
 }
 
-export function BudgetDescription({
-	budget,
+type BudgetDescriptionProps = {
+	budget: number
+	actualUsage: number
+}
+
+export const BudgetDescription: FC<BudgetDescriptionProps> = ({
 	actualUsage,
-}: { budget: number; actualUsage: number }) {
+	budget,
+}) => {
 	return (
 		<Distant>
-			<span className="text-lg">
-				{displayPercentage(1 - actualUsage / budget)}
-			</span>
 			<span>
-				<span className="text-lg">{formatCurrency(budget - actualUsage)}</span>
+				<span className="text-xl">{formatCurrency(budget - actualUsage)}</span>
 				<span className="text-muted-foreground"> / </span>
 				<span className="text-muted-foreground">{formatCurrency(budget)}</span>
 			</span>
+			<span className="text-lg">
+				{displayPercentage(1 - actualUsage / budget)}
+			</span>
 		</Distant>
+	)
+}
+
+type BudgetSectionContentProps = BudgetDescriptionProps & BudgetGaugeProps
+
+export const BudgetSectionContent: FC<
+	BudgetSectionContentProps & { children?: ReactNode; className?: string }
+> = (props) => {
+	return (
+		<SectionContent className={props.className}>
+			{props.children}
+			<div className="space-y-1">
+				<BudgetDescription {...props} />
+				<BudgetGauge {...props} />
+			</div>
+		</SectionContent>
 	)
 }
