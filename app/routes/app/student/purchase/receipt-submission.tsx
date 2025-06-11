@@ -88,7 +88,7 @@ export const action = async ({ request, params }: Route.ActionArgs) => {
 
 	const registeredPurchases = await prisma.purchase.findMany({
 		where: {
-			part: { id: partId },
+			part: { wallet: { parts: { some: { id: partId } } } },
 			AND: [
 				{ receiptSubmission: { isNot: null } },
 				{ id: { not: params.purchaseId } },
