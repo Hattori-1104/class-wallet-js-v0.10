@@ -48,6 +48,12 @@ export const loader = async ({ request, params }: Route.LoaderArgs) => {
 					label: true,
 					description: true,
 					plannedUsage: true,
+					requestedBy: {
+						select: {
+							id: true,
+							name: true,
+						},
+					},
 					updatedAt: true,
 					canceled: true,
 					accountantApproval: {
@@ -193,6 +199,9 @@ export default ({ loaderData }: Route.ComponentProps) => {
 									</Distant>
 								</AlertTitle>
 								<AlertDescription>
+									<Distant>
+										<span>{purchase.requestedBy.name}</span>
+									</Distant>
 									<Distant>
 										{purchase.canceled ? (
 											<span className="text-destructive">

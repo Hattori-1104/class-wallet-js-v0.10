@@ -48,6 +48,12 @@ export const loader = async ({ request, params }: Route.LoaderArgs) => {
 								id: true,
 								label: true,
 								description: true,
+								requestedBy: {
+									select: {
+										name: true,
+										id: true,
+									},
+								},
 								plannedUsage: true,
 								updatedAt: true,
 								canceled: true,
@@ -246,6 +252,9 @@ export default ({ loaderData }: Route.ComponentProps) => {
 											</Distant>
 										</AlertTitle>
 										<AlertDescription>
+											<Distant>
+												<span>{purchase.requestedBy.name}</span>
+											</Distant>
 											<Distant>
 												<div className="flex flex-col gap-1">
 													<span>{purchase.description}</span>
