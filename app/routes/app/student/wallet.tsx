@@ -1,6 +1,13 @@
-import { Section } from "~/components/common/container"
+import {
+	Section,
+	SectionContent,
+	SectionTitle,
+} from "~/components/common/container"
+import { Distant } from "~/components/common/placement"
 import { NoData, Title } from "~/components/common/typography"
 import { BudgetSectionContent } from "~/components/utility/budget"
+import { PurchaseItem } from "~/components/utility/purchase-item"
+import { RevalidateButton } from "~/components/utility/revalidate-button"
 import { entryStudentRoute } from "~/route-modules/common.server"
 import { prisma } from "~/services/repository.server"
 import { errorBuilder } from "~/services/session.server"
@@ -40,9 +47,63 @@ export const loader = async ({ request, params }: Route.LoaderArgs) => {
 			},
 		})
 
-		if (!wallet) {
-			throw await errorRedirect("ウォレットが見つかりません。")
-		}
+		if (!wallet) throw await errorRedirect("ウォレットが見つかりません。")
+
+		const purchases = await prisma.purchase.findMany({
+			where: {
+				part: {
+					wallet: {
+						parts: {
+							some: {
+								id: partId,
+							},
+						},
+					},
+				},
+			},
+			select: {
+				id: true,
+				part: {
+					select: {
+						id: true,
+					},
+				},
+				label: true,
+				description: true,
+				plannedUsage: true,
+				requestedBy: {
+					select: {
+						id: true,
+						name: true,
+					},
+				},
+				updatedAt: true,
+				canceled: true,
+				accountantApproval: {
+					select: {
+						approved: true,
+					},
+				},
+				teacherApproval: {
+					select: {
+						approved: true,
+					},
+				},
+				completion: {
+					select: {
+						actualUsage: true,
+					},
+				},
+				receiptSubmission: {
+					select: {
+						receiptIndex: true,
+					},
+				},
+			},
+			orderBy: {
+				updatedAt: "desc",
+			},
+		})
 
 		// 各パートの進行中の購入（予定額）を取得
 		const purchasesInProgress = await prisma.purchase.findMany({
@@ -108,9 +169,9 @@ export const loader = async ({ request, params }: Route.LoaderArgs) => {
 			},
 			totalPlannedUsage,
 			totalActualUsage,
+			purchases,
 		}
-	} catch (error) {
-		console.error("ウォレット情報の取得に失敗しました:", error)
+	} catch (_) {
 		throw await errorRedirect("ウォレット情報の取得に失敗しました。")
 	}
 }
@@ -123,7 +184,7 @@ export default ({ loaderData }: Route.ComponentProps) => {
 			</Section>
 		)
 
-	const { wallet, totalPlannedUsage, totalActualUsage } = loaderData
+	const { wallet, totalPlannedUsage, totalActualUsage, purchases } = loaderData
 
 	return (
 		<>
@@ -150,6 +211,24 @@ export default ({ loaderData }: Route.ComponentProps) => {
 						<Title>{part.name}</Title>
 					</BudgetSectionContent>
 				))}
+			</Section>
+			<Section>
+				<SectionTitle>
+					<Distant>
+						<Title>買い出し</Title>
+						<RevalidateButton />
+					</Distant>
+				</SectionTitle>
+				<SectionContent className="flex flex-col gap-2">
+					{purchases.map((purchase) => (
+						<PurchaseItem
+							key={purchase.id}
+							type="student"
+							purchase={purchase}
+							id={purchase.part.id}
+						/>
+					))}
+				</SectionContent>
 			</Section>
 		</>
 	)

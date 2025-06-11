@@ -239,7 +239,7 @@ export function CashBookFilter({ parts, filter }: CashBookFilterProps) {
 			<Distant>
 				<div className="flex flex-wrap gap-2">
 					{parts.map((part) => (
-						<div key={part.id} className="inline-flex items-center">
+						<div key={part.id} className="inline-flex items-center h-8">
 							<Checkbox
 								id={part.id}
 								name="filter"
@@ -270,13 +270,11 @@ export function CashBookTabel({
 	}
 
 	return (
-		<div>
-			<div className="mb-4 flex justify-end">
-				<Button onClick={handleCSVDownload} variant="outline">
-					<Download className="h-4 w-4 mr-2" />
-					CSV出力
-				</Button>
-			</div>
+		<div className="space-y-4">
+			<Button onClick={handleCSVDownload} variant="outline">
+				<Download className="h-4 w-4 mr-2" />
+				CSV出力
+			</Button>
 			<Table>
 				<TableHeader>
 					<TableRow>

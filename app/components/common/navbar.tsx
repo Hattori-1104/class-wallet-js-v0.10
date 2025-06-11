@@ -5,7 +5,7 @@ import type { Icon } from "~/utilities/type"
 
 export const NavBar = ({ children }: { children: ReactNode }) => {
 	return (
-		<nav className="h-16 border-t shrink-0 sticky bottom-0 bg-white">
+		<nav className="h-18 pb-2 border-t shrink-0 sticky bottom-0 bg-white">
 			<div className="container mx-auto px-8 h-full flex flex-row items-center justify-between">
 				{children}
 			</div>
@@ -30,7 +30,7 @@ export const NavBarItem = ({
 			)}
 			{...props}
 		>
-			<Icon size={20} />
+			<Icon size={24} />
 			<span className="text-xs">{label}</span>
 		</Link>
 	)

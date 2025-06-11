@@ -52,11 +52,11 @@ export const loader = async ({ request, params }: Route.LoaderArgs) => {
 	return { purchase, partId }
 }
 
-export default ({ loaderData: { purchase, partId } }: Route.ComponentProps) => {
+export default ({ loaderData: { purchase } }: Route.ComponentProps) => {
 	return (
 		<>
 			<Header>
-				<HeaderBackButton to={`/app/student/part/${partId}`} />
+				<HeaderBackButton />
 			</Header>
 			<MainContainer>
 				<Section>
@@ -78,6 +78,9 @@ export default ({ loaderData: { purchase, partId } }: Route.ComponentProps) => {
 								</span>
 							)}
 						</Distant>
+						<span className="text-muted-foreground">
+							{purchase.requestedBy.name} さんがリクエスト
+						</span>
 					</SectionTitle>
 				</Section>
 				<Outlet />

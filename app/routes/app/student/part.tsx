@@ -11,18 +11,13 @@ import {
 import { LinkButton } from "~/components/common/link-button"
 import { Distant } from "~/components/common/placement"
 import { NoData, Title } from "~/components/common/typography"
-import { Alert, AlertDescription, AlertTitle } from "~/components/ui/alert"
 import { Button } from "~/components/ui/button"
 import { BudgetSectionContent } from "~/components/utility/budget"
+import { PurchaseItem } from "~/components/utility/purchase-item"
 import { RevalidateButton } from "~/components/utility/revalidate-button"
 import { queryPartBudgetInfo } from "~/route-modules/budget.server"
 import { entryStudentRoute } from "~/route-modules/common.server"
 import { prisma } from "~/services/repository.server"
-import { formatCurrency, formatDiffDate } from "~/utilities/display"
-import {
-	type PurchaseAction,
-	recommendedAction,
-} from "~/utilities/purchase-state"
 import type { Route } from "./+types/part"
 
 export const loader = async ({ request, params }: Route.LoaderArgs) => {
@@ -39,7 +34,7 @@ export const loader = async ({ request, params }: Route.LoaderArgs) => {
 	// データを取得
 	// FIXME: エラーハンドリングが未実装
 	const part = await prisma.part.findUniqueOrThrow({
-		where: { id: partId, students: { some: { id: student.id } } },
+		where: { id: partId },
 		select: {
 			id: true,
 			name: true,
@@ -123,12 +118,6 @@ export default ({ loaderData }: Route.ComponentProps) => {
 	if (!loaderData) return <NotBelongsTo />
 
 	const { partId, part, plannedUsage, actualUsage } = loaderData
-	const purchaseActionLabel: Record<PurchaseAction, string> = {
-		approval: "承認待ち",
-		completion: "買い出し中",
-		receiptSubmission: "レシート提出待ち",
-		completed: "完了",
-	}
 
 	return (
 		<>
@@ -158,41 +147,12 @@ export default ({ loaderData }: Route.ComponentProps) => {
 				</SectionTitle>
 				<SectionContent className="flex flex-col gap-2">
 					{part.purchases.map((purchase) => (
-						<Link
+						<PurchaseItem
 							key={purchase.id}
-							to={`/app/student/part/${partId}/purchase/${purchase.id}`}
-						>
-							<Alert>
-								<AlertTitle>
-									<Distant>
-										<span className="font-bold">{purchase.label}</span>
-										<span className="font-normal">
-											{purchase.completion
-												? `${formatCurrency(purchase.completion.actualUsage)}`
-												: `（予定額）${formatCurrency(purchase.plannedUsage)}`}
-										</span>
-									</Distant>
-								</AlertTitle>
-								<AlertDescription>
-									<Distant>
-										<span>{purchase.requestedBy.name}</span>
-									</Distant>
-									<Distant>
-										{purchase.canceled ? (
-											<span className="text-destructive">
-												キャンセルされました。
-											</span>
-										) : (
-											<span>
-												{purchaseActionLabel[recommendedAction(purchase)]}
-											</span>
-										)}
-
-										<span>{formatDiffDate(purchase.updatedAt)}</span>
-									</Distant>
-								</AlertDescription>
-							</Alert>
-						</Link>
+							type="student"
+							id={partId}
+							purchase={purchase}
+						/>
 					))}
 				</SectionContent>
 			</Section>

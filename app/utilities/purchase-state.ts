@@ -1,6 +1,6 @@
 import type { Prisma } from "@prisma/client"
 
-type PurchaseWithState = Prisma.PurchaseGetPayload<{
+export type PurchaseWithState = Prisma.PurchaseGetPayload<{
 	select: {
 		canceled: true
 		accountantApproval: {
@@ -23,6 +23,13 @@ export type PurchaseAction =
 	| "completion"
 	| "receiptSubmission"
 	| "completed"
+
+export const purchaseActionLabel: Record<PurchaseAction, string> = {
+	approval: "承認待ち",
+	completion: "買い出し中",
+	receiptSubmission: "レシート提出待ち",
+	completed: "完了",
+}
 
 export class PurchaseState {
 	constructor(private purchase: PurchaseWithState) {}

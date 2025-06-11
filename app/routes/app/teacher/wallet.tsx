@@ -1,4 +1,3 @@
-import { Link } from "react-router"
 import {
 	Section,
 	SectionContent,
@@ -6,21 +5,16 @@ import {
 } from "~/components/common/container"
 import { Distant } from "~/components/common/placement"
 import { NoData, Title } from "~/components/common/typography"
-import { AlertDescription, AlertTitle } from "~/components/ui/alert"
-import { Alert } from "~/components/ui/alert"
-import { BudgetDescription, BudgetGauge } from "~/components/utility/budget"
+import { BudgetSectionContent } from "~/components/utility/budget"
+import { PurchaseItem } from "~/components/utility/purchase-item"
+import { RevalidateButton } from "~/components/utility/revalidate-button"
 import { entryTeacherRoute } from "~/route-modules/common.server"
 import { prisma } from "~/services/repository.server"
 import { errorBuilder } from "~/services/session.server"
-import { formatCurrency, formatDiffDate } from "~/utilities/display"
-import {
-	type PurchaseAction,
-	recommendedAction,
-} from "~/utilities/purchase-state"
 import type { Route } from "./+types/wallet"
 
 export const loader = async ({ request, params }: Route.LoaderArgs) => {
-	const { teacher, session, walletId } = await entryTeacherRoute(
+	const { session, walletId } = await entryTeacherRoute(
 		request,
 		params.walletId,
 		false,
@@ -43,45 +37,6 @@ export const loader = async ({ request, params }: Route.LoaderArgs) => {
 						name: true,
 						budget: true,
 						isBazaar: true,
-						purchases: {
-							select: {
-								id: true,
-								label: true,
-								description: true,
-								requestedBy: {
-									select: {
-										name: true,
-										id: true,
-									},
-								},
-								plannedUsage: true,
-								updatedAt: true,
-								canceled: true,
-								accountantApproval: {
-									select: {
-										approved: true,
-									},
-								},
-								teacherApproval: {
-									select: {
-										approved: true,
-									},
-								},
-								completion: {
-									select: {
-										actualUsage: true,
-									},
-								},
-								receiptSubmission: {
-									select: {
-										receiptIndex: true,
-									},
-								},
-							},
-							orderBy: {
-								updatedAt: "desc",
-							},
-						},
 					},
 				},
 			},
@@ -90,6 +45,58 @@ export const loader = async ({ request, params }: Route.LoaderArgs) => {
 		if (!wallet) {
 			throw await errorRedirect("ウォレットが見つかりません。")
 		}
+
+		const purchases = await prisma.purchase.findMany({
+			where: {
+				part: {
+					wallet: {
+						id: walletId,
+					},
+				},
+			},
+			select: {
+				id: true,
+				part: {
+					select: {
+						id: true,
+					},
+				},
+				label: true,
+				description: true,
+				plannedUsage: true,
+				requestedBy: {
+					select: {
+						id: true,
+						name: true,
+					},
+				},
+				updatedAt: true,
+				canceled: true,
+				accountantApproval: {
+					select: {
+						approved: true,
+					},
+				},
+				teacherApproval: {
+					select: {
+						approved: true,
+					},
+				},
+				completion: {
+					select: {
+						actualUsage: true,
+					},
+				},
+				receiptSubmission: {
+					select: {
+						receiptIndex: true,
+					},
+				},
+			},
+			orderBy: {
+				updatedAt: "desc",
+			},
+		})
 
 		// 各パートの進行中の購入（予定額）を取得
 		const purchasesInProgress = await prisma.purchase.findMany({
@@ -156,9 +163,9 @@ export const loader = async ({ request, params }: Route.LoaderArgs) => {
 			walletId,
 			totalPlannedUsage,
 			totalActualUsage,
+			purchases,
 		}
-	} catch (error) {
-		console.error("ウォレット情報の取得に失敗しました:", error)
+	} catch (_) {
 		throw await errorRedirect("ウォレット情報の取得に失敗しました。")
 	}
 }
@@ -173,102 +180,50 @@ export default ({ loaderData }: Route.ComponentProps) => {
 			</>
 		)
 
-	const { wallet, walletId, totalPlannedUsage, totalActualUsage } = loaderData
-	const purchaseActionLabel: Record<PurchaseAction, string> = {
-		approval: "承認待ち",
-		completion: "買い出し中",
-		receiptSubmission: "レシート提出待ち",
-		completed: "完了",
-	}
-
+	const { wallet, walletId, totalPlannedUsage, totalActualUsage, purchases } =
+		loaderData
 	return (
 		<>
-			{/* ウォレット全体の予算状況 */}
 			<Section>
-				<SectionTitle>
+				<BudgetSectionContent
+					budget={wallet.budget}
+					plannedUsage={totalPlannedUsage}
+					actualUsage={totalActualUsage}
+					className="space-y-2"
+				>
 					<Title>{wallet.name}</Title>
-				</SectionTitle>
-				<SectionContent className="space-y-2">
-					<BudgetDescription
-						budget={wallet.budget}
-						actualUsage={totalActualUsage}
-					/>
-					<BudgetGauge
-						budget={wallet.budget}
-						plannedUsage={totalPlannedUsage}
-						actualUsage={totalActualUsage}
-					/>
-				</SectionContent>
+				</BudgetSectionContent>
 			</Section>
 
-			{/* 各パートの予算状況 */}
-			{wallet.parts.map((part) => (
-				<Section key={part.id}>
-					<SectionTitle>
-						<Distant>
-							<Title>{part.name}</Title>
-							{part.isBazaar && (
-								<span className="text-sm text-muted-foreground">バザー</span>
-							)}
-						</Distant>
-					</SectionTitle>
-					<SectionContent className="space-y-2">
-						<BudgetDescription
-							budget={part.budget}
-							actualUsage={part.actualUsage}
-						/>
-						<BudgetGauge
-							budget={part.budget}
-							plannedUsage={part.plannedUsage}
-							actualUsage={part.actualUsage}
-						/>
-					</SectionContent>
-				</Section>
-			))}
-
-			{/* 買い出し一覧 */}
+			<Section>
+				{wallet.parts.map((part) => (
+					<BudgetSectionContent
+						key={part.id}
+						budget={part.budget}
+						plannedUsage={part.plannedUsage}
+						actualUsage={part.actualUsage}
+						className="space-y-2 my-4"
+					>
+						<Title>{part.name}</Title>
+					</BudgetSectionContent>
+				))}
+			</Section>
 			<Section>
 				<SectionTitle>
-					<Title>買い出し</Title>
+					<Distant>
+						<Title>買い出し</Title>
+						<RevalidateButton />
+					</Distant>
 				</SectionTitle>
 				<SectionContent className="flex flex-col gap-2">
-					{wallet.parts.map((part) =>
-						part.purchases
-							.filter((purchase) => !purchase.canceled)
-							.map((purchase) => (
-								<Link
-									key={purchase.id}
-									to={`/app/teacher/wallet/${walletId}/purchase/${purchase.id}`}
-								>
-									<Alert>
-										<AlertTitle>
-											<Distant>
-												<span className="font-bold">{purchase.label}</span>
-												<span className="font-normal">
-													{purchase.completion
-														? formatCurrency(purchase.completion.actualUsage)
-														: `（予定額）${formatCurrency(purchase.plannedUsage)}`}
-												</span>
-											</Distant>
-										</AlertTitle>
-										<AlertDescription>
-											<Distant>
-												<span>{purchase.requestedBy.name}</span>
-											</Distant>
-											<Distant>
-												<div className="flex flex-col gap-1">
-													<span>{purchase.description}</span>
-													<span>
-														{purchaseActionLabel[recommendedAction(purchase)]}
-													</span>
-												</div>
-												<span>{formatDiffDate(purchase.updatedAt)}</span>
-											</Distant>
-										</AlertDescription>
-									</Alert>
-								</Link>
-							)),
-					)}
+					{purchases.map((purchase) => (
+						<PurchaseItem
+							key={purchase.id}
+							type="teacher"
+							purchase={purchase}
+							id={walletId}
+						/>
+					))}
 				</SectionContent>
 			</Section>
 		</>

@@ -77,6 +77,9 @@ export default ({
 								</span>
 							)}
 						</Distant>
+						<span className="text-muted-foreground">
+							{purchase.requestedBy.name} さんがリクエスト
+						</span>
 					</SectionTitle>
 				</Section>
 				<Outlet />
