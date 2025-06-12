@@ -257,7 +257,7 @@ export function CashBookFilter({ parts, filter }: CashBookFilterProps) {
 	)
 }
 
-export function CashBookTabel({
+export function CashBookTable({
 	purchases,
 	filteredParts,
 	wallet,

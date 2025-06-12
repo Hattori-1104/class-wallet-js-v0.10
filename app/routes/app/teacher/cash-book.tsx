@@ -6,7 +6,7 @@ import {
 import { Title } from "~/components/common/typography"
 import {
 	CashBookFilter,
-	CashBookTabel,
+	CashBookTable,
 	PurchaseRecordableOrderByQuery,
 	PurchaseRecordableSelectQuery,
 	PurchaseRecordableWhereQuery,
@@ -93,7 +93,7 @@ export default ({ loaderData }: Route.ComponentProps) => {
 				<CashBookFilter parts={loaderData.parts} filter={loaderData.filter} />
 			</SectionContent>
 			<SectionContent>
-				<CashBookTabel
+				<CashBookTable
 					purchases={loaderData.filteredPurchases}
 					filteredParts={loaderData.filteredParts}
 					wallet={loaderData.wallet}

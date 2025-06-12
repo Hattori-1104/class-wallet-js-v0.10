@@ -10,12 +10,12 @@ export const loader = async ({ request, params }: Route.LoaderArgs) => {
 	return { partId }
 }
 
-export default ({ loaderData: { partId } }: Route.ComponentProps) => {
+export default ({}: Route.ComponentProps) => {
 	return (
 		<>
 			<LayoutAbsolute>
 				<Header>
-					<HeaderBackButton to={`/app/student/part/${partId}`} />
+					<HeaderBackButton />
 				</Header>
 				<MainContainer>
 					<Outlet />

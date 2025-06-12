@@ -65,6 +65,7 @@ export default [
 		...prefix("admin", [
 			layout("routes/app/admin/layout.tsx", [
 				index("routes/app/admin/index.tsx"),
+				route("cash-book", "routes/app/admin/cash-book.tsx"),
 			]),
 		]),
 		// 認証
