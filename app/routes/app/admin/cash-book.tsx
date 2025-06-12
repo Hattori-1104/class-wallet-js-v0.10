@@ -19,6 +19,7 @@ export const loader = async ({ request }: Route.LoaderArgs) => {
 		select: {
 			id: true,
 			name: true,
+			budget: true,
 			parts: {
 				select: {
 					purchases: {
@@ -46,6 +47,10 @@ export default ({ loaderData: { wallets } }: Route.ComponentProps) => {
 							purchases={wallet.parts.flatMap((part) => part.purchases)}
 							filteredParts={wallet.parts}
 							wallet={wallet}
+							reserved={
+								wallet.budget -
+								wallet.parts.reduce((sum, part) => sum + part.budget, 0)
+							}
 						/>
 					</SectionContent>
 				</Section>

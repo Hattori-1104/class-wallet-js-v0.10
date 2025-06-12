@@ -69,6 +69,7 @@ interface CashBookTabelProps {
 	purchases: PurchaseRecordable[]
 	filteredParts: { id: string; name: string; budget: number }[]
 	wallet: { id: string; name: string } | null
+	reserved?: number
 }
 
 interface CashBookFilterProps {
@@ -105,8 +106,10 @@ function formatDateDisplay(date: Date): string {
 function createCashBookData(
 	purchases: PurchaseRecordable[],
 	filteredParts: { id: string; name: string; budget: number }[],
+	reserved = 0,
 ): CashBookRow[] {
-	const totalBudget = filteredParts.reduce((sum, part) => sum + part.budget, 0)
+	const totalBudget =
+		filteredParts.reduce((sum, part) => sum + part.budget, 0) + reserved
 	const data: CashBookRow[] = []
 	let currentBalance = 0
 
@@ -116,7 +119,7 @@ function createCashBookData(
 		data.push({
 			no: null,
 			date: null,
-			item: "予算",
+			item: reserved > 0 ? "予算（予備費込み）" : "予備費",
 			income: totalBudget,
 			expense: null,
 			category: "",
@@ -125,7 +128,12 @@ function createCashBookData(
 	}
 
 	// 購入記録行を追加
-	for (const purchase of purchases) {
+
+	for (const purchase of purchases.sort(
+		(a, b) =>
+			(a.receiptSubmission?.receiptIndex ?? 0) -
+			(b.receiptSubmission?.receiptIndex ?? 0),
+	)) {
 		const expense = purchase.completion?.actualUsage || 0
 		currentBalance -= expense
 
@@ -261,9 +269,10 @@ export function CashBookTable({
 	purchases,
 	filteredParts,
 	wallet,
+	reserved = 0,
 }: CashBookTabelProps) {
 	// 生データの配列を作成
-	const cashBookData = createCashBookData(purchases, filteredParts)
+	const cashBookData = createCashBookData(purchases, filteredParts, reserved)
 
 	const handleCSVDownload = () => {
 		downloadCSV(cashBookData, filteredParts, wallet)
