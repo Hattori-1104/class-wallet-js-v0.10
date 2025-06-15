@@ -98,7 +98,7 @@ const formSchema = z.object({
 	part: z.string().optional(),
 })
 
-export default ({ loaderData, actionData }: Route.ComponentProps) => {
+export default ({ loaderData }: Route.ComponentProps) => {
 	const submit = useSubmit()
 	const [form, fields] = useForm({
 		onValidate({ formData }) {
@@ -131,49 +131,51 @@ export default ({ loaderData, actionData }: Route.ComponentProps) => {
 					/>
 				</SectionContent>
 			</Section>
-			<Section>
-				<Form method="post" {...getFormProps(form)}>
-					<FormBody>
-						<FormField label="レシート番号" name={fields.receiptIndex.id} error={fields.receiptIndex.errors}>
-							<Input {...getInputProps(fields.receiptIndex, { type: "number" })} />
-						</FormField>
-						<FormField label="項目名" name={fields.label.id} error={fields.label.errors}>
-							<Input {...getInputProps(fields.label, { type: "text" })} />
-						</FormField>
-						<FormField label="使用額" name={fields.actualUsage.id} error={fields.actualUsage.errors}>
-							<Input {...getInputProps(fields.actualUsage, { type: "number" })} />
-						</FormField>
-						<FormField label="パート" name={fields.part.id} error={fields.part.errors}>
-							<Popover>
-								<PopoverTrigger asChild>
-									<Button variant="outline">{partName}</Button>
-								</PopoverTrigger>
-								<PopoverContent className="w-[200px] p-0">
-									<Command>
-										<CommandList>
-											<CommandGroup>
-												{loaderData.parts.map((part) => (
-													<CommandItem
-														key={part.id}
-														onSelect={() => {
-															setPartName(part.name)
-														}}
-													>
-														{part.name}
-													</CommandItem>
-												))}
-											</CommandGroup>
-										</CommandList>
-									</Command>
-								</PopoverContent>
-							</Popover>
-						</FormField>
-					</FormBody>
-					<FormFooter>
-						<Button type="submit">作成</Button>
-					</FormFooter>
-				</Form>
-			</Section>
+			{loaderData.isAccountant && (
+				<Section>
+					<Form method="post" {...getFormProps(form)}>
+						<FormBody>
+							<FormField label="レシート番号" name={fields.receiptIndex.id} error={fields.receiptIndex.errors}>
+								<Input {...getInputProps(fields.receiptIndex, { type: "number" })} />
+							</FormField>
+							<FormField label="項目名" name={fields.label.id} error={fields.label.errors}>
+								<Input {...getInputProps(fields.label, { type: "text" })} />
+							</FormField>
+							<FormField label="使用額" name={fields.actualUsage.id} error={fields.actualUsage.errors}>
+								<Input {...getInputProps(fields.actualUsage, { type: "number" })} />
+							</FormField>
+							<FormField label="パート" name={fields.part.id} error={fields.part.errors}>
+								<Popover>
+									<PopoverTrigger asChild>
+										<Button variant="outline">{partName}</Button>
+									</PopoverTrigger>
+									<PopoverContent className="w-[200px] p-0">
+										<Command>
+											<CommandList>
+												<CommandGroup>
+													{loaderData.parts.map((part) => (
+														<CommandItem
+															key={part.id}
+															onSelect={() => {
+																setPartName(part.name)
+															}}
+														>
+															{part.name}
+														</CommandItem>
+													))}
+												</CommandGroup>
+											</CommandList>
+										</Command>
+									</PopoverContent>
+								</Popover>
+							</FormField>
+						</FormBody>
+						<FormFooter>
+							<Button type="submit">作成</Button>
+						</FormFooter>
+					</Form>
+				</Section>
+			)}
 		</>
 	)
 }
