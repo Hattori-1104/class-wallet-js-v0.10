@@ -75,7 +75,7 @@ export const action = async ({ request, params }: Route.ActionArgs) => {
 				},
 				select: {
 					label: true,
-					accountantApproval: {
+					teacherApproval: {
 						select: {
 							by: {
 								select: {
@@ -121,8 +121,8 @@ export const action = async ({ request, params }: Route.ActionArgs) => {
 			})
 		).map((sub) => ({ endpoint: sub.endpoint, keys: { p256dh: sub.p256dh, auth: sub.auth } }))
 		sendPushNotification(subscriptions, {
-			title: `会計による${action === "approve" ? "承認" : "拒否"}`,
-			body: `（${purchase.part.wallet.name}）${purchase.part.name} ${purchase.accountantApproval?.by.name ?? "??"} ${purchase.label}`,
+			title: `教師による${action === "approve" ? "承認" : "拒否"}`,
+			body: `（${purchase.part.wallet.name}）${purchase.part.name} ${purchase.teacherApproval?.by.name ?? "??"} ${purchase.label}`,
 		})
 		return successRedirect("購入を承認しました。")
 	} catch (_) {
