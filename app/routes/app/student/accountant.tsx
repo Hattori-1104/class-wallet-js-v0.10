@@ -5,13 +5,7 @@ import { Link, Loader2, Send, Trash } from "lucide-react"
 import { Form, useNavigation, useSubmit } from "react-router"
 import { toast } from "sonner"
 import { z } from "zod"
-import {
-	LayoutRelative,
-	MainContainer,
-	Section,
-	SectionContent,
-	SectionTitle,
-} from "~/components/common/container"
+import { LayoutRelative, MainContainer, Section, SectionContent, SectionTitle } from "~/components/common/container"
 import { HeaderBackButton } from "~/components/common/header"
 import { Header } from "~/components/common/header"
 import { Aside, Distant } from "~/components/common/placement"
@@ -22,11 +16,7 @@ import { Input } from "~/components/ui/input"
 import { FormBody, FormField, FormFooter } from "~/components/utility/form"
 import { verifyStudent } from "~/route-modules/common.server"
 import { prisma } from "~/services/repository.server"
-import {
-	buildErrorRedirect,
-	buildSuccessRedirect,
-	requireSession,
-} from "~/services/session.server"
+import { buildErrorRedirect, buildSuccessRedirect, requireSession } from "~/services/session.server"
 import { formatCurrency } from "~/utilities/display"
 import type { Route } from "./+types/accountant"
 
@@ -90,10 +80,7 @@ const formSchema = z.discriminatedUnion("intent", [
 	}),
 ])
 
-export default ({
-	loaderData: { wallet },
-	actionData,
-}: Route.ComponentProps) => {
+export default ({ loaderData: { wallet }, actionData }: Route.ComponentProps) => {
 	const [form, fields] = useForm({
 		onValidate({ formData }) {
 			return parseWithZod(formData, { schema: formSchema })
@@ -103,10 +90,7 @@ export default ({
 		shouldValidate: "onInput",
 	})
 	const navigation = useNavigation()
-	const wholePartBudgetWithoutBazaar = wallet.parts.reduce(
-		(acc, part) => acc + (part.isBazaar ? 0 : part.budget),
-		0,
-	)
+	const wholePartBudgetWithoutBazaar = wallet.parts.reduce((acc, part) => acc + (part.isBazaar ? 0 : part.budget), 0)
 	return (
 		<>
 			<LayoutRelative>
@@ -120,40 +104,20 @@ export default ({
 						</SectionTitle>
 					</Section>
 					<SectionContent className="space-y-4">
-						<SectionTitle>
-							ウォレットの予算：{formatCurrency(wallet.budget)}
-						</SectionTitle>
+						<SectionTitle>ウォレットの予算：{formatCurrency(wallet.budget)}</SectionTitle>
 						<Form method="post" {...getFormProps(form)}>
 							<Alert>
 								<AlertTitle>
 									<FormBody>
-										<FormField
-											label="パート名"
-											name={fields.name.id}
-											error={fields.name.errors}
-										>
-											<Input
-												{...getInputProps(fields.name, { type: "text" })}
-											/>
+										<FormField label="パート名" name={fields.name.id} error={fields.name.errors}>
+											<Input {...getInputProps(fields.name, { type: "text" })} />
 										</FormField>
-										<FormField
-											label="予算"
-											name={fields.budget.id}
-											error={fields.budget.errors}
-										>
-											<Input
-												className="text-right no-spin"
-												{...getInputProps(fields.budget, { type: "number" })}
-											/>
+										<FormField label="予算" name={fields.budget.id} error={fields.budget.errors}>
+											<Input className="text-right no-spin" {...getInputProps(fields.budget, { type: "number" })} />
 										</FormField>
 									</FormBody>
 									<FormFooter>
-										<Button
-											type="submit"
-											name="intent"
-											value="create"
-											disabled={navigation.state === "submitting"}
-										>
+										<Button type="submit" name="intent" value="create" disabled={navigation.state === "submitting"}>
 											{navigation.state === "submitting" ? (
 												<>
 													<Loader2 className="animate-spin" />
@@ -182,16 +146,12 @@ export default ({
 								/>
 							))
 						) : (
-							<NoData className="text-center block">
-								パートがありません。
-							</NoData>
+							<NoData className="text-center block">パートがありません。</NoData>
 						)}
 						{wallet.budget > wholePartBudgetWithoutBazaar && (
 							<Alert>
 								<AlertTitle>予備費（余り予算）</AlertTitle>
-								<AlertDescription>
-									{formatCurrency(wallet.budget - wholePartBudgetWithoutBazaar)}
-								</AlertDescription>
+								<AlertDescription>{formatCurrency(wallet.budget - wholePartBudgetWithoutBazaar)}</AlertDescription>
 							</Alert>
 						)}
 					</SectionContent>
@@ -224,9 +184,9 @@ function PartItem(props: PartItemProps) {
 			const origin = window.location.origin
 			const inviteUrl = `${origin}/app/invite/null/${props.id}`
 			await navigator.clipboard.writeText(inviteUrl)
-			toast.success(`${props.name}の招待リンクをコピーしました`)
+			toast.success(`${props.name}の招待リンクをコピーしました`, { position: "top-right" })
 		} catch (_) {
-			toast.error("リンクのコピーに失敗しました")
+			toast.error("リンクのコピーに失敗しました", { position: "top-right" })
 		}
 	}
 
@@ -240,15 +200,9 @@ function PartItem(props: PartItemProps) {
 							variant="destructive"
 							size="icon"
 							disabled={props.purchasesCount > 0}
-							onClick={() =>
-								submit({ intent: "delete", id: props.id }, { method: "post" })
-							}
+							onClick={() => submit({ intent: "delete", id: props.id }, { method: "post" })}
 						>
-							{navigation.state === "submitting" ? (
-								<Loader2 className="animate-spin" />
-							) : (
-								<Trash />
-							)}
+							{navigation.state === "submitting" ? <Loader2 className="animate-spin" /> : <Trash />}
 						</Button>
 						<Button size="icon" onClick={copyInviteLink}>
 							<Link />
@@ -276,11 +230,7 @@ function PartItem(props: PartItemProps) {
 								size="icon"
 								disabled={navigation.state === "submitting"}
 							>
-								{navigation.state === "submitting" ? (
-									<Loader2 className="animate-spin" />
-								) : (
-									<Send />
-								)}
+								{navigation.state === "submitting" ? <Loader2 className="animate-spin" /> : <Send />}
 							</Button>
 						</Aside>
 					</Form>
@@ -315,17 +265,9 @@ export const action = async ({ request, params }: Route.ActionArgs) => {
 				},
 			},
 		})
-		.catch(() =>
-			buildErrorRedirect(
-				"/app/student/part",
-				session,
-			)("指定されたウォレットが見つかりません。"),
-		)
+		.catch(() => buildErrorRedirect("/app/student/part", session)("指定されたウォレットが見つかりません。"))
 
-	const errorRedirect = buildErrorRedirect(
-		`/app/student/accountant/${wallet.id}`,
-		session,
-	)
+	const errorRedirect = buildErrorRedirect(`/app/student/accountant/${wallet.id}`, session)
 
 	const formData = await request.formData()
 	const submission = parseWithZod(formData, { schema: formSchema })
@@ -334,10 +276,7 @@ export const action = async ({ request, params }: Route.ActionArgs) => {
 	const { value } = submission
 
 	if (value.intent === "create") {
-		if (
-			wallet.parts.reduce((acc, part) => acc + part.budget, 0) + value.budget >
-			wallet.budget
-		) {
+		if (wallet.parts.reduce((acc, part) => acc + part.budget, 0) + value.budget > wallet.budget) {
 			return errorRedirect("予算を超えています。")
 		}
 		const part = await prisma.part
@@ -353,10 +292,7 @@ export const action = async ({ request, params }: Route.ActionArgs) => {
 				},
 			})
 			.catch(() => errorRedirect("パートの作成に失敗しました。"))
-		const successRedirect = buildSuccessRedirect(
-			`/app/student/accountant/${wallet.id}`,
-			session,
-		)
+		const successRedirect = buildSuccessRedirect(`/app/student/accountant/${wallet.id}`, session)
 		return successRedirect(`${part.name} を作成しました。`)
 	}
 
@@ -366,18 +302,12 @@ export const action = async ({ request, params }: Route.ActionArgs) => {
 				where: { id: value.id },
 			})
 			.catch(() => errorRedirect("パートの削除に失敗しました。"))
-		const successRedirect = buildSuccessRedirect(
-			`/app/student/accountant/${wallet.id}`,
-			session,
-		)
+		const successRedirect = buildSuccessRedirect(`/app/student/accountant/${wallet.id}`, session)
 		return successRedirect(`${part.name} を削除しました。`)
 	}
 
 	if (value.intent === "update") {
-		const totalBudget = wallet.parts.reduce(
-			(acc, part) => acc + (part.id === value.id ? value.budget : part.budget),
-			0,
-		)
+		const totalBudget = wallet.parts.reduce((acc, part) => acc + (part.id === value.id ? value.budget : part.budget), 0)
 		if (totalBudget > wallet.budget) {
 			return errorRedirect("予算を超えています。")
 		}
@@ -387,10 +317,7 @@ export const action = async ({ request, params }: Route.ActionArgs) => {
 				data: { budget: value.budget },
 			})
 			.catch(() => errorRedirect("パートの更新に失敗しました。"))
-		const successRedirect = buildSuccessRedirect(
-			`/app/student/accountant/${wallet.id}`,
-			session,
-		)
+		const successRedirect = buildSuccessRedirect(`/app/student/accountant/${wallet.id}`, session)
 		return successRedirect(`${part.name} の予算を変更しました。`)
 	}
 }

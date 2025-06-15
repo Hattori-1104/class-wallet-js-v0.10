@@ -1,46 +1,46 @@
 -- Active: 1749879791721@@127.0.0.1@3306@class-wallet-js
 SELECT
-  wallet.id as walletId,
-  wallet.name as walletName,
-  part.id as partId,
-  part.name as partName,
-  part.budget as partBudget,
-  IFNULL(plannedUsage, 0) AS plannedUsage,
-  IFNULL(actualUsage, 0) as actualUsage
+  `Wallet`.id as `walletId`,
+  `Wallet`.name as `walletName`,
+  `Part`.id as `partId`,
+  `Part`.name as `partName`,
+  `Part`.`budget` as `partBudget`,
+  IFNULL(`plannedUsage`, 0) AS `plannedUsage`,
+  IFNULL(`actualUsage`, 0) as `actualUsage`
 FROM
-  wallet
-  INNER JOIN part on wallet.id = part.walletId
+  `Wallet`
+  INNER JOIN `Part` on `Wallet`.id = `Part`.`walletId`
   LEFT JOIN (
     SELECT
-      purchase.partId,
-      SUM(purchase.plannedUsage) AS plannedUsage
+      `Purchase`.`partId`,
+      SUM(`Purchase`.`plannedUsage`) AS `plannedUsage`
     FROM
-      purchase
-      LEFT JOIN purchasereceiptsubmission ON purchase.id = purchasereceiptsubmission.purchaseId
-      LEFT JOIN purchaseaccountantapproval ON purchase.id = purchaseaccountantapproval.purchaseId
-      LEFT JOIN purchaseteacherapproval ON purchase.id = purchaseteacherapproval.purchaseId
+      `Purchase`
+      LEFT JOIN `PurchaseReceiptSubmission` ON `Purchase`.id = `PurchaseReceiptSubmission`.`purchaseId`
+      LEFT JOIN `PurchaseAccountantApproval` ON `Purchase`.id = `PurchaseAccountantApproval`.`purchaseId`
+      LEFT JOIN `PurchaseTeacherApproval` ON `Purchase`.id = `PurchaseTeacherApproval`.`purchaseId`
     WHERE
-      purchasereceiptsubmission.purchaseId IS NULL
-      AND canceled IS FALSE
-      AND purchaseaccountantapproval.approved IS NOT FALSE
-      AND purchaseteacherapproval.approved IS NOT FALSE
+      `PurchaseReceiptSubmission`.`purchaseId` IS NULL
+      AND `canceled` IS FALSE
+      AND `PurchaseAccountantApproval`.`approved` IS NOT FALSE
+      AND `PurchaseTeacherApproval`.`approved` IS NOT FALSE
     GROUP BY
-      partId
-  ) AS plannedUsageTable ON part.id = plannedUsageTable.partId
+      `partId`
+  ) AS `PlannedUsageTable` ON `Part`.id = `PlannedUsageTable`.`partId`
   LEFT JOIN (
     SELECT
-      purchase.partId,
-      SUM(purchasecompletion.actualUsage) AS actualUsage
+      `Purchase`.`partId`,
+      SUM(`PurchaseCompletion`.`actualUsage`) AS `actualUsage`
     FROM
-      purchase
-      LEFT JOIN purchasecompletion ON purchase.id = purchasecompletion.purchaseId
+      `Purchase`
+      LEFT JOIN `PurchaseCompletion` ON `Purchase`.id = `PurchaseCompletion`.`purchaseId`
     WHERE
-      purchasecompletion.purchaseId IS NOT NULL
-      AND canceled IS FALSE
+      `PurchaseCompletion`.`purchaseId` IS NOT NULL
+      AND `canceled` IS FALSE
     GROUP BY
-      partId
-  ) AS actualUsageTable ON part.id = actualUsageTable.partId
+      `partId`
+  ) AS `ActualUsageTable` ON `Part`.id = `ActualUsageTable`.`partId`
 WHERE
-  wallet.id = ?
+  `Wallet`.id = ?
 ORDER BY
-  wallet.name DESC;
+  `Wallet`.name DESC;

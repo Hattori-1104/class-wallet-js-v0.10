@@ -14,10 +14,7 @@ import { Input } from "~/components/ui/input"
 import { FormBody, FormField, FormFooter } from "~/components/utility/form"
 import { entryAdminRoute } from "~/route-modules/common.server"
 import { prisma } from "~/services/repository.server"
-import {
-	buildErrorRedirect,
-	buildSuccessRedirect,
-} from "~/services/session.server"
+import { buildErrorRedirect, buildSuccessRedirect } from "~/services/session.server"
 import { formatCurrency } from "~/utilities/display"
 import type { Route } from "./+types/index"
 export const loader = async ({ request }: Route.LoaderArgs) => {
@@ -46,10 +43,7 @@ const formSchema = z.discriminatedUnion("intent", [
 	}),
 ])
 
-export default ({
-	loaderData: { wallets },
-	actionData,
-}: Route.ComponentProps) => {
+export default ({ loaderData: { wallets }, actionData }: Route.ComponentProps) => {
 	const [form, fields] = useForm({
 		onValidate({ formData }) {
 			return parseWithZod(formData, { schema: formSchema })
@@ -67,9 +61,9 @@ export default ({
 			const origin = window.location.origin
 			const inviteUrl = `${origin}/app/invite/${walletId}`
 			await navigator.clipboard.writeText(inviteUrl)
-			toast.success(`${walletName}の招待リンクをコピーしました`)
+			toast.success(`${walletName}の招待リンクをコピーしました`, { position: "top-right" })
 		} catch (_) {
-			toast.error("リンクのコピーに失敗しました")
+			toast.error("リンクのコピーに失敗しました", { position: "top-right" })
 		}
 	}
 
@@ -83,31 +77,15 @@ export default ({
 					<Alert>
 						<AlertTitle>
 							<FormBody>
-								<FormField
-									label="ウォレット名"
-									name={fields.name.id}
-									error={fields.name.errors}
-								>
+								<FormField label="ウォレット名" name={fields.name.id} error={fields.name.errors}>
 									<Input {...getInputProps(fields.name, { type: "text" })} />
 								</FormField>
-								<FormField
-									label="予算"
-									name={fields.budget.id}
-									error={fields.budget.errors}
-								>
-									<Input
-										className="text-right no-spin"
-										{...getInputProps(fields.budget, { type: "number" })}
-									/>
+								<FormField label="予算" name={fields.budget.id} error={fields.budget.errors}>
+									<Input className="text-right no-spin" {...getInputProps(fields.budget, { type: "number" })} />
 								</FormField>
 							</FormBody>
 							<FormFooter>
-								<Button
-									type="submit"
-									name="intent"
-									value="create"
-									disabled={navigation.state === "submitting"}
-								>
+								<Button type="submit" name="intent" value="create" disabled={navigation.state === "submitting"}>
 									{navigation.state === "submitting" ? (
 										<>
 											<Loader2 className="animate-spin" />
@@ -133,24 +111,14 @@ export default ({
 									<Button
 										disabled={navigation.state === "submitting"}
 										onClick={() => {
-											submit(
-												{ intent: "delete", id: wallet.id },
-												{ method: "post" },
-											)
+											submit({ intent: "delete", id: wallet.id }, { method: "post" })
 										}}
 										size="icon"
 										variant="destructive"
 									>
-										{navigation.state === "submitting" ? (
-											<Loader2 className="animate-spin" />
-										) : (
-											<Trash />
-										)}
+										{navigation.state === "submitting" ? <Loader2 className="animate-spin" /> : <Trash />}
 									</Button>
-									<Button
-										size="icon"
-										onClick={() => copyInviteLink(wallet.id, wallet.name)}
-									>
+									<Button size="icon" onClick={() => copyInviteLink(wallet.id, wallet.name)}>
 										<Link />
 									</Button>
 								</Aside>

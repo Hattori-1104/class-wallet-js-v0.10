@@ -11,21 +11,16 @@ export const loader = async ({ request }: Route.LoaderArgs) => {
 	const session = await requireSession(request)
 	const errorObject = session.get("error")
 	const successObject = session.get("success")
-	return data(
-		{ errorObject, successObject },
-		{ headers: { "Set-Cookie": await commitSession(session) } },
-	)
+	return data({ errorObject, successObject }, { headers: { "Set-Cookie": await commitSession(session) } })
 }
 
-export default ({
-	loaderData: { errorObject, successObject },
-}: Route.ComponentProps) => {
+export default ({ loaderData: { errorObject, successObject } }: Route.ComponentProps) => {
 	useEffect(() => {
 		if (errorObject) {
-			toast.error(errorObject.message)
+			toast.error(errorObject.message, { position: "top-right" })
 		}
 		if (successObject) {
-			toast.success(successObject.message)
+			toast.success(successObject.message, { position: "top-right" })
 		}
 	}, [errorObject, successObject])
 	return (

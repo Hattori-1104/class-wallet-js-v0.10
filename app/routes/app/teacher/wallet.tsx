@@ -118,7 +118,7 @@ const NotBelongsTo: FC = () => {
 				inviteUrlSchema.parse(clipboardData)
 				setInviteUrl(clipboardData)
 			} catch (_) {
-				toast.error("招待リンクがコピーされていません。")
+				toast.error("招待リンクがコピーされていません。", { position: "top-right" })
 				setInviteUrl(null)
 			}
 		}
