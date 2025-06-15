@@ -2,7 +2,7 @@ import { parseWithZod } from "@conform-to/zod"
 import { data } from "react-router"
 import { SectionContent, SectionTitle } from "~/components/common/container"
 import { Section } from "~/components/common/container"
-import { entryStudentRoute } from "~/route-modules/common.server"
+import { entryStudentPurchaseRoute } from "~/route-modules/common.server"
 import { queryIsRequester } from "~/route-modules/purchase-state/common.server"
 import { PurchaseCompletionSectionContent, formSchema } from "~/route-modules/purchase-state/completion"
 import { PurchaseCompletionSelectQuery } from "~/route-modules/purchase-state/completion.server"
@@ -13,7 +13,7 @@ import { formatCurrency } from "~/utilities/display"
 import type { Route } from "./+types/completion"
 
 export const loader = async ({ request, params }: Route.LoaderArgs) => {
-	const { partId, student } = await entryStudentRoute(request, params.partId)
+	const { partId, student } = await entryStudentPurchaseRoute(request, params.purchaseId)
 
 	// TODO: エラーハンドリング
 	const purchase = await prisma.purchase.findUniqueOrThrow({
@@ -46,7 +46,7 @@ export default ({ loaderData, actionData }: Route.ComponentProps) => {
 }
 
 export const action = async ({ request, params }: Route.ActionArgs) => {
-	const { partId, student, session } = await entryStudentRoute(request, params.partId)
+	const { session, partId, student, purchaseId } = await entryStudentPurchaseRoute(request, params.purchaseId)
 
 	const formData = await request.formData()
 
@@ -66,12 +66,12 @@ export const action = async ({ request, params }: Route.ActionArgs) => {
 	try {
 		const purchase = await prisma.$transaction(async ($prisma) => {
 			const { plannedUsage } = await $prisma.purchase.findUniqueOrThrow({
-				where: { id: params.purchaseId },
+				where: { id: purchaseId },
 				select: { plannedUsage: true },
 			})
 			const purchase = await $prisma.purchase.update({
 				where: {
-					id: params.purchaseId,
+					id: purchaseId,
 					part: { id: partId, students: { some: { id: student.id } } },
 				},
 				data: {

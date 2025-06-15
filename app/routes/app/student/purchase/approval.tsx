@@ -1,6 +1,6 @@
 import { Section, SectionTitle } from "~/components/common/container"
 import { Title } from "~/components/common/typography"
-import { entryStudentRoute } from "~/route-modules/common.server"
+import { entryStudentPurchaseRoute } from "~/route-modules/common.server"
 import { PurchaseApprovalSectionContent } from "~/route-modules/purchase-state/approval"
 import { PurchaseApprovalSelectQuery } from "~/route-modules/purchase-state/approval.server"
 import { queryIsStudentInCharge } from "~/route-modules/purchase-state/common.server"
@@ -11,19 +11,13 @@ import type { Route } from "./+types/approval"
 
 export const loader = async ({ request, params }: Route.LoaderArgs) => {
 	// セッション情報の取得 & 検証
-	const { partId, session, student } = await entryStudentRoute(request, params.partId)
+	const { session, partId, student, purchaseId } = await entryStudentPurchaseRoute(request, params.purchaseId)
 	const errorRedirect = buildErrorRedirect(`/app/student/part/${partId}`, session)
 
 	// データ取得
 	const purchase = await prisma.purchase
 		.findUniqueOrThrow({
-			where: {
-				id: params.purchaseId,
-				part: {
-					id: partId,
-					students: { some: { id: student.id } },
-				},
-			},
+			where: { id: purchaseId },
 			select: PurchaseApprovalSelectQuery,
 		})
 		.catch(() => errorRedirect("購入情報が見つかりません。"))
@@ -47,7 +41,7 @@ export default ({ loaderData }: Route.ComponentProps) => {
 }
 
 export const action = async ({ request, params }: Route.ActionArgs) => {
-	const { partId, session, student } = await entryStudentRoute(request, params.partId)
+	const { session, partId, student, purchaseId } = await entryStudentPurchaseRoute(request, params.purchaseId)
 	const errorRedirect = buildErrorRedirect(`/app/student/part/${partId}`, session)
 
 	const isInCharge = await queryIsStudentInCharge(partId, student.id)
@@ -60,11 +54,11 @@ export const action = async ({ request, params }: Route.ActionArgs) => {
 		return null
 	}
 
-	const successRedirect = buildSuccessRedirect(`/app/student/part/${partId}/purchase/${params.purchaseId}`, session)
+	const successRedirect = buildSuccessRedirect(`/app/student/part/${partId}/purchase/${purchaseId}`, session)
 
 	try {
 		const purchase = await prisma.purchase.update({
-			where: { id: params.purchaseId },
+			where: { id: purchaseId },
 			data: {
 				accountantApproval: {
 					upsert: {

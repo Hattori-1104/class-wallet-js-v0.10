@@ -1,7 +1,7 @@
 import { Section, SectionTitle } from "~/components/common/container"
 import { Title } from "~/components/common/typography"
-import { entryStudentRoute } from "~/route-modules/common.server"
-import { queryIsStudentInCharge } from "~/route-modules/purchase-state/common.server"
+import { entryStudentPurchaseRoute } from "~/route-modules/common.server"
+import { queryIsRequester, queryIsStudentInCharge } from "~/route-modules/purchase-state/common.server"
 import { PurchaseReceiptSubmissionSectionContent } from "~/route-modules/purchase-state/receipt-submission"
 import { PurchaseReceiptSubmissionSelectQuery } from "~/route-modules/purchase-state/receipt-submission.server"
 import { prisma } from "~/services/repository.server"
@@ -9,28 +9,14 @@ import { sendPushNotification } from "~/services/send-notification.server"
 import { buildErrorRedirect, buildSuccessRedirect } from "~/services/session.server"
 import type { Route } from "./+types/receipt-submission"
 
-const queryIsRequester = async (purchaseId: string, studentId: string) => {
-	const purchase = await prisma.purchase.findUnique({
-		where: {
-			id: purchaseId,
-			requestedBy: { id: studentId },
-			part: { students: { some: { id: studentId } } },
-		},
-	})
-	return Boolean(purchase)
-}
-
 export const loader = async ({ request, params }: Route.LoaderArgs) => {
-	const { partId, student, session } = await entryStudentRoute(request, params.partId)
+	const { session, partId, student, purchaseId } = await entryStudentPurchaseRoute(request, params.purchaseId)
 	const isAccountant = await queryIsStudentInCharge(partId, student.id)
-	const isRequester = await queryIsRequester(params.purchaseId, student.id)
-	const errorRedirect = buildErrorRedirect(`/app/student/part/${partId}/purchase/${params.purchaseId}`, session)
+	const isRequester = await queryIsRequester(purchaseId, student.id)
+	const errorRedirect = buildErrorRedirect(`/app/student/part/${partId}/purchase/${purchaseId}`, session)
 	const purchase = await prisma.purchase
 		.findUniqueOrThrow({
-			where: {
-				id: params.purchaseId,
-				part: { id: partId, students: { some: { id: student.id } } },
-			},
+			where: { id: purchaseId },
 			select: PurchaseReceiptSubmissionSelectQuery,
 		})
 		.catch(() => errorRedirect("購入が見つかりません"))
@@ -54,8 +40,8 @@ export default ({ loaderData }: Route.ComponentProps) => {
 }
 
 export const action = async ({ request, params }: Route.ActionArgs) => {
-	const { partId, student, session } = await entryStudentRoute(request, params.partId)
-	const errorRedirect = buildErrorRedirect(`/app/student/part/${partId}/purchase/${params.purchaseId}`, session)
+	const { session, partId, student, purchaseId } = await entryStudentPurchaseRoute(request, params.purchaseId)
+	const errorRedirect = buildErrorRedirect(`/app/student/part/${partId}/purchase/${purchaseId}`, session)
 	const formData = await request.formData()
 	const accepted = formData.get("receiptSubmission") === "accepted"
 	if (!accepted) {
@@ -71,14 +57,14 @@ export const action = async ({ request, params }: Route.ActionArgs) => {
 		(await prisma.purchase.count({
 			where: {
 				receiptSubmission: { isNot: null },
-				id: { not: params.purchaseId },
+				id: { not: purchaseId },
 				part: { wallet: { parts: { some: { id: partId } } } },
 			},
 		})) + 1
 
 	const purchase = await prisma.purchase
 		.update({
-			where: { id: params.purchaseId },
+			where: { id: purchaseId },
 			data: {
 				receiptSubmission: {
 					upsert: {
@@ -148,6 +134,6 @@ export const action = async ({ request, params }: Route.ActionArgs) => {
 		body: `（${purchase.part.wallet.name}）${purchase.part.name} ${purchase.requestedBy.name} ${purchase.label}`,
 	})
 
-	const successRedirect = buildSuccessRedirect(`/app/student/part/${partId}/purchase/${params.purchaseId}`, session)
+	const successRedirect = buildSuccessRedirect(`/app/student/part/${partId}/purchase/${purchaseId}`, session)
 	return successRedirect(`レシートを提出しました。番号：${purchase.receiptSubmission?.receiptIndex}`)
 }

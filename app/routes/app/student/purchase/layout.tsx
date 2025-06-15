@@ -1,39 +1,23 @@
 // import { Flag } from "lucide-react"
 import { Outlet } from "react-router"
-import {
-	MainContainer,
-	Section,
-	SectionTitle,
-} from "~/components/common/container"
+import { MainContainer, Section, SectionTitle } from "~/components/common/container"
 import { Header, HeaderBackButton } from "~/components/common/header"
 import { Distant } from "~/components/common/placement"
 import { Title } from "~/components/common/typography"
-import { entryStudentRoute } from "~/route-modules/common.server"
+import { entryStudentPurchaseRoute } from "~/route-modules/common.server"
 import { prisma } from "~/services/repository.server"
 import { buildErrorRedirect } from "~/services/session.server"
 import { formatCurrency } from "~/utilities/display"
 import type { Route } from "./+types/layout"
 
 export const loader = async ({ request, params }: Route.LoaderArgs) => {
-	const { partId, session, student } = await entryStudentRoute(
-		request,
-		params.partId,
-	)
-	const errorRedirect = buildErrorRedirect(
-		`/app/student/part/${partId}`,
-		session,
-	)
+	const { session, partId, purchaseId } = await entryStudentPurchaseRoute(request, params.purchaseId)
+	const errorRedirect = buildErrorRedirect(`/app/student/part/${partId}`, session)
 
 	// データ取得
 	const purchase = await prisma.purchase
 		.findUniqueOrThrow({
-			where: {
-				id: params.purchaseId,
-				part: {
-					id: partId,
-					students: { some: { id: student.id } },
-				},
-			},
+			where: { id: purchaseId },
 			select: {
 				id: true,
 				label: true,
@@ -68,22 +52,16 @@ export default ({ loaderData: { purchase } }: Route.ComponentProps) => {
 							<Title>{purchase.label}</Title>
 							{purchase.completion ? (
 								<>
-									<span className="text-lg">
-										{formatCurrency(purchase.completion.actualUsage)}
-									</span>
+									<span className="text-lg">{formatCurrency(purchase.completion.actualUsage)}</span>
 								</>
 							) : (
 								<span>
 									<span>（予定額）</span>
-									<span className="text-lg">
-										{formatCurrency(purchase.plannedUsage)}
-									</span>
+									<span className="text-lg">{formatCurrency(purchase.plannedUsage)}</span>
 								</span>
 							)}
 						</Distant>
-						<span className="text-muted-foreground">
-							{purchase.requestedBy.name} さんがリクエスト
-						</span>
+						<span className="text-muted-foreground">{purchase.requestedBy.name} さんがリクエスト</span>
 					</SectionTitle>
 				</Section>
 				<Outlet />

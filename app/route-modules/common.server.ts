@@ -1,9 +1,5 @@
 import { prisma } from "../services/repository.server"
-import {
-	type SessionStorage,
-	buildErrorRedirect,
-	requireSession,
-} from "../services/session.server"
+import { type SessionStorage, buildErrorRedirect, requireSession } from "../services/session.server"
 
 /**
  * 指定されたpartIdが存在し、かつ学生が参加している場合はpartIdを返す
@@ -16,10 +12,7 @@ import {
  * @query 1
  */
 
-export async function requirePartId(
-	partId: string | undefined,
-	studentId: string,
-) {
+export async function requirePartId(partId: string | undefined, studentId: string) {
 	if (partId) {
 		const part = await prisma.part.findUnique({
 			where: { id: partId, students: { some: { id: studentId } } },
@@ -70,10 +63,7 @@ export async function entryStudentRoute(
 	const student = await verifyStudent(session)
 	const partId = await requirePartId(paramPartId, student.id)
 	if (!partId && redirect) {
-		const errorRedirect = buildErrorRedirect(
-			`/app/student/part/${partId}`,
-			session,
-		)
+		const errorRedirect = buildErrorRedirect(`/app/student/part/${partId}`, session)
 		throw await errorRedirect("パートに所属していません。")
 	}
 	return { student, session, partId }
@@ -103,10 +93,7 @@ export async function verifyStudent(session: SessionStorage) {
 	return student
 }
 
-export async function requireWalletId(
-	walletId: string | undefined,
-	teacherId: string,
-) {
+export async function requireWalletId(walletId: string | undefined, teacherId: string) {
 	if (walletId) {
 		const wallet = await prisma.wallet.findUnique({
 			where: { id: walletId, teachers: { some: { id: teacherId } } },
@@ -152,19 +139,12 @@ export async function entryTeacherRoute(
 	paramWalletId: string | undefined,
 	redirect?: true,
 ): Promise<{ teacher: User; session: SessionStorage; walletId: string }>
-export async function entryTeacherRoute(
-	request: Request,
-	paramWalletId: string | undefined,
-	redirect = true,
-) {
+export async function entryTeacherRoute(request: Request, paramWalletId: string | undefined, redirect = true) {
 	const session = await requireSession(request)
 	const teacher = await verifyTeacher(session)
 	const walletId = await requireWalletId(paramWalletId, teacher.id)
 	if (!walletId && redirect) {
-		const errorRedirect = buildErrorRedirect(
-			`/app/teacher/wallet/${walletId}`,
-			session,
-		)
+		const errorRedirect = buildErrorRedirect(`/app/teacher/wallet/${walletId}`, session)
 		throw await errorRedirect("ウォレットが見つかりません。")
 	}
 	return { teacher, session, walletId }
@@ -189,4 +169,28 @@ export async function entryAdminRoute(request: Request) {
 	})
 	if (!admin) throw await errorRedirect("管理者ではありません。")
 	return { admin, session }
+}
+
+export const entryStudentPurchaseRoute = async (request: Request, purchaseId: string) => {
+	const session = await requireSession(request)
+	const user = session.get("user")
+	const errorRedirect = buildErrorRedirect("/app/auth", session)
+	if (!user) throw await errorRedirect("ユーザーが見つかりません。")
+	if (user.type !== "student") throw await errorRedirect("生徒ではありません。")
+	const student = user
+	const purchase = await prisma.purchase.findUniqueOrThrow({
+		where: {
+			id: purchaseId,
+			part: { wallet: { parts: { some: { students: { some: { id: student.id } } } } } },
+		},
+		select: {
+			id: true,
+			part: {
+				select: {
+					id: true,
+				},
+			},
+		},
+	})
+	return { session, student, purchaseId: purchase.id, partId: purchase.part.id }
 }
