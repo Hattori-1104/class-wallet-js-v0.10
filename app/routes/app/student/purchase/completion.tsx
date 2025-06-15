@@ -13,17 +13,14 @@ import { formatCurrency } from "~/utilities/display"
 import type { Route } from "./+types/completion"
 
 export const loader = async ({ request, params }: Route.LoaderArgs) => {
-	const { partId, student } = await entryStudentPurchaseRoute(request, params.purchaseId)
+	const { student, purchaseId } = await entryStudentPurchaseRoute(request, params.purchaseId)
 
 	// TODO: エラーハンドリング
 	const purchase = await prisma.purchase.findUniqueOrThrow({
-		where: {
-			id: params.purchaseId,
-			part: { id: partId, students: { some: { id: student.id } } },
-		},
+		where: { id: purchaseId },
 		select: PurchaseCompletionSelectQuery,
 	})
-	const isRequester = await queryIsRequester(params.purchaseId, student.id)
+	const isRequester = await queryIsRequester(purchaseId, student.id)
 	return { purchase, isRequester }
 }
 
