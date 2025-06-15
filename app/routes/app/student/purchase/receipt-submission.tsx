@@ -1,7 +1,7 @@
 import { Section, SectionTitle } from "~/components/common/container"
 import { Title } from "~/components/common/typography"
 import { entryStudentRoute } from "~/route-modules/common.server"
-import { queryIsInCharge } from "~/route-modules/purchase-state/common.server"
+import { queryIsStudentInCharge } from "~/route-modules/purchase-state/common.server"
 import { PurchaseReceiptSubmissionSectionContent } from "~/route-modules/purchase-state/receipt-submission"
 import { PurchaseReceiptSubmissionSelectQuery } from "~/route-modules/purchase-state/receipt-submission.server"
 import { prisma } from "~/services/repository.server"
@@ -21,11 +21,7 @@ const queryIsRequester = async (purchaseId: string, studentId: string) => {
 
 export const loader = async ({ request, params }: Route.LoaderArgs) => {
 	const { partId, student, session } = await entryStudentRoute(request, params.partId)
-	const isAccountant = await queryIsInCharge({
-		type: "accountant",
-		id: { use: "part", part: partId },
-		studentId: student.id,
-	})
+	const isAccountant = await queryIsStudentInCharge(partId, student.id)
 	const isRequester = await queryIsRequester(params.purchaseId, student.id)
 	const errorRedirect = buildErrorRedirect(`/app/student/part/${partId}/purchase/${params.purchaseId}`, session)
 	const purchase = await prisma.purchase
@@ -65,12 +61,8 @@ export const action = async ({ request, params }: Route.ActionArgs) => {
 		return errorRedirect("レシートが見つかりません")
 	}
 
-	const isAccountant = await queryIsInCharge({
-		type: "accountant",
-		id: { use: "part", part: partId },
-		studentId: student.id,
-	})
-	if (!isAccountant) {
+	const isInCharge = await queryIsStudentInCharge(partId, student.id)
+	if (!isInCharge) {
 		return errorRedirect("権限がありません")
 	}
 

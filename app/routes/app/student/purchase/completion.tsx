@@ -4,10 +4,7 @@ import { SectionContent, SectionTitle } from "~/components/common/container"
 import { Section } from "~/components/common/container"
 import { entryStudentRoute } from "~/route-modules/common.server"
 import { queryIsRequester } from "~/route-modules/purchase-state/common.server"
-import {
-	PurchaseCompletionSectionContent,
-	formSchema,
-} from "~/route-modules/purchase-state/completion"
+import { PurchaseCompletionSectionContent, formSchema } from "~/route-modules/purchase-state/completion"
 import { PurchaseCompletionSelectQuery } from "~/route-modules/purchase-state/completion.server"
 import { prisma } from "~/services/repository.server"
 import { buildSuccessRedirect, commitSession } from "~/services/session.server"
@@ -47,10 +44,7 @@ export default ({ loaderData, actionData }: Route.ComponentProps) => {
 }
 
 export const action = async ({ request, params }: Route.ActionArgs) => {
-	const { partId, student, session } = await entryStudentRoute(
-		request,
-		params.partId,
-	)
+	const { partId, student, session } = await entryStudentRoute(request, params.partId)
 
 	const formData = await request.formData()
 
@@ -64,37 +58,40 @@ export const action = async ({ request, params }: Route.ActionArgs) => {
 			},
 		)
 	}
-	if (submission.value.intent === "confirm")
-		return { result: submission.reply(), shouldConfirm: true }
+	if (submission.value.intent === "confirm") return { result: submission.reply(), shouldConfirm: true }
 
 	const actualUsage = submission.value.actualUsage
 	try {
-		const purchase = await prisma.purchase.update({
-			where: {
-				id: params.purchaseId,
-				part: { id: partId, students: { some: { id: student.id } } },
-			},
-			data: {
-				completion: {
-					upsert: {
-						update: {
-							actualUsage,
-						},
-						create: {
-							actualUsage,
+		const purchase = await prisma.$transaction(async ($prisma) => {
+			const { plannedUsage } = await $prisma.purchase.findUniqueOrThrow({
+				where: { id: params.purchaseId },
+				select: { plannedUsage: true },
+			})
+			const purchase = await $prisma.purchase.update({
+				where: {
+					id: params.purchaseId,
+					part: { id: partId, students: { some: { id: student.id } } },
+				},
+				data: {
+					balanced: plannedUsage === actualUsage,
+					completion: {
+						upsert: {
+							update: {
+								actualUsage,
+							},
+							create: {
+								actualUsage,
+							},
 						},
 					},
 				},
-			},
+			})
+			return purchase
 		})
-		const successRedirect = buildSuccessRedirect(
-			`/app/student/part/${partId}/purchase/${purchase.id}`,
-			session,
-		)
 
-		return await successRedirect(
-			`買い出しの完了を報告しました：${purchase.label}`,
-		)
+		const successRedirect = buildSuccessRedirect(`/app/student/part/${partId}/purchase/${purchase.id}`, session)
+
+		return await successRedirect(`買い出しの完了を報告しました：${purchase.label}`)
 	} catch (error) {
 		// biome-ignore lint/suspicious/noConsole: エラーをログに出力
 		console.error(error)

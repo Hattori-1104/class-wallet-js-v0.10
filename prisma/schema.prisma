@@ -5,7 +5,7 @@
 // Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
 
 generator client {
-  provider = "prisma-client-js"
+  provider        = "prisma-client-js"
   previewFeatures = ["typedSql"]
 }
 
@@ -15,8 +15,8 @@ datasource db {
 }
 
 model Student {
-  id    String @id @default(uuid())
-  email String @unique
+  id    String  @id @default(uuid())
+  email String  @unique
   name  String
   admin Boolean @default(false)
 
@@ -76,16 +76,16 @@ model Event {
 
 // 購入
 model Purchase {
-  id            String   @id @default(uuid())
-  label         String
-  description   String?
-  plannedUsage  Int
-  
+  id           String  @id @default(uuid())
+  label        String
+  description  String?
+  plannedUsage Int
+
   updatedAt     DateTime @default(now()) @updatedAt
   requestedAt   DateTime @default(now())
   requestedById String
   requestedBy   Student  @relation(name: "RequestedBy", fields: [requestedById], references: [id], onDelete: Cascade)
-  canceled    Boolean  @default(false)
+  canceled      Boolean  @default(false)
 
   partId String
   part   Part   @relation(fields: [partId], references: [id], onDelete: Cascade)
@@ -94,7 +94,7 @@ model Purchase {
   teacherApproval    PurchaseTeacherApproval?
   completion         PurchaseCompletion?
   receiptSubmission  PurchaseReceiptSubmission?
-  balance            Int                         @default(0)
+  balanced            Boolean @default(false)
 
   @@index([partId])
 }
@@ -137,10 +137,10 @@ model PurchaseReceiptSubmission {
   purchaseId String   @id
   purchase   Purchase @relation(fields: [purchaseId], references: [id], onDelete: Cascade)
 
-  receiptIndex Int
+  receiptIndex  Int
   submittedToId String
-  submittedTo  Student? @relation(name: "SubmittedTo", fields: [submittedToId], references: [id], onDelete: Cascade)
-  at           DateTime @default(now()) @updatedAt
+  submittedTo   Student? @relation(name: "SubmittedTo", fields: [submittedToId], references: [id], onDelete: Cascade)
+  at            DateTime @default(now()) @updatedAt
 }
 
 // 商品データ・AIのコンテキストとして使用
@@ -154,18 +154,18 @@ model Product {
 
 // プッシュ通知のsubscription
 model Subscription {
-  id           String @id @default(uuid())
-  endpoint     String @db.VarChar(512) @unique
-  p256dh       String
-  auth         String
-  
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
-  
+  id       String @id @default(uuid())
+  endpoint String @unique @db.VarChar(512)
+  p256dh   String
+  auth     String
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
   // Student または Teacher のいずれかに関連付け
   studentId String?
   student   Student? @relation(fields: [studentId], references: [id], onDelete: Cascade)
-  
+
   teacherId String?
   teacher   Teacher? @relation(fields: [teacherId], references: [id], onDelete: Cascade)
 

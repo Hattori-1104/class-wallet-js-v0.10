@@ -1,8 +1,4 @@
-import {
-	Section,
-	SectionContent,
-	SectionTitle,
-} from "~/components/common/container"
+import { Section, SectionContent, SectionTitle } from "~/components/common/container"
 import { entryTeacherRoute } from "~/route-modules/common.server"
 import { PurchaseCompletionSectionContent } from "~/route-modules/purchase-state/completion"
 import { PurchaseCompletionSelectQuery } from "~/route-modules/purchase-state/completion.server"
@@ -10,7 +6,7 @@ import { prisma } from "~/services/repository.server"
 import type { Route } from "./+types/completion"
 
 export const loader = async ({ request, params }: Route.LoaderArgs) => {
-	const { walletId, teacher } = await entryTeacherRoute(request, params.partId)
+	const { walletId, teacher } = await entryTeacherRoute(request, params.walletId)
 
 	// TODO: エラーハンドリング
 	const purchase = await prisma.purchase.findUniqueOrThrow({
@@ -31,11 +27,7 @@ export default ({ loaderData }: Route.ComponentProps) => {
 			<Section>
 				<SectionTitle>買い出し</SectionTitle>
 				<SectionContent>
-					<PurchaseCompletionSectionContent
-						purchase={loaderData.purchase}
-						userType="teacher"
-						isRequester={false}
-					/>
+					<PurchaseCompletionSectionContent purchase={loaderData.purchase} userType="teacher" isRequester={false} />
 				</SectionContent>
 			</Section>
 		</>

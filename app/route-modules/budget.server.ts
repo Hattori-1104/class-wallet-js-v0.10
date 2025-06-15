@@ -1,4 +1,4 @@
-import { getPartBudgetInfo, getWalletBudgetInfo } from "@prisma/client/sql"
+import { getPartBudgetInfoRaw, getWalletBudgetInfoRaw } from "@prisma/client/sql"
 import { prisma } from "~/services/repository.server"
 
 // export async function queryPartBudgetInfo(partId: string) {
@@ -44,12 +44,12 @@ import { prisma } from "~/services/repository.server"
 // }
 
 export async function queryPartBudgetInfo(partId: string) {
-	const [result] = await prisma.$queryRawTyped(getPartBudgetInfo(partId))
+	const [result] = await prisma.$queryRawTyped(getPartBudgetInfoRaw(partId))
 	return { plannedUsage: result.plannedUsage.toNumber(), actualUsage: result.actualUsage.toNumber() }
 }
 
 export async function queryWalletBudgetInfo(walletId: string) {
-	const result = await prisma.$queryRawTyped(getWalletBudgetInfo(walletId))
+	const result = await prisma.$queryRawTyped(getWalletBudgetInfoRaw(walletId))
 	const partsBudgetInfo = result.map((line) => ({
 		id: line.partId,
 		budget: line.partBudget,

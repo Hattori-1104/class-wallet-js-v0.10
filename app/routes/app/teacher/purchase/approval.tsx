@@ -2,25 +2,15 @@ import { Section, SectionTitle } from "~/components/common/container"
 import { Title } from "~/components/common/typography"
 import { entryTeacherRoute } from "~/route-modules/common.server"
 import { PurchaseApprovalSectionContent } from "~/route-modules/purchase-state/approval"
-import {
-	PurchaseApprovalSelectQuery,
-	processPurchaseApproval,
-} from "~/route-modules/purchase-state/approval.server"
-import { queryIsInCharge } from "~/route-modules/purchase-state/common.server"
+import { PurchaseApprovalSelectQuery, processPurchaseApproval } from "~/route-modules/purchase-state/approval.server"
 import { prisma } from "~/services/repository.server"
 import { buildErrorRedirect } from "~/services/session.server"
 import type { Route } from "./+types/approval"
 
 export const loader = async ({ request, params }: Route.LoaderArgs) => {
 	// セッション情報の取得 & 検証
-	const { walletId, session, teacher } = await entryTeacherRoute(
-		request,
-		params.walletId,
-	)
-	const errorRedirect = buildErrorRedirect(
-		`/app/teacher/wallet/${walletId}`,
-		session,
-	)
+	const { walletId, session, teacher } = await entryTeacherRoute(request, params.walletId)
+	const errorRedirect = buildErrorRedirect(`/app/teacher/wallet/${walletId}`, session)
 
 	// データ取得
 	const purchase = await prisma.purchase
@@ -37,12 +27,7 @@ export const loader = async ({ request, params }: Route.LoaderArgs) => {
 			select: PurchaseApprovalSelectQuery,
 		})
 		.catch(() => errorRedirect("購入情報が見つかりません。"))
-	const isInCharge = await queryIsInCharge({
-		type: "teacher",
-		walletId,
-		teacherId: teacher.id,
-	})
-	return { purchase, isInCharge }
+	return { purchase }
 }
 
 export default ({ loaderData }: Route.ComponentProps) => {
@@ -51,31 +36,13 @@ export default ({ loaderData }: Route.ComponentProps) => {
 			<SectionTitle>
 				<Title>購入承認</Title>
 			</SectionTitle>
-			<PurchaseApprovalSectionContent
-				purchase={loaderData.purchase}
-				isInCharge={loaderData.isInCharge}
-				userType="teacher"
-			/>
+			<PurchaseApprovalSectionContent purchase={loaderData.purchase} isInCharge={true} userType="teacher" />
 		</Section>
 	)
 }
 
 export const action = async ({ request, params }: Route.ActionArgs) => {
-	const { walletId, session, teacher } = await entryTeacherRoute(
-		request,
-		params.walletId,
-	)
-	const errorRedirect = buildErrorRedirect(
-		`/app/teacher/wallet/${walletId}`,
-		session,
-	)
-
-	const isInCharge = await queryIsInCharge({
-		type: "teacher",
-		walletId,
-		teacherId: teacher.id,
-	})
-	if (!isInCharge) return await errorRedirect("権限がありません。")
+	const { walletId, session, teacher } = await entryTeacherRoute(request, params.walletId)
 
 	const formData = await request.formData()
 	const action = formData.get("action")
