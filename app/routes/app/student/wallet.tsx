@@ -5,23 +5,23 @@ import { BudgetSectionContent } from "~/components/utility/budget"
 import { PurchaseItem } from "~/components/utility/purchase-item"
 import { RevalidateButton } from "~/components/utility/revalidate-button"
 import { queryWalletBudgetInfo } from "~/route-modules/budget.server"
-import { entryStudentPlusWallet } from "~/route-modules/entry.server"
+import { entryStudentRoute } from "~/route-modules/common.server"
 import { prisma } from "~/services/repository.server"
 import { buildErrorRedirect } from "~/services/session.server"
 import type { Route } from "./+types/wallet"
 
 export const loader = async ({ request, params }: Route.LoaderArgs) => {
 	// セッション情報の取得 & 検証
-	const { walletId, session } = await entryStudentPlusWallet(request, params.partId)
+	const { partId, session } = await entryStudentRoute(request, params.partId, true)
 
-	// ウォレットに所属していない場合
-	if (!walletId) return null
+	// パートに所属していない場合
+	if (!partId) return null
 
 	const errorRedirect = buildErrorRedirect("/app/student", session)
 
 	try {
-		const wallet = await prisma.wallet.findUniqueOrThrow({
-			where: { id: walletId },
+		const wallet = await prisma.wallet.findFirstOrThrow({
+			where: { parts: { some: { id: partId } } },
 			select: {
 				id: true,
 				name: true,
@@ -36,7 +36,7 @@ export const loader = async ({ request, params }: Route.LoaderArgs) => {
 			},
 		})
 		const purchases = await prisma.purchase.findMany({
-			where: { part: { wallet: { id: walletId } } },
+			where: { part: { wallet: { id: wallet.id } } },
 			select: {
 				id: true,
 				label: true,
@@ -78,7 +78,7 @@ export const loader = async ({ request, params }: Route.LoaderArgs) => {
 				updatedAt: "desc",
 			},
 		})
-		const budgetInfo = await queryWalletBudgetInfo(walletId)
+		const budgetInfo = await queryWalletBudgetInfo(wallet.id)
 		return { wallet, ...budgetInfo, purchases }
 	} catch (_) {
 		console.log(_)
