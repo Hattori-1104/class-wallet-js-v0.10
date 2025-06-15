@@ -5,5 +5,5 @@
 
 */
 -- AlterTable
-ALTER TABLE `purchase` DROP COLUMN `balance`,
+ALTER TABLE `Purchase` DROP COLUMN `balance`,
     ADD COLUMN `balanced` BOOLEAN NOT NULL DEFAULT false;
