@@ -32,7 +32,7 @@ self.addEventListener("push", (e) => {
 		body: body,
 		icon: "/icon-192px.png",
 		badge: "/icon-128px.png",
-		tag: "default",
+		tag: String(Date.now()),
 		requireInteraction: false,
 		actions: []
 	};

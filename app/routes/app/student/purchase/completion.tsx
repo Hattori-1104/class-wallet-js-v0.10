@@ -7,7 +7,9 @@ import { queryIsRequester } from "~/route-modules/purchase-state/common.server"
 import { PurchaseCompletionSectionContent, formSchema } from "~/route-modules/purchase-state/completion"
 import { PurchaseCompletionSelectQuery } from "~/route-modules/purchase-state/completion.server"
 import { prisma } from "~/services/repository.server"
+import { sendPushNotification } from "~/services/send-notification.server"
 import { buildSuccessRedirect, commitSession } from "~/services/session.server"
+import { formatCurrency } from "~/utilities/display"
 import type { Route } from "./+types/completion"
 
 export const loader = async ({ request, params }: Route.LoaderArgs) => {
@@ -85,11 +87,55 @@ export const action = async ({ request, params }: Route.ActionArgs) => {
 						},
 					},
 				},
+				select: {
+					label: true,
+					requestedBy: {
+						select: {
+							id: true,
+							name: true,
+						},
+					},
+					completion: {
+						select: {
+							actualUsage: true,
+						},
+					},
+					part: {
+						select: {
+							name: true,
+							wallet: {
+								select: {
+									name: true,
+								},
+							},
+						},
+					},
+				},
 			})
 			return purchase
 		})
 
-		const successRedirect = buildSuccessRedirect(`/app/student/part/${partId}/purchase/${purchase.id}`, session)
+		const subscriptions = (
+			await prisma.subscription.findMany({
+				where: {
+					OR: [
+						{ student: { id: purchase.requestedBy.id } },
+						{ student: { wallets: { some: { parts: { some: { id: partId } } } } } },
+						{ teacher: { wallets: { some: { parts: { some: { id: partId } } } } } },
+					],
+				},
+				select: {
+					endpoint: true,
+					auth: true,
+					p256dh: true,
+				},
+			})
+		).map((sub) => ({ endpoint: sub.endpoint, keys: { p256dh: sub.p256dh, auth: sub.auth } }))
+		sendPushNotification(subscriptions, {
+			title: `使用額の報告 - ${formatCurrency(purchase.completion?.actualUsage || Number.NaN)}`,
+			body: `（${purchase.part.wallet.name}）${purchase.part.name} ${purchase.requestedBy.name} ${purchase.label}`,
+		})
+		const successRedirect = buildSuccessRedirect(`/app/student/part/${partId}/purchase/${params.purchaseId}`, session)
 
 		return await successRedirect(`買い出しの完了を報告しました：${purchase.label}`)
 	} catch (error) {

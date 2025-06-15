@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from "react"
 import { useFetcher } from "react-router"
+import type { SubscriptionBodyType } from "~/routes/api/push-subscription"
 
 interface PushNotificationState {
 	permission: NotificationPermission | null
@@ -8,7 +9,7 @@ interface PushNotificationState {
 	error: string | null
 }
 
-export function usePushNotification(vapidPublicKey?: string) {
+export function usePushNotification(type: "student" | "teacher", vapidPublicKey?: string) {
 	const fetcher = useFetcher()
 	const [state, setState] = useState<PushNotificationState>({
 		permission: null,
@@ -19,10 +20,7 @@ export function usePushNotification(vapidPublicKey?: string) {
 
 	// ブラウザサポート確認
 	useEffect(() => {
-		const isSupported =
-			"Notification" in window &&
-			"serviceWorker" in navigator &&
-			"PushManager" in window
+		const isSupported = "Notification" in window && "serviceWorker" in navigator && "PushManager" in window
 
 		setState((prev) => ({
 			...prev,
@@ -63,22 +61,15 @@ export function usePushNotification(vapidPublicKey?: string) {
 			const subscriptionData = {
 				endpoint: subscription.endpoint,
 				keys: {
-					p256dh: btoa(
-						String.fromCharCode(
-							...new Uint8Array(subscription.getKey("p256dh") || []),
-						),
-					),
-					auth: btoa(
-						String.fromCharCode(
-							...new Uint8Array(subscription.getKey("auth") || []),
-						),
-					),
+					p256dh: btoa(String.fromCharCode(...new Uint8Array(subscription.getKey("p256dh") || []))),
+					auth: btoa(String.fromCharCode(...new Uint8Array(subscription.getKey("auth") || []))),
 				},
 			}
 
-			fetcher.submit(subscriptionData, {
+			const body: SubscriptionBodyType = { type, subscription: subscriptionData }
+			fetcher.submit(body, {
 				method: "post",
-				action: "/app/student/push-subscription",
+				action: "/api/push-subscription",
 				encType: "application/json",
 			})
 
@@ -91,7 +82,7 @@ export function usePushNotification(vapidPublicKey?: string) {
 				error: "プッシュ通知の設定に失敗しました",
 			}))
 		}
-	}, [state.isSupported, fetcher, vapidPublicKey])
+	}, [state.isSupported, fetcher, vapidPublicKey, type])
 
 	return {
 		...state,

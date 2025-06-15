@@ -12,13 +12,13 @@ import { BudgetSectionContent } from "~/components/utility/budget"
 import { PurchaseItem } from "~/components/utility/purchase-item"
 import { RevalidateButton } from "~/components/utility/revalidate-button"
 import { queryPartBudgetInfo } from "~/route-modules/budget.server"
-import { entryStudentPlusPart } from "~/route-modules/entry.server"
+import { entryStudentRoute } from "~/route-modules/common.server"
 import { prisma } from "~/services/repository.server"
 import type { Route } from "./+types/part"
 
 export const loader = async ({ request, params }: Route.LoaderArgs) => {
 	// セッション情報の取得 & 検証
-	const { partId } = await entryStudentPlusPart(request, params.partId)
+	const { partId } = await entryStudentRoute(request, params.partId, false)
 
 	// パートに所属していない場合
 	if (!partId) return null

@@ -1,10 +1,4 @@
-import {
-	type RouteConfig,
-	index,
-	layout,
-	prefix,
-	route,
-} from "@react-router/dev/routes"
+import { type RouteConfig, index, layout, prefix, route } from "@react-router/dev/routes"
 
 export default [
 	route("/app", "routes/app/layout-root.tsx", [
@@ -16,18 +10,13 @@ export default [
 					route("wallet", "routes/app/student/wallet.tsx"),
 					route("cash-book", "routes/app/student/cash-book.tsx"),
 				]),
-				layout("routes/app/student/layout-push.tsx", [
-					route("purchase/new", "routes/app/student/purchase/new.tsx"),
-				]),
+				layout("routes/app/student/layout-push.tsx", [route("purchase/new", "routes/app/student/purchase/new.tsx")]),
 				...prefix("purchase/:purchaseId", [
 					layout("routes/app/student/purchase/layout.tsx", [
 						index("routes/app/student/purchase/router.tsx"),
 						route("approval", "routes/app/student/purchase/approval.tsx"),
 						route("completion", "routes/app/student/purchase/completion.tsx"),
-						route(
-							"receiptSubmission",
-							"routes/app/student/purchase/receipt-submission.tsx",
-						),
+						route("receiptSubmission", "routes/app/student/purchase/receipt-submission.tsx"),
 					]),
 				]),
 				route("invite", "routes/app/student/invite.tsx"),
@@ -51,10 +40,7 @@ export default [
 						index("routes/app/teacher/purchase/router.tsx"),
 						route("approval", "routes/app/teacher/purchase/approval.tsx"),
 						route("completion", "routes/app/teacher/purchase/completion.tsx"),
-						route(
-							"receiptSubmission",
-							"routes/app/teacher/purchase/receipt-submission.tsx",
-						),
+						route("receiptSubmission", "routes/app/teacher/purchase/receipt-submission.tsx"),
 					]),
 				]),
 			]),
@@ -80,6 +66,7 @@ export default [
 		// 振り分け
 		route("*", "routes/app/router.tsx", { index: true }),
 	]),
+	...prefix("/api", [route("push-subscription", "routes/api/push-subscription.ts")]),
 	route("test", "routes/test.tsx", { index: true }),
 	// 振り分け
 	route("*?", "routes/router.tsx", { index: true }),

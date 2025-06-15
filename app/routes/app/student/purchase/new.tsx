@@ -1,18 +1,9 @@
-import {
-	getFormProps,
-	getInputProps,
-	getTextareaProps,
-	useForm,
-} from "@conform-to/react"
+import { getFormProps, getInputProps, getTextareaProps, useForm } from "@conform-to/react"
 import { parseWithZod } from "@conform-to/zod"
 import { Loader2, Send } from "lucide-react"
 import { Form, data, useNavigation, useRevalidator } from "react-router"
 import { z } from "zod"
-import {
-	Section,
-	SectionContent,
-	SectionTitle,
-} from "~/components/common/container"
+import { Section, SectionContent, SectionTitle } from "~/components/common/container"
 import { AsideEven, Distant } from "~/components/common/placement"
 import { Title } from "~/components/common/typography"
 import { Alert, AlertTitle } from "~/components/ui/alert"
@@ -32,6 +23,7 @@ import { Textarea } from "~/components/ui/textarea"
 import { FormBody, FormField, FormFooter } from "~/components/utility/form"
 import { entryStudentRoute } from "~/route-modules/common.server"
 import { prisma } from "~/services/repository.server"
+import { sendPushNotification } from "~/services/send-notification.server"
 import { buildSuccessRedirect, commitSession } from "~/services/session.server"
 import { formatCurrency } from "~/utilities/display"
 import type { Route } from "./+types/new"
@@ -74,29 +66,14 @@ export default ({ actionData }: Route.ComponentProps) => {
 				<SectionContent>
 					<Form method="post" {...getFormProps(form)}>
 						<FormBody>
-							<FormField
-								label="買いたいもの"
-								name={fields.label.id}
-								error={fields.label.errors}
-							>
+							<FormField label="買いたいもの" name={fields.label.id} error={fields.label.errors}>
 								<Input {...getInputProps(fields.label, { type: "text" })} />
 							</FormField>
-							<FormField
-								label="備考"
-								name={fields.description.id}
-								error={fields.description.errors}
-							>
+							<FormField label="備考" name={fields.description.id} error={fields.description.errors}>
 								<Textarea {...getTextareaProps(fields.description)} />
 							</FormField>
-							<FormField
-								label="使用予定金額"
-								name={fields.plannedUsage.id}
-								error={fields.plannedUsage.errors}
-							>
-								<Input
-									{...getInputProps(fields.plannedUsage, { type: "number" })}
-									className="text-right no-spin"
-								/>
+							<FormField label="使用予定金額" name={fields.plannedUsage.id} error={fields.plannedUsage.errors}>
+								<Input {...getInputProps(fields.plannedUsage, { type: "number" })} className="text-right no-spin" />
 							</FormField>
 						</FormBody>
 						<FormFooter>
@@ -104,9 +81,7 @@ export default ({ actionData }: Route.ComponentProps) => {
 								type="submit"
 								name="intent"
 								value="confirm"
-								disabled={
-									actionData?.shouldConfirm || navigation.state === "submitting"
-								}
+								disabled={actionData?.shouldConfirm || navigation.state === "submitting"}
 								className="w-full sm:max-w-48"
 							>
 								{navigation.state === "submitting" ? (
@@ -146,17 +121,13 @@ export default ({ actionData }: Route.ComponentProps) => {
 								<AlertTitle>
 									<Distant>
 										<span>{fields.label.value}</span>
-										<span>
-											{formatCurrency(Number(fields.plannedUsage.value))}
-										</span>
+										<span>{formatCurrency(Number(fields.plannedUsage.value))}</span>
 									</Distant>
 								</AlertTitle>
 							</Alert>
 							<AlertDialogFooter>
 								<AsideEven className="w-full">
-									<AlertDialogCancel className="grow">
-										キャンセル
-									</AlertDialogCancel>
+									<AlertDialogCancel className="grow">キャンセル</AlertDialogCancel>
 									<AlertDialogAction
 										type="submit"
 										name="intent"
@@ -189,10 +160,7 @@ export default ({ actionData }: Route.ComponentProps) => {
 
 export const action = async ({ request, params }: Route.ActionArgs) => {
 	// 認証
-	const { partId, student, session } = await entryStudentRoute(
-		request,
-		params.partId,
-	)
+	const { partId, student, session } = await entryStudentRoute(request, params.partId)
 	// フォームデータの取得
 	const formData = await request.formData()
 	const submission = parseWithZod(formData, { schema: formSchema })
@@ -208,8 +176,7 @@ export const action = async ({ request, params }: Route.ActionArgs) => {
 		)
 	}
 	// 確認ダイアログを表示
-	if (submission.value.intent === "confirm")
-		return { result: submission.reply(), shouldConfirm: true }
+	if (submission.value.intent === "confirm") return { result: submission.reply(), shouldConfirm: true }
 
 	// 情報の更新
 	try {
@@ -234,16 +201,47 @@ export const action = async ({ request, params }: Route.ActionArgs) => {
 				id: true,
 				label: true,
 				plannedUsage: true,
+				requestedBy: {
+					select: {
+						name: true,
+						id: true,
+					},
+				},
+				part: {
+					select: {
+						name: true,
+						wallet: {
+							select: {
+								name: true,
+							},
+						},
+					},
+				},
 			},
 		})
-		const successRedirect = buildSuccessRedirect(
-			`/app/student/part/${partId}`,
-			session,
-		)
+		const successRedirect = buildSuccessRedirect(`/app/student/part/${partId}`, session)
+		const subscriptions = (
+			await prisma.subscription.findMany({
+				where: {
+					OR: [
+						{ student: { id: purchase.requestedBy.id } },
+						{ student: { wallets: { some: { parts: { some: { id: partId } } } } } },
+						{ teacher: { wallets: { some: { parts: { some: { id: partId } } } } } },
+					],
+				},
+				select: {
+					endpoint: true,
+					auth: true,
+					p256dh: true,
+				},
+			})
+		).map((sub) => ({ endpoint: sub.endpoint, keys: { p256dh: sub.p256dh, auth: sub.auth } }))
+		sendPushNotification(subscriptions, {
+			title: "新しい買い出しリクエスト",
+			body: `（${purchase.part.wallet.name}）${purchase.part.name} ${purchase.requestedBy.name} ${purchase.label}`,
+		})
 
-		return await successRedirect(
-			`買い出しをリクエストしました：${purchase.label}`,
-		)
+		return await successRedirect(`買い出しをリクエストしました：${purchase.label}`)
 	} catch (error) {
 		// biome-ignore lint/suspicious/noConsole: エラーをログに出力
 		console.error(error)
