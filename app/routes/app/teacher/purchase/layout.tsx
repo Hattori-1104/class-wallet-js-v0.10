@@ -7,7 +7,7 @@ import { Distant } from "~/components/common/placement"
 import { Title } from "~/components/common/typography"
 import { entryTeacherRoute } from "~/route-modules/common.server"
 import { prisma } from "~/services/repository.server"
-import { errorBuilder } from "~/services/session.server"
+import { buildErrorRedirect } from "~/services/session.server"
 import { formatCurrency } from "~/utilities/display"
 import type { Route } from "./+types/layout"
 
@@ -16,7 +16,10 @@ export const loader = async ({ request, params }: Route.LoaderArgs) => {
 		request,
 		params.walletId,
 	)
-	const errorRedirect = errorBuilder(`/app/teacher/wallet/${walletId}`, session)
+	const errorRedirect = buildErrorRedirect(
+		`/app/teacher/wallet/${walletId}`,
+		session,
+	)
 	const purchase = await prisma.purchase
 		.findUniqueOrThrow({
 			where: {

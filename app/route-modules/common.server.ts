@@ -1,7 +1,7 @@
 import { prisma } from "../services/repository.server"
 import {
 	type SessionStorage,
-	errorBuilder,
+	buildErrorRedirect,
 	requireSession,
 } from "../services/session.server"
 
@@ -70,7 +70,10 @@ export async function entryStudentRoute(
 	const student = await verifyStudent(session)
 	const partId = await requirePartId(paramPartId, student.id)
 	if (!partId && redirect) {
-		const errorRedirect = errorBuilder(`/app/student/part/${partId}`, session)
+		const errorRedirect = buildErrorRedirect(
+			`/app/student/part/${partId}`,
+			session,
+		)
 		throw await errorRedirect("パートに所属していません。")
 	}
 	return { student, session, partId }
@@ -85,7 +88,7 @@ export async function entryStudentRoute(
  */
 export async function verifyStudent(session: SessionStorage) {
 	const user = session.get("user")
-	const errorRedirect = errorBuilder("/app/auth", session)
+	const errorRedirect = buildErrorRedirect("/app/auth", session)
 
 	// セッションの検証
 	if (!user) throw await errorRedirect("ログインしていません。")
@@ -126,7 +129,7 @@ export async function requireWalletId(
  */
 export async function verifyTeacher(session: SessionStorage) {
 	const user = session.get("user")
-	const errorRedirect = errorBuilder("/app/auth", session)
+	const errorRedirect = buildErrorRedirect("/app/auth", session)
 
 	if (!user) throw await errorRedirect("ログインしていません。")
 	if (user.type !== "teacher") throw await errorRedirect("教師ではありません。")
@@ -158,7 +161,7 @@ export async function entryTeacherRoute(
 	const teacher = await verifyTeacher(session)
 	const walletId = await requireWalletId(paramWalletId, teacher.id)
 	if (!walletId && redirect) {
-		const errorRedirect = errorBuilder(
+		const errorRedirect = buildErrorRedirect(
 			`/app/teacher/wallet/${walletId}`,
 			session,
 		)
@@ -169,7 +172,7 @@ export async function entryTeacherRoute(
 
 export async function entryAdminRoute(request: Request) {
 	const session = await requireSession(request)
-	const errorRedirect = errorBuilder("/app/auth", session)
+	const errorRedirect = buildErrorRedirect("/app/auth", session)
 	const user = session.get("user")
 	if (!user) throw await errorRedirect("ログインしていません。")
 	if (user.type !== "student") throw await errorRedirect("生徒ではありません。")

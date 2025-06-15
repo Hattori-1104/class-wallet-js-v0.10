@@ -10,7 +10,7 @@ import { Distant } from "~/components/common/placement"
 import { Title } from "~/components/common/typography"
 import { entryStudentRoute } from "~/route-modules/common.server"
 import { prisma } from "~/services/repository.server"
-import { errorBuilder } from "~/services/session.server"
+import { buildErrorRedirect } from "~/services/session.server"
 import { formatCurrency } from "~/utilities/display"
 import type { Route } from "./+types/layout"
 
@@ -19,7 +19,10 @@ export const loader = async ({ request, params }: Route.LoaderArgs) => {
 		request,
 		params.partId,
 	)
-	const errorRedirect = errorBuilder(`/app/student/part/${partId}`, session)
+	const errorRedirect = buildErrorRedirect(
+		`/app/student/part/${partId}`,
+		session,
+	)
 
 	// データ取得
 	const purchase = await prisma.purchase

@@ -8,7 +8,7 @@ import {
 } from "~/route-modules/purchase-state/approval.server"
 import { queryIsInCharge } from "~/route-modules/purchase-state/common.server"
 import { prisma } from "~/services/repository.server"
-import { errorBuilder } from "~/services/session.server"
+import { buildErrorRedirect } from "~/services/session.server"
 import type { Route } from "./+types/approval"
 
 export const loader = async ({ request, params }: Route.LoaderArgs) => {
@@ -17,7 +17,10 @@ export const loader = async ({ request, params }: Route.LoaderArgs) => {
 		request,
 		params.partId,
 	)
-	const errorRedirect = errorBuilder(`/app/student/part/${partId}`, session)
+	const errorRedirect = buildErrorRedirect(
+		`/app/student/part/${partId}`,
+		session,
+	)
 
 	// データ取得
 	const purchase = await prisma.purchase
@@ -60,7 +63,10 @@ export const action = async ({ request, params }: Route.ActionArgs) => {
 		request,
 		params.partId,
 	)
-	const errorRedirect = errorBuilder(`/app/student/part/${partId}`, session)
+	const errorRedirect = buildErrorRedirect(
+		`/app/student/part/${partId}`,
+		session,
+	)
 
 	const isInCharge = await queryIsInCharge({
 		type: "student",

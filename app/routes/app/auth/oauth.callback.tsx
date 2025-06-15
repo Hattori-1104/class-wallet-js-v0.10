@@ -1,9 +1,9 @@
 import { getGoogleUser, verifyOauthState } from "~/services/oauth.server"
 import { prisma } from "~/services/repository.server"
 import {
-	errorBuilder,
+	buildErrorRedirect,
+	buildSuccessRedirect,
 	requireSession,
-	successBuilder,
 } from "~/services/session.server"
 
 import type { Route } from "./+types/oauth.callback"
@@ -13,7 +13,7 @@ export const loader = async ({ request }: Route.LoaderArgs) => {
 	const code = url.searchParams.get("code")
 	const state = url.searchParams.get("state")
 	const session = await requireSession(request)
-	const errorRedirect = errorBuilder("/app/auth", session)
+	const errorRedirect = buildErrorRedirect("/app/auth", session)
 
 	if (!code) return await errorRedirect("OAuth認証：codeがありません。")
 	if (!state) return await errorRedirect("OAuth認証：stateがありません。")
@@ -66,6 +66,6 @@ export const loader = async ({ request }: Route.LoaderArgs) => {
 		throw await errorRedirect("OAuth認証：データベースエラーが発生しました。")
 	}
 	session.unset("tempUserType")
-	const successRedirect = successBuilder(`/app/${userType}`, session)
+	const successRedirect = buildSuccessRedirect(`/app/${userType}`, session)
 	return await successRedirect("認証されました。")
 }

@@ -23,9 +23,9 @@ import { FormBody, FormField, FormFooter } from "~/components/utility/form"
 import { verifyStudent } from "~/route-modules/common.server"
 import { prisma } from "~/services/repository.server"
 import {
-	errorBuilder,
+	buildErrorRedirect,
+	buildSuccessRedirect,
 	requireSession,
-	successBuilder,
 } from "~/services/session.server"
 import { formatCurrency } from "~/utilities/display"
 import type { Route } from "./+types/accountant"
@@ -52,7 +52,7 @@ const WalletSelectQuery = {
 export const loader = async ({ request, params }: Route.LoaderArgs) => {
 	const session = await requireSession(request)
 	const student = await verifyStudent(session)
-	const errorRedirect = errorBuilder("/app/student/part", session)
+	const errorRedirect = buildErrorRedirect("/app/student/part", session)
 
 	const wallet = await prisma.wallet
 		.findUniqueOrThrow({
@@ -316,13 +316,13 @@ export const action = async ({ request, params }: Route.ActionArgs) => {
 			},
 		})
 		.catch(() =>
-			errorBuilder(
+			buildErrorRedirect(
 				"/app/student/part",
 				session,
 			)("指定されたウォレットが見つかりません。"),
 		)
 
-	const errorRedirect = errorBuilder(
+	const errorRedirect = buildErrorRedirect(
 		`/app/student/accountant/${wallet.id}`,
 		session,
 	)
@@ -353,7 +353,7 @@ export const action = async ({ request, params }: Route.ActionArgs) => {
 				},
 			})
 			.catch(() => errorRedirect("パートの作成に失敗しました。"))
-		const successRedirect = successBuilder(
+		const successRedirect = buildSuccessRedirect(
 			`/app/student/accountant/${wallet.id}`,
 			session,
 		)
@@ -366,7 +366,7 @@ export const action = async ({ request, params }: Route.ActionArgs) => {
 				where: { id: value.id },
 			})
 			.catch(() => errorRedirect("パートの削除に失敗しました。"))
-		const successRedirect = successBuilder(
+		const successRedirect = buildSuccessRedirect(
 			`/app/student/accountant/${wallet.id}`,
 			session,
 		)
@@ -387,7 +387,7 @@ export const action = async ({ request, params }: Route.ActionArgs) => {
 				data: { budget: value.budget },
 			})
 			.catch(() => errorRedirect("パートの更新に失敗しました。"))
-		const successRedirect = successBuilder(
+		const successRedirect = buildSuccessRedirect(
 			`/app/student/accountant/${wallet.id}`,
 			session,
 		)

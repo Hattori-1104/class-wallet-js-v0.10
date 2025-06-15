@@ -32,7 +32,7 @@ import { Textarea } from "~/components/ui/textarea"
 import { FormBody, FormField, FormFooter } from "~/components/utility/form"
 import { entryStudentRoute } from "~/route-modules/common.server"
 import { prisma } from "~/services/repository.server"
-import { commitSession, successBuilder } from "~/services/session.server"
+import { buildSuccessRedirect, commitSession } from "~/services/session.server"
 import { formatCurrency } from "~/utilities/display"
 import type { Route } from "./+types/new"
 
@@ -236,7 +236,7 @@ export const action = async ({ request, params }: Route.ActionArgs) => {
 				plannedUsage: true,
 			},
 		})
-		const successRedirect = successBuilder(
+		const successRedirect = buildSuccessRedirect(
 			`/app/student/part/${partId}`,
 			session,
 		)

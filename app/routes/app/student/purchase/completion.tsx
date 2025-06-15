@@ -10,7 +10,7 @@ import {
 } from "~/route-modules/purchase-state/completion"
 import { PurchaseCompletionSelectQuery } from "~/route-modules/purchase-state/completion.server"
 import { prisma } from "~/services/repository.server"
-import { commitSession, successBuilder } from "~/services/session.server"
+import { buildSuccessRedirect, commitSession } from "~/services/session.server"
 import type { Route } from "./+types/completion"
 
 export const loader = async ({ request, params }: Route.LoaderArgs) => {
@@ -87,7 +87,7 @@ export const action = async ({ request, params }: Route.ActionArgs) => {
 				},
 			},
 		})
-		const successRedirect = successBuilder(
+		const successRedirect = buildSuccessRedirect(
 			`/app/student/part/${partId}/purchase/${purchase.id}`,
 			session,
 		)

@@ -1,7 +1,7 @@
 import { redirect } from "react-router"
 import { entryTeacherRoute } from "~/route-modules/common.server"
 import { prisma } from "~/services/repository.server"
-import { errorBuilder } from "~/services/session.server"
+import { buildErrorRedirect } from "~/services/session.server"
 import { PurchaseState } from "~/utilities/purchase-state"
 import type { Route } from "./+types/router"
 
@@ -12,7 +12,10 @@ export const loader = async ({ request, params }: Route.LoaderArgs) => {
 		params.walletId,
 		false,
 	)
-	const errorRedirect = errorBuilder(`/app/teacher/wallet/${walletId}`, session)
+	const errorRedirect = buildErrorRedirect(
+		`/app/teacher/wallet/${walletId}`,
+		session,
+	)
 
 	// データ取得
 	// 状態の検証

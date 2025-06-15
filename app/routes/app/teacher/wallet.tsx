@@ -2,32 +2,25 @@ import { type FC, useEffect, useState } from "react"
 import { Link } from "react-router"
 import { toast } from "sonner"
 import z from "zod"
-import {
-	Section,
-	SectionContent,
-	SectionTitle,
-} from "~/components/common/container"
+import { Section, SectionContent, SectionTitle } from "~/components/common/container"
 import { Distant } from "~/components/common/placement"
 import { NoData, Title } from "~/components/common/typography"
 import { Button } from "~/components/ui/button"
 import { BudgetSectionContent } from "~/components/utility/budget"
 import { PurchaseItem } from "~/components/utility/purchase-item"
 import { RevalidateButton } from "~/components/utility/revalidate-button"
+import { queryWalletBudgetInfo } from "~/route-modules/budget.server"
 import { entryTeacherRoute } from "~/route-modules/common.server"
 import { prisma } from "~/services/repository.server"
-import { errorBuilder } from "~/services/session.server"
+import { buildErrorRedirect } from "~/services/session.server"
 import type { Route } from "./+types/wallet"
 
 export const loader = async ({ request, params }: Route.LoaderArgs) => {
-	const { session, walletId } = await entryTeacherRoute(
-		request,
-		params.walletId,
-		false,
-	)
+	const { session, walletId } = await entryTeacherRoute(request, params.walletId, false)
 
 	if (!walletId) return null
 
-	const errorRedirect = errorBuilder("/app/teacher", session)
+	const errorRedirect = buildErrorRedirect("/app/teacher", session)
 
 	try {
 		const wallet = await prisma.wallet.findFirst({
@@ -102,72 +95,12 @@ export const loader = async ({ request, params }: Route.LoaderArgs) => {
 				updatedAt: "desc",
 			},
 		})
-
-		// 各パートの進行中の購入（予定額）を取得
-		const purchasesInProgress = await prisma.purchase.findMany({
-			where: {
-				partId: { in: wallet.parts.map((part) => part.id) },
-				receiptSubmission: null,
-				canceled: false,
-			},
-			select: {
-				partId: true,
-				plannedUsage: true,
-			},
-		})
-
-		// 各パートの完了した購入（実際の使用額）を取得
-		const purchasesCompleted = await prisma.purchase.findMany({
-			where: {
-				partId: { in: wallet.parts.map((part) => part.id) },
-				receiptSubmission: { isNot: null },
-				canceled: false,
-			},
-			select: {
-				partId: true,
-				completion: {
-					select: {
-						actualUsage: true,
-					},
-				},
-			},
-		})
-
-		// 各パートの予算使用状況を計算
-		const partsWithBudgetInfo = wallet.parts.map((part) => {
-			const plannedUsage = purchasesInProgress
-				.filter((p) => p.partId === part.id)
-				.reduce((sum, p) => sum + p.plannedUsage, 0)
-
-			const actualUsage = purchasesCompleted
-				.filter((p) => p.partId === part.id)
-				.reduce((sum, p) => sum + (p.completion?.actualUsage || 0), 0)
-
-			return {
-				...part,
-				plannedUsage,
-				actualUsage,
-			}
-		})
-
-		// ウォレット全体の予算使用状況を計算
-		const totalPlannedUsage = partsWithBudgetInfo.reduce(
-			(sum, part) => sum + part.plannedUsage,
-			0,
-		)
-		const totalActualUsage = partsWithBudgetInfo.reduce(
-			(sum, part) => sum + part.actualUsage,
-			0,
-		)
+		const budgetInfo = await queryWalletBudgetInfo(walletId)
 
 		return {
-			wallet: {
-				...wallet,
-				parts: partsWithBudgetInfo,
-			},
+			wallet,
 			walletId,
-			totalPlannedUsage,
-			totalActualUsage,
+			...budgetInfo,
 			purchases,
 		}
 	} catch (_) {
@@ -196,10 +129,7 @@ const NotBelongsTo: FC = () => {
 		<>
 			<Section>
 				<NoData className="block">パートに所属していません。</NoData>
-				<Button
-					className="block mt-8 mx-auto"
-					disabled={Boolean(inviteUrl) === false}
-				>
+				<Button className="block mt-8 mx-auto" disabled={Boolean(inviteUrl) === false}>
 					<Link to={inviteUrl ?? "."}>クリップボードのURLから参加</Link>
 				</Button>
 			</Section>
@@ -210,17 +140,11 @@ const NotBelongsTo: FC = () => {
 export default ({ loaderData }: Route.ComponentProps) => {
 	if (!loaderData) return <NotBelongsTo />
 
-	const { wallet, walletId, totalPlannedUsage, totalActualUsage, purchases } =
-		loaderData
+	const { wallet, walletId, walletBudgetInfo, partsBudgetInfo, purchases } = loaderData
 	return (
 		<>
 			<Section>
-				<BudgetSectionContent
-					budget={wallet.budget}
-					plannedUsage={totalPlannedUsage}
-					actualUsage={totalActualUsage}
-					className="space-y-2"
-				>
+				<BudgetSectionContent budget={wallet.budget} {...walletBudgetInfo} className="space-y-2">
 					<Title>{wallet.name}</Title>
 				</BudgetSectionContent>
 			</Section>
@@ -229,9 +153,11 @@ export default ({ loaderData }: Route.ComponentProps) => {
 				{wallet.parts.map((part) => (
 					<BudgetSectionContent
 						key={part.id}
-						budget={part.budget}
-						plannedUsage={part.plannedUsage}
-						actualUsage={part.actualUsage}
+						{...(partsBudgetInfo.find((budgetInfo) => budgetInfo.id === part.id) ?? {
+							plannedUsage: 0,
+							actualUsage: 0,
+							budget: part.budget,
+						})}
 						className="space-y-2 my-4"
 					>
 						<Title>{part.name}</Title>
@@ -247,12 +173,7 @@ export default ({ loaderData }: Route.ComponentProps) => {
 				</SectionTitle>
 				<SectionContent className="flex flex-col gap-2">
 					{purchases.map((purchase) => (
-						<PurchaseItem
-							key={purchase.id}
-							type="teacher"
-							purchase={purchase}
-							id={walletId}
-						/>
+						<PurchaseItem key={purchase.id} type="teacher" purchase={purchase} id={walletId} />
 					))}
 				</SectionContent>
 			</Section>

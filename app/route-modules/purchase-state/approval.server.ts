@@ -2,8 +2,8 @@ import type { Prisma } from "@prisma/client"
 import { prisma } from "~/services/repository.server"
 import {
 	type SessionStorage,
-	errorBuilder,
-	successBuilder,
+	buildErrorRedirect,
+	buildSuccessRedirect,
 } from "~/services/session.server"
 
 export const PurchaseApprovalSelectQuery = {
@@ -67,11 +67,11 @@ export async function processPurchaseApproval(
 	actionData: ApprovalAction,
 ): Promise<Response> {
 	if (actionData.type === "student") {
-		const errorRedirect = errorBuilder(
+		const errorRedirect = buildErrorRedirect(
 			`/app/student/part/${actionData.partId}`,
 			actionData.session,
 		)
-		const successRedirect = successBuilder(
+		const successRedirect = buildSuccessRedirect(
 			`/app/student/part/${actionData.partId}/purchase/${actionData.purchaseId}`,
 			actionData.session,
 		)
@@ -121,11 +121,11 @@ export async function processPurchaseApproval(
 		throw new Error(`Unhandled action: ${_exhaustiveCheck}`)
 	}
 
-	const errorRedirect = errorBuilder(
+	const errorRedirect = buildErrorRedirect(
 		`/app/teacher/wallet/${actionData.walletId}`,
 		actionData.session,
 	)
-	const successRedirect = successBuilder(
+	const successRedirect = buildSuccessRedirect(
 		`/app/teacher/wallet/${actionData.walletId}/purchase/${actionData.purchaseId}`,
 		actionData.session,
 	)

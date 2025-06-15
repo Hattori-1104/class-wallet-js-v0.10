@@ -3,8 +3,8 @@ import { redirect, redirectDocument } from "react-router"
 import { z } from "zod"
 import { getGoogleAuthUrl, setOauthState } from "~/services/oauth.server"
 import {
+	buildErrorRedirect,
 	commitSession,
-	errorBuilder,
 	requireSession,
 } from "~/services/session.server"
 import type { Route } from "./+types/oauth.entry"
@@ -17,7 +17,7 @@ export const loader = () => redirect("/app/auth")
 
 export const action = async ({ request }: Route.ActionArgs) => {
 	const session = await requireSession(request)
-	const errorRedirect = errorBuilder("/app/auth", session)
+	const errorRedirect = buildErrorRedirect("/app/auth", session)
 	const formData = await request.formData()
 	const submission = parseWithZod(formData, { schema: FormSchema })
 

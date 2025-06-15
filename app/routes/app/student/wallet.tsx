@@ -1,37 +1,27 @@
-import {
-	Section,
-	SectionContent,
-	SectionTitle,
-} from "~/components/common/container"
+import { Section, SectionContent, SectionTitle } from "~/components/common/container"
 import { Distant } from "~/components/common/placement"
 import { NoData, Title } from "~/components/common/typography"
 import { BudgetSectionContent } from "~/components/utility/budget"
 import { PurchaseItem } from "~/components/utility/purchase-item"
 import { RevalidateButton } from "~/components/utility/revalidate-button"
-import { entryStudentRoute } from "~/route-modules/common.server"
+import { queryWalletBudgetInfo } from "~/route-modules/budget.server"
+import { entryStudentPlusWallet } from "~/route-modules/entry.server"
 import { prisma } from "~/services/repository.server"
-import { errorBuilder } from "~/services/session.server"
+import { buildErrorRedirect } from "~/services/session.server"
 import type { Route } from "./+types/wallet"
 
 export const loader = async ({ request, params }: Route.LoaderArgs) => {
 	// セッション情報の取得 & 検証
-	const { student, session, partId } = await entryStudentRoute(
-		request,
-		params.partId,
-		false,
-	)
+	const { walletId, session } = await entryStudentPlusWallet(request, params.partId)
 
-	// パートに所属していない場合
-	if (!partId) return null
+	// ウォレットに所属していない場合
+	if (!walletId) return null
 
-	const errorRedirect = errorBuilder("/app/student", session)
+	const errorRedirect = buildErrorRedirect("/app/student", session)
 
 	try {
-		// ウォレット情報を取得
-		const wallet = await prisma.wallet.findFirst({
-			where: {
-				parts: { some: { id: partId, students: { some: { id: student.id } } } },
-			},
+		const wallet = await prisma.wallet.findUniqueOrThrow({
+			where: { id: walletId },
 			select: {
 				id: true,
 				name: true,
@@ -41,44 +31,33 @@ export const loader = async ({ request, params }: Route.LoaderArgs) => {
 						id: true,
 						name: true,
 						budget: true,
-						isBazaar: true,
 					},
 				},
 			},
 		})
-
-		if (!wallet) throw await errorRedirect("ウォレットが見つかりません。")
-
 		const purchases = await prisma.purchase.findMany({
-			where: {
-				part: {
-					wallet: {
-						parts: {
-							some: {
-								id: partId,
-							},
-						},
-					},
-				},
-			},
+			where: { part: { wallet: { id: walletId } } },
 			select: {
 				id: true,
-				part: {
+				label: true,
+				completion: {
 					select: {
-						id: true,
+						actualUsage: true,
 					},
 				},
-				label: true,
-				description: true,
 				plannedUsage: true,
 				requestedBy: {
 					select: {
-						id: true,
 						name: true,
 					},
 				},
 				updatedAt: true,
 				canceled: true,
+				part: {
+					select: {
+						id: true,
+					},
+				},
 				accountantApproval: {
 					select: {
 						approved: true,
@@ -87,11 +66,6 @@ export const loader = async ({ request, params }: Route.LoaderArgs) => {
 				teacherApproval: {
 					select: {
 						approved: true,
-					},
-				},
-				completion: {
-					select: {
-						actualUsage: true,
 					},
 				},
 				receiptSubmission: {
@@ -104,75 +78,11 @@ export const loader = async ({ request, params }: Route.LoaderArgs) => {
 				updatedAt: "desc",
 			},
 		})
-
-		// 各パートの進行中の購入（予定額）を取得
-		const purchasesInProgress = await prisma.purchase.findMany({
-			where: {
-				partId: { in: wallet.parts.map((part) => part.id) },
-				receiptSubmission: null,
-				canceled: false,
-			},
-			select: {
-				partId: true,
-				plannedUsage: true,
-			},
-		})
-
-		// 各パートの完了した購入（実際の使用額）を取得
-		const purchasesCompleted = await prisma.purchase.findMany({
-			where: {
-				partId: { in: wallet.parts.map((part) => part.id) },
-				receiptSubmission: { isNot: null },
-				canceled: false,
-			},
-			select: {
-				partId: true,
-				completion: {
-					select: {
-						actualUsage: true,
-					},
-				},
-			},
-		})
-
-		// 各パートの予算使用状況を計算
-		const partsWithBudgetInfo = wallet.parts.map((part) => {
-			const plannedUsage = purchasesInProgress
-				.filter((p) => p.partId === part.id)
-				.reduce((sum, p) => sum + p.plannedUsage, 0)
-
-			const actualUsage = purchasesCompleted
-				.filter((p) => p.partId === part.id)
-				.reduce((sum, p) => sum + (p.completion?.actualUsage || 0), 0)
-
-			return {
-				...part,
-				plannedUsage,
-				actualUsage,
-			}
-		})
-
-		// ウォレット全体の予算使用状況を計算
-		const totalPlannedUsage = partsWithBudgetInfo.reduce(
-			(sum, part) => sum + part.plannedUsage,
-			0,
-		)
-		const totalActualUsage = partsWithBudgetInfo.reduce(
-			(sum, part) => sum + part.actualUsage,
-			0,
-		)
-
-		return {
-			wallet: {
-				...wallet,
-				parts: partsWithBudgetInfo,
-			},
-			totalPlannedUsage,
-			totalActualUsage,
-			purchases,
-		}
+		const budgetInfo = await queryWalletBudgetInfo(walletId)
+		return { wallet, ...budgetInfo, purchases }
 	} catch (_) {
-		throw await errorRedirect("ウォレット情報の取得に失敗しました。")
+		console.log(_)
+		throw await errorRedirect("エラーが発生しました。")
 	}
 }
 
@@ -184,17 +94,12 @@ export default ({ loaderData }: Route.ComponentProps) => {
 			</Section>
 		)
 
-	const { wallet, totalPlannedUsage, totalActualUsage, purchases } = loaderData
+	const { wallet, walletBudgetInfo, partsBudgetInfo, purchases } = loaderData
 
 	return (
 		<>
 			<Section>
-				<BudgetSectionContent
-					budget={wallet.budget}
-					plannedUsage={totalPlannedUsage}
-					actualUsage={totalActualUsage}
-					className="space-y-2"
-				>
+				<BudgetSectionContent budget={wallet.budget} {...walletBudgetInfo} className="space-y-2">
 					<Title>{wallet.name}</Title>
 				</BudgetSectionContent>
 			</Section>
@@ -203,9 +108,11 @@ export default ({ loaderData }: Route.ComponentProps) => {
 				{wallet.parts.map((part) => (
 					<BudgetSectionContent
 						key={part.id}
-						budget={part.budget}
-						plannedUsage={part.plannedUsage}
-						actualUsage={part.actualUsage}
+						{...(partsBudgetInfo.find((budgetInfo) => budgetInfo.id === part.id) ?? {
+							actualUsage: 0,
+							plannedUsage: 0,
+							budget: part.budget,
+						})}
 						className="space-y-2 my-4"
 					>
 						<Title>{part.name}</Title>
@@ -221,12 +128,7 @@ export default ({ loaderData }: Route.ComponentProps) => {
 				</SectionTitle>
 				<SectionContent className="flex flex-col gap-2">
 					{purchases.map((purchase) => (
-						<PurchaseItem
-							key={purchase.id}
-							type="student"
-							purchase={purchase}
-							id={purchase.part.id}
-						/>
+						<PurchaseItem key={purchase.id} type="student" purchase={purchase} id={purchase.part.id} />
 					))}
 				</SectionContent>
 			</Section>

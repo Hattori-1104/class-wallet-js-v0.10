@@ -1,5 +1,4 @@
 {
-	"editor.defaultFormatter": "biomejs.biome",
 	"[typescript]": {
 		"editor.formatOnSave": true,
 		"editor.defaultFormatter": "biomejs.biome",
@@ -33,5 +32,9 @@
 		"shadcn",
 		"sonner",
 		"vaul"
-	]
+	],
+	"[sql]": {
+		"editor.defaultFormatter": "adpyke.vscode-sql-formatter",
+		// "editor.formatOnSave": true
+	},
 }

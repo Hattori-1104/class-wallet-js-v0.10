@@ -52,7 +52,10 @@ export type SessionStorage = Session<SessionDataType, SessionFlashDataType>
 export const requireSession = async (request: Request) =>
 	getSession(request.headers.get("Cookie"))
 
-export function errorBuilder(redirectUrl: string, session: SessionStorage) {
+export function buildErrorRedirect(
+	redirectUrl: string,
+	session: SessionStorage,
+) {
 	return async (errorMessage: string, redirectUrlOverride?: string) => {
 		session.flash("error", { message: errorMessage })
 		throw redirect(redirectUrlOverride ?? redirectUrl, {
@@ -61,7 +64,10 @@ export function errorBuilder(redirectUrl: string, session: SessionStorage) {
 	}
 }
 
-export function successBuilder(redirectUrl: string, session: SessionStorage) {
+export function buildSuccessRedirect(
+	redirectUrl: string,
+	session: SessionStorage,
+) {
 	return async (successMessage: string) => {
 		session.flash("success", { message: successMessage })
 		return redirect(redirectUrl, {

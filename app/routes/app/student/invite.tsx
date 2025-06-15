@@ -16,9 +16,9 @@ import { Label } from "~/components/ui/label"
 import { verifyStudent } from "~/route-modules/common.server"
 import { prisma } from "~/services/repository.server"
 import {
-	errorBuilder,
+	buildErrorRedirect,
+	buildSuccessRedirect,
 	requireSession,
-	successBuilder,
 } from "~/services/session.server"
 import type { Route } from "./+types/invite"
 
@@ -88,7 +88,7 @@ export const action = async ({ request, params }: Route.ActionArgs) => {
 	const submission = parseWithZod(formData, { schema: formSchema })
 	if (submission.status !== "success") return submission.reply()
 	const { value } = submission
-	const errorRedirect = errorBuilder("/app/student/part", session)
+	const errorRedirect = buildErrorRedirect("/app/student/part", session)
 
 	if (value.asLeader) {
 		const part = await prisma.part
@@ -112,7 +112,7 @@ export const action = async ({ request, params }: Route.ActionArgs) => {
 				},
 			})
 			.catch(() => errorRedirect("パートの参加に失敗しました。"))
-		const successRedirect = successBuilder(
+		const successRedirect = buildSuccessRedirect(
 			`/app/student/part/${part.id}`,
 			session,
 		)
@@ -142,7 +142,7 @@ export const action = async ({ request, params }: Route.ActionArgs) => {
 			},
 		})
 		.catch(() => errorRedirect("パートの参加に失敗しました。"))
-	const successRedirect = successBuilder(
+	const successRedirect = buildSuccessRedirect(
 		`/app/student/part/${part.id}`,
 		session,
 	)

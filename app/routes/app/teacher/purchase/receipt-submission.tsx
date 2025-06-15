@@ -5,7 +5,7 @@ import { entryTeacherRoute } from "~/route-modules/common.server"
 import { PurchaseReceiptSubmissionSectionContent } from "~/route-modules/purchase-state/receipt-submission"
 import { PurchaseReceiptSubmissionSelectQuery } from "~/route-modules/purchase-state/receipt-submission.server"
 import { prisma } from "~/services/repository.server"
-import { errorBuilder } from "~/services/session.server"
+import { buildErrorRedirect } from "~/services/session.server"
 import type { Route } from "./+types/receipt-submission"
 
 export const loader = async ({ request, params }: Route.LoaderArgs) => {
@@ -13,7 +13,7 @@ export const loader = async ({ request, params }: Route.LoaderArgs) => {
 		request,
 		params.walletId,
 	)
-	const errorRedirect = errorBuilder(
+	const errorRedirect = buildErrorRedirect(
 		`/app/teacher/wallet/${params.walletId}/purchase/${params.purchaseId}`,
 		session,
 	)

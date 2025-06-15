@@ -1,7 +1,7 @@
 import { redirect } from "react-router"
 import { entryStudentRoute } from "~/route-modules/common.server"
 import { prisma } from "~/services/repository.server"
-import { errorBuilder } from "~/services/session.server"
+import { buildErrorRedirect } from "~/services/session.server"
 import { recommendedAction } from "~/utilities/purchase-state"
 import type { Route } from "./+types/router"
 
@@ -11,7 +11,10 @@ export const loader = async ({ request, params }: Route.LoaderArgs) => {
 		request,
 		params.partId,
 	)
-	const errorRedirect = errorBuilder(`/app/student/part/${partId}`, session)
+	const errorRedirect = buildErrorRedirect(
+		`/app/student/part/${partId}`,
+		session,
+	)
 
 	// データ取得
 	// 状態の検証

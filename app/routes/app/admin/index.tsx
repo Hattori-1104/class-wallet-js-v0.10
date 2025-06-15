@@ -14,7 +14,10 @@ import { Input } from "~/components/ui/input"
 import { FormBody, FormField, FormFooter } from "~/components/utility/form"
 import { entryAdminRoute } from "~/route-modules/common.server"
 import { prisma } from "~/services/repository.server"
-import { errorBuilder, successBuilder } from "~/services/session.server"
+import {
+	buildErrorRedirect,
+	buildSuccessRedirect,
+} from "~/services/session.server"
 import { formatCurrency } from "~/utilities/display"
 import type { Route } from "./+types/index"
 export const loader = async ({ request }: Route.LoaderArgs) => {
@@ -170,7 +173,7 @@ export const action = async ({ request }: Route.ActionArgs) => {
 		return submission.reply()
 	}
 
-	const errorRedirect = errorBuilder("/app/admin", session)
+	const errorRedirect = buildErrorRedirect("/app/admin", session)
 	if (submission.value.intent === "create") {
 		const wallet = await prisma.wallet
 			.create({
@@ -189,7 +192,7 @@ export const action = async ({ request }: Route.ActionArgs) => {
 				},
 			})
 			.catch(() => errorRedirect("ウォレット作成に失敗しました。"))
-		const successRedirect = successBuilder("/app/admin", session)
+		const successRedirect = buildSuccessRedirect("/app/admin", session)
 		return successRedirect(`${wallet.name} を作成しました。`)
 	}
 	if (submission.value.intent === "delete") {
@@ -200,7 +203,7 @@ export const action = async ({ request }: Route.ActionArgs) => {
 				},
 			})
 			.catch(() => errorRedirect("ウォレット削除に失敗しました。"))
-		const successRedirect = successBuilder("/app/admin", session)
+		const successRedirect = buildSuccessRedirect("/app/admin", session)
 		return successRedirect(`${wallet.name} を削除しました。`)
 	}
 }
