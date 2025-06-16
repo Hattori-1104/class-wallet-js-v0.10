@@ -2,39 +2,17 @@ import { Slot } from "@radix-ui/react-slot"
 import type { ComponentProps, ReactNode } from "react"
 import { cn } from "~/lib/utils"
 
-export const LayoutRelative = ({
-	children,
-	className,
-}: { children: ReactNode; className?: string }) => {
-	return (
-		<main className={cn("relative grow flex flex-col", className)}>
-			{children}
-		</main>
-	)
+export const LayoutRelative = ({ children, className }: { children: ReactNode; className?: string }) => {
+	return <main className={cn("relative grow flex flex-col w-full", className)}>{children}</main>
 }
 
-export const LayoutAbsolute = ({
-	children,
-	className,
-}: { children: ReactNode; className?: string }) => {
-	return (
-		<LayoutRelative className={cn("absolute inset-0", className)}>
-			{children}
-		</LayoutRelative>
-	)
+export const LayoutAbsolute = ({ children, className }: { children: ReactNode; className?: string }) => {
+	return <LayoutRelative className={cn("absolute inset-0", className)}>{children}</LayoutRelative>
 }
 
-export const MainContainer = ({
-	children,
-	className,
-}: { children: ReactNode; className?: string }) => {
+export const MainContainer = ({ children, className }: { children: ReactNode; className?: string }) => {
 	return (
-		<div
-			className={cn(
-				"container mx-auto px-8 overflow-y-scroll scrollbar-hidden grow shrink-0",
-				className,
-			)}
-		>
+		<div className={cn("container mx-auto px-8 overflow-y-scroll scrollbar-hidden grow shrink-0", className)}>
 			{children}
 		</div>
 	)
@@ -50,16 +28,10 @@ export const LimitedContainer = ({ children }: { children: ReactNode }) => {
 	)
 }
 
-export const Section = ({
-	children,
-	className,
-}: { children: ReactNode; className?: string }) => {
+export const Section = ({ children, className }: { children: ReactNode; className?: string }) => {
 	return <section className={cn("my-8 w-full", className)}>{children}</section>
 }
-export const SectionTitle = ({
-	children,
-	className,
-}: { children: ReactNode; className?: string }) => {
+export const SectionTitle = ({ children, className }: { children: ReactNode; className?: string }) => {
 	return <div className={cn("my-6", className)}>{children}</div>
 }
 export const SectionContent = ({
@@ -82,18 +54,6 @@ export const SectionContent = ({
 	return <div className={cn("my-2", className)}>{children}</div>
 }
 
-export function HorizonContainer({
-	className,
-	children,
-}: { className?: string; children: ReactNode }) {
-	return (
-		<div
-			className={cn(
-				"contents w-full sm:flex sm:flex-row sm:gap-8 sm:my-[-1.5rem]",
-				className,
-			)}
-		>
-			{children}
-		</div>
-	)
+export function HorizonContainer({ className, children }: { className?: string; children: ReactNode }) {
+	return <div className={cn("contents w-full sm:flex sm:flex-row sm:gap-8 sm:my-[-1.5rem]", className)}>{children}</div>
 }

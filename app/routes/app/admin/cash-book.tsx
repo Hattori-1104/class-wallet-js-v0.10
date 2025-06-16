@@ -1,13 +1,5 @@
-import {
-	Section,
-	SectionContent,
-	SectionTitle,
-} from "~/components/common/container"
-import {
-	CashBookTable,
-	PurchaseRecordableSelectQuery,
-	PurchaseRecordableWhereQuery,
-} from "~/route-modules/cash-book"
+import { Section, SectionContent, SectionTitle } from "~/components/common/container"
+import { CashBookTable, PurchaseRecordableSelectQuery, PurchaseRecordableWhereQuery } from "~/route-modules/cash-book"
 import { entryAdminRoute } from "~/route-modules/common.server"
 import { prisma } from "~/services/repository.server"
 import type { Route } from "./+types/cash-book"
@@ -44,13 +36,10 @@ export default ({ loaderData: { wallets } }: Route.ComponentProps) => {
 					<SectionTitle>{wallet.name}</SectionTitle>
 					<SectionContent>
 						<CashBookTable
-							purchases={wallet.parts.flatMap((part) => part.purchases)}
-							filteredParts={wallet.parts}
-							wallet={wallet}
-							reserved={
-								wallet.budget -
-								wallet.parts.reduce((sum, part) => sum + part.budget, 0)
-							}
+							filteredPurchases={wallet.parts
+								.flatMap((part) => part.purchases)
+								.sort((a, b) => (a.receiptSubmission?.receiptIndex ?? 0) - (b.receiptSubmission?.receiptIndex ?? 0))}
+							budget={wallet.budget}
 						/>
 					</SectionContent>
 				</Section>

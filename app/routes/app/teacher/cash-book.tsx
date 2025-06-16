@@ -1,11 +1,6 @@
-import {
-	Section,
-	SectionContent,
-	SectionTitle,
-} from "~/components/common/container"
+import { Section, SectionContent, SectionTitle } from "~/components/common/container"
 import { Title } from "~/components/common/typography"
 import {
-	CashBookFilter,
 	CashBookTable,
 	PurchaseRecordableOrderByQuery,
 	PurchaseRecordableSelectQuery,
@@ -13,46 +8,37 @@ import {
 } from "~/route-modules/cash-book"
 import { entryTeacherRoute } from "~/route-modules/common.server"
 import { prisma } from "~/services/repository.server"
+import { buildErrorRedirect } from "~/services/session.server"
 import type { Route } from "./+types/cash-book"
 
 export const loader = async ({ request, params }: Route.LoaderArgs) => {
-	const { teacher, walletId } = await entryTeacherRoute(
-		request,
-		params.walletId,
-		true,
-	)
+	const { walletId, session } = await entryTeacherRoute(request, params.walletId, true)
+
+	const errorRedirect = buildErrorRedirect(`/app/teacher/wallet/${walletId}`, session)
 
 	// ウォレット情報とパーツ情報を同時に取得
-	const wallet = await prisma.wallet.findUnique({
-		where: {
-			id: walletId,
-		},
-		select: {
-			id: true,
-			name: true,
-			parts: {
-				select: {
-					id: true,
-					name: true,
+	const wallet = await prisma.wallet
+		.findUniqueOrThrow({
+			where: {
+				id: walletId,
+			},
+			select: {
+				id: true,
+				name: true,
+				budget: true,
+				parts: {
+					select: {
+						id: true,
+						name: true,
+					},
 				},
 			},
-		},
-	})
+		})
+		.catch(() => errorRedirect("ウォレットが見つかりません。"))
 
-	const url = new URL(request.url)
-	const searchParams = new URLSearchParams(url.searchParams)
-	const filter = searchParams.getAll("filter")
-
-	// フィルターが空の場合は、すべてのパートのIDを使用
-	const allPartIds = wallet?.parts.map((part) => part.id) || []
-	const targetPartIds = filter.length > 0 ? filter : allPartIds
-
-	const filteredPurchases = await prisma.purchase.findMany({
+	const purchases = await prisma.purchase.findMany({
 		where: {
 			part: {
-				id: {
-					in: targetPartIds,
-				},
 				walletId: walletId,
 			},
 			...PurchaseRecordableWhereQuery,
@@ -60,44 +46,19 @@ export const loader = async ({ request, params }: Route.LoaderArgs) => {
 		select: PurchaseRecordableSelectQuery,
 		orderBy: PurchaseRecordableOrderByQuery,
 	})
-	const filteredParts = await prisma.part.findMany({
-		where: {
-			id: {
-				in: targetPartIds,
-			},
-			walletId: walletId,
-		},
-		select: {
-			id: true,
-			name: true,
-			budget: true,
-		},
-	})
-
-	return {
-		parts: wallet?.parts || [],
-		filter,
-		filteredPurchases,
-		filteredParts,
-		wallet: wallet ? { id: wallet.id, name: wallet.name } : null,
-	}
+	return { wallet, purchases }
 }
 
-export default ({ loaderData }: Route.ComponentProps) => {
+export default ({ loaderData: { wallet, purchases } }: Route.ComponentProps) => {
 	return (
 		<Section>
 			<SectionTitle>
 				<Title>出納簿</Title>
 			</SectionTitle>
 			<SectionContent>
-				<CashBookFilter parts={loaderData.parts} filter={loaderData.filter} />
-			</SectionContent>
-			<SectionContent>
-				<CashBookTable
-					purchases={loaderData.filteredPurchases}
-					filteredParts={loaderData.filteredParts}
-					wallet={loaderData.wallet}
-				/>
+				<div className="border rounded-md overflow-auto max-h-[70vh]">
+					<CashBookTable filteredPurchases={purchases} budget={wallet.budget} />
+				</div>
 			</SectionContent>
 		</Section>
 	)
