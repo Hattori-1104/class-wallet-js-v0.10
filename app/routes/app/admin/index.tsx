@@ -109,7 +109,8 @@ export default ({ loaderData: { wallets }, actionData }: Route.ComponentProps) =
 								<span>{wallet.name}</span>
 								<Aside>
 									<Button
-										disabled={navigation.state === "submitting"}
+										// disabled={navigation.state === "submitting"}
+										disabled={true}
 										onClick={() => {
 											submit({ intent: "delete", id: wallet.id }, { method: "post" })
 										}}
