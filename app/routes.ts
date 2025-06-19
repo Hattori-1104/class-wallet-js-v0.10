@@ -17,6 +17,7 @@ export default [
 						route("approval", "routes/app/student/purchase/approval.tsx"),
 						route("completion", "routes/app/student/purchase/completion.tsx"),
 						route("receiptSubmission", "routes/app/student/purchase/receipt-submission.tsx"),
+						route("cancel", "routes/app/student/purchase/cancel.ts"),
 					]),
 				]),
 				route("invite", "routes/app/student/invite.tsx"),
@@ -52,6 +53,7 @@ export default [
 			layout("routes/app/admin/layout.tsx", [
 				index("routes/app/admin/index.tsx"),
 				route("cash-book", "routes/app/admin/cash-book.tsx"),
+				// route("inspection", "routes/app/admin/inspection.tsx"),
 			]),
 		]),
 		// 認証

@@ -165,7 +165,11 @@ export default ({
 												<Link to="/app/admin">管理者ページ</Link>
 											</SidebarMenuButton>
 										</SidebarMenuItem>
-
+										<SidebarMenuItem>
+											<SidebarMenuButton asChild>
+												<Link to="/app/admin/check-cash">出納簿点検</Link>
+											</SidebarMenuButton>
+										</SidebarMenuItem>
 										<SidebarMenuItem>
 											<SidebarMenuButton asChild>
 												<Link to="/app/admin/cash-book">全体出納簿</Link>
